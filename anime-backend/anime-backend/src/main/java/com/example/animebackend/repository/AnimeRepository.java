@@ -7,6 +7,6 @@ import java.util.List;
 
 @Repository
 public interface AnimeRepository extends JpaRepository<Anime, Long> {
-    // Spring Data magic: automatically generates: SELECT * FROM animes WHERE is_deleted = false
+    // automatically generates: SELECT * FROM animes WHERE is_deleted = false
     List<Anime> findAllByIsDeletedFalse();
 }

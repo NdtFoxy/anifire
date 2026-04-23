@@ -26,12 +26,11 @@ public class Anime {
     private String imageUrl;
     private Double rating;
 
-    // --- Requirements from Professor ---
     @Builder.Default
     private boolean isDeleted = false; // Logical deletion flag
 
     @Builder.Default
     private LocalDateTime creationDate = LocalDateTime.now(); // Record creation timestamp
 
-    private Long creatorUserId; // User ID who created this record (for Grade 5)
+    private Long creatorUserId; // User ID who created this record
 }
