@@ -18,7 +18,20 @@ public class JikanResponse {
         private String title;
         private String synopsis;
         private Double score;
+        private Integer year;
+        private Integer episodes;
         private Images images;
+        private List<Genre> genres;
+        private List<Genre> themes;
+        private List<Genre> demographics;
+
+        @Data
+        @JsonIgnoreProperties(ignoreUnknown = true)
+        public static class Genre {
+            @JsonProperty("mal_id")
+            private Long malId;
+            private String name;
+        }
 
         @Data
         @JsonIgnoreProperties(ignoreUnknown = true)

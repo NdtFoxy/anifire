@@ -35,3 +35,6 @@ out/
 
 ### VS Code ###
 .vscode/
+
+### Anifire auth signing keys (never commit) ###
+auth-keys/

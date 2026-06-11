@@ -1,34 +1,65 @@
 package com.example.animebackend.controller;
 
-import com.example.animebackend.entity.Anime;
-import com.example.animebackend.repository.AnimeRepository;
-import org.springframework.web.bind.annotation.*;
+import com.example.animebackend.dto.AnimeRequest;
+import com.example.animebackend.dto.AnimeResponse;
+import com.example.animebackend.dto.PagedResponse;
+import com.example.animebackend.service.AnimeService;
+import jakarta.validation.Valid;
 import java.util.List;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/v1/animes")
-@CrossOrigin(origins = "http://localhost:3000") // Enabling CORS for Next.js
+// CORS is configured centrally in SecurityConfig (anifire.cors.allowed-origins).
 public class AnimeController {
 
-    private final AnimeRepository repository;
+    private final AnimeService animeService;
 
-    public AnimeController(AnimeRepository repository) {
-        this.repository = repository;
+    public AnimeController(AnimeService animeService) {
+        this.animeService = animeService;
     }
 
     @GetMapping
-    public List<Anime> getAllAnimes() {
-        // Only return records that are not marked as deleted
-        return repository.findAllByIsDeletedFalse();
+    public List<AnimeResponse> getAllAnimes() {
+        return animeService.listAll();
+    }
+
+    @GetMapping("/paged")
+    public PagedResponse<AnimeResponse> searchAnimes(
+            @RequestParam(defaultValue = "") String search,
+            @RequestParam(required = false) Long categoryId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "12") int size) {
+        return animeService.search(search, categoryId, page, size);
+    }
+
+    @GetMapping("/{id}")
+    public AnimeResponse getAnime(@PathVariable Long id) {
+        return animeService.getById(id);
+    }
+
+    @PostMapping
+    public AnimeResponse createAnime(@Valid @RequestBody AnimeRequest request, @AuthenticationPrincipal Jwt jwt) {
+        return animeService.create(request, Long.valueOf(jwt.getSubject()));
+    }
+
+    @PutMapping("/{id}")
+    public AnimeResponse updateAnime(@PathVariable Long id, @Valid @RequestBody AnimeRequest request) {
+        return animeService.update(id, request);
     }
 
     @DeleteMapping("/{id}")
     public void deleteAnime(@PathVariable Long id) {
-        Anime anime = repository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Anime not found with id: " + id));
-
-        anime.setDeleted(true); // Logical deletion
-        repository.save(anime);
-        System.out.println("❌ Anime marked as deleted: ID " + id);
+        animeService.softDelete(id);
     }
 }

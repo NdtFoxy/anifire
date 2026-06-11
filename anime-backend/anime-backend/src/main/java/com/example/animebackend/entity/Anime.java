@@ -3,6 +3,8 @@ package com.example.animebackend.entity;
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDateTime;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 @Entity
 @Table(name = "animes")
@@ -25,6 +27,14 @@ public class Anime {
 
     private String imageUrl;
     private Double rating;
+
+    @ManyToMany
+    @JoinTable(
+            name = "anime_categories",
+            joinColumns = @JoinColumn(name = "anime_id"),
+            inverseJoinColumns = @JoinColumn(name = "category_id"))
+    @Builder.Default
+    private Set<Category> categories = new LinkedHashSet<>();
 
     @Builder.Default
     private boolean isDeleted = false; // Logical deletion flag
