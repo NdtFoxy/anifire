@@ -12,6 +12,13 @@ export interface Movie {
   heroImageUrl: string;
   logoImageUrl?: string;
   tags: string[];
+  /** True when `title`/`description` are the Russian localization. */
+  localized?: boolean;
+  /** Stored catalogue values, for editing and for lookups by romaji / English title. */
+  originalTitle?: string;
+  titleEn?: string;
+  originalDescription?: string;
+  originalImageUrl?: string;
 }
 
 export const NAV_ITEMS = [

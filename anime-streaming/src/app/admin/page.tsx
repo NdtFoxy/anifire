@@ -18,6 +18,7 @@ import {
 import { useAuth } from "@/components/auth/AuthProvider";
 import AdsSection from "@/components/admin/AdsSection";
 import CatalogSection from "@/components/admin/CatalogSection";
+import CatalogImportPanel from "@/components/admin/CatalogImportPanel";
 import GeoSection from "@/components/admin/GeoSection";
 import OverviewSection from "@/components/admin/OverviewSection";
 import SignalsSection from "@/components/admin/SignalsSection";
@@ -248,6 +249,8 @@ function AdminConsole() {
           {section === "overview" ? (
             <OverviewSection analytics={analytics} />
           ) : section === "catalog" ? (
+            <>
+              <CatalogImportPanel onFinished={() => void loadCatalog()} />
             <CatalogSection
               movies={movies}
               categories={categories}
@@ -264,9 +267,10 @@ function AdminConsole() {
               onEdit={(movie) => {
                 setEditingId(movie.id);
                 setForm({
-                  title: movie.title,
-                  description: movie.description,
-                  imageUrl: movie.imageUrl,
+                  // Edit the stored catalogue values, not the localized display copy.
+                  title: movie.originalTitle ?? movie.title,
+                  description: movie.originalDescription ?? movie.description,
+                  imageUrl: movie.originalImageUrl ?? movie.imageUrl,
                   rating: Number.isFinite(Number(movie.rating)) ? Number(movie.rating) : null,
                   categoryIds: [],
                 });
@@ -303,6 +307,7 @@ function AdminConsole() {
                 }))
               }
             />
+            </>
           ) : section === "users" ? (
             <UsersSection />
           ) : section === "ads" ? (

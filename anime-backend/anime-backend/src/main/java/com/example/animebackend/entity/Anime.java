@@ -28,6 +28,27 @@ public class Anime {
     private String imageUrl;
     private Double rating;
 
+    // ── Enrichment (CatalogImportService): localized text and artwork resolved
+    // once on the server instead of per visitor in the browser.
+    private String titleRu;
+    private String titleEn;
+
+    @Column(length = 4000)
+    private String synopsisRu;
+
+    private Long anilistId;
+
+    @Column(length = 600)
+    private String coverUrl;
+
+    @Column(length = 600)
+    private String bannerUrl;
+
+    private Integer seasonYear;
+
+    /** Null until enrichment ran; the backfill picks those up. */
+    private java.time.Instant enrichedAt;
+
     @ManyToMany
     @JoinTable(
             name = "anime_categories",

@@ -14,7 +14,15 @@ public record AnimeResponse(
         boolean deleted,
         LocalDateTime creationDate,
         Long creatorUserId,
-        List<CategoryResponse> categories) {
+        List<CategoryResponse> categories,
+        /** Localized / enriched fields; null until the catalogue import enriched the title. */
+        String titleRu,
+        String titleEn,
+        String synopsisRu,
+        Long anilistId,
+        String coverUrl,
+        String bannerUrl,
+        Integer seasonYear) {
 
     public static AnimeResponse from(Anime anime) {
         List<CategoryResponse> categories = anime.getCategories().stream()
@@ -31,6 +39,13 @@ public record AnimeResponse(
                 anime.isDeleted(),
                 anime.getCreationDate(),
                 anime.getCreatorUserId(),
-                categories);
+                categories,
+                anime.getTitleRu(),
+                anime.getTitleEn(),
+                anime.getSynopsisRu(),
+                anime.getAnilistId(),
+                anime.getCoverUrl(),
+                anime.getBannerUrl(),
+                anime.getSeasonYear());
     }
 }

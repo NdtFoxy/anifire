@@ -65,7 +65,11 @@ export default function CatalogView({
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     return movies.filter((m) => {
-      if (q && !m.title.toLowerCase().includes(q)) return false;
+      if (
+        q &&
+        ![m.title, m.originalTitle, m.titleEn].some((t) => t?.toLowerCase().includes(q))
+      )
+        return false;
       // Strict on type (all backend titles default to TV); soft on genre/status
       // until the backend stores that metadata — selected chips never empty the
       // list when the field is absent.

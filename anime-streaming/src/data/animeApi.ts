@@ -2,12 +2,12 @@ import { MOCK_MOVIES, ROWS } from "./mockAnime";
 import type { Movie, Row } from "./mockAnime";
 import { API_BASE, authFetch } from "@/lib/auth-client";
 import { cached, TTL } from "./cache";
+import type { AniListMedia } from "@/lib/anilist-server";
 import type { SubtitleTrack } from "@/components/player/types";
 
 const API_URL =
   process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api/v1/animes";
 const JIKAN_URL = "https://api.jikan.moe/v4";
-const ANILIST_URL = "https://graphql.anilist.co";
 
 interface BackendAnime {
   id: number;
@@ -20,32 +20,13 @@ interface BackendAnime {
   creationDate: string;
   creatorUserId: number | null;
   categories?: Category[];
-}
-
-interface AniListMedia {
-  id: number | null;
-  bannerImage: string | null;
+  titleRu: string | null;
+  titleEn: string | null;
+  synopsisRu: string | null;
+  anilistId: number | null;
+  coverUrl: string | null;
+  bannerUrl: string | null;
   seasonYear: number | null;
-  coverImage: {
-    extraLarge: string | null;
-    large: string | null;
-  } | null;
-  title: {
-    romaji: string | null;
-    english: string | null;
-    native: string | null;
-  } | null;
-  trailer: {
-    id: string | null;
-    site: string | null;
-    thumbnail: string | null;
-  } | null;
-  streamingEpisodes:
-    | {
-        title: string | null;
-        thumbnail: string | null;
-      }[]
-    | null;
 }
 
 interface TmdbAssets {
@@ -164,57 +145,48 @@ function heroImage(url: string): string {
 
 function mapToMovie(a: BackendAnime): Movie {
   const categories = a.categories?.map((c) => c.name) ?? [];
+  const poster = a.coverUrl || a.imageUrl || "/hero-1.png";
   return {
     id: Number(a.id),
     malId: a.malId,
-    title: a.title,
-    description: a.synopsis || "",
-    year: "—",
+    title: a.titleRu || a.title,
+    description: a.synopsisRu || a.synopsis || "",
+    localized: Boolean(a.titleRu),
+    originalTitle: a.title,
+    titleEn: a.titleEn ?? undefined,
+    originalDescription: a.synopsis || "",
+    originalImageUrl: a.imageUrl || "",
+    year: a.seasonYear ? String(a.seasonYear) : "—",
     rating: "16+",
     duration: "24 мин",
     genre: categories.length ? categories.join(" • ") : "Аниме",
     match: a.rating ? Math.round(a.rating * 10) : 90,
-    imageUrl: a.imageUrl || "/hero-1.png",
-    heroImageUrl: heroImage(a.imageUrl || "/hero-1.png"),
+    imageUrl: poster,
+    heroImageUrl: a.bannerUrl || heroImage(a.imageUrl || "/hero-1.png"),
     tags: categories,
   };
 }
 
+/**
+ * AniList goes through our server route (`/api/anilist`), which caches per MAL id
+ * for everyone: AniList rate-limits per client IP, and a page that asked it
+ * directly from the browser got 429s long before it finished rendering.
+ */
 async function fetchAniListMedia(malId: number): Promise<AniListMedia | null> {
   if (!malId) return null;
   const cached = aniListCache.get(malId);
   if (cached) return cached;
 
-  const request = fetch(ANILIST_URL, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      query: `
-        query ($idMal: Int) {
-          Media(idMal: $idMal, type: ANIME) {
-            id
-            bannerImage
-            seasonYear
-            coverImage { extraLarge large }
-            title { romaji english native }
-            trailer { id site thumbnail }
-            streamingEpisodes { title thumbnail }
-          }
-        }
-      `,
-      variables: { idMal: malId },
-    }),
-  })
+  const request = fetch(`/api/anilist?idMal=${malId}`)
     .then(async (res) => {
-      if (!res.ok) throw new Error(`AniList ${res.status}`);
-      const data = (await res.json()) as { data?: { Media?: AniListMedia | null } };
-      return data.data?.Media ?? null;
+      if (res.status === 404) return null;
+      if (!res.ok) throw new Error(`AniList proxy ${res.status}`);
+      return (await res.json()) as AniListMedia;
     })
     .catch(() => null);
 
   aniListCache.set(malId, request);
-  // Don't poison the cache with a transient failure (AniList 429s a lot) —
-  // drop null results so the next call retries.
+  // A transient failure must not stick for the whole session.
   request.then((media) => {
     if (!media) aniListCache.delete(malId);
   });
@@ -265,28 +237,21 @@ export async function fetchTrailerEmbedUrl(malId?: number): Promise<string | nul
   return null;
 }
 
+/**
+ * Artwork and localized text come from the backend (enriched at import time), so
+ * a catalogue render makes no AniList calls at all. Only the TMDB logo/backdrop
+ * is still looked up, through our own server route, by the English/romaji title.
+ */
 async function enrichMovieMedia(movie: Movie): Promise<Movie> {
-  if (!movie.malId) return movie;
-  const media = await fetchAniListMedia(movie.malId);
-  const tmdbTitle = media?.title?.english ?? media?.title?.romaji ?? movie.title;
   const tmdbAssets = await fetchTmdbAssets(
-    tmdbTitle,
-    media?.seasonYear ?? movie.year
+    movie.titleEn ?? movie.originalTitle ?? movie.title,
+    movie.year
   );
-
-  if (!media && !tmdbAssets) return movie;
-
+  if (!tmdbAssets) return movie;
   return {
     ...movie,
-    imageUrl: media?.coverImage?.extraLarge ?? media?.coverImage?.large ?? movie.imageUrl,
-    heroImageUrl:
-      tmdbAssets?.backdropImageUrl ??
-      media?.bannerImage ??
-      media?.trailer?.thumbnail ??
-      media?.coverImage?.extraLarge ??
-      movie.heroImageUrl,
-    logoImageUrl: tmdbAssets?.logoImageUrl ?? movie.logoImageUrl,
-    year: media?.seasonYear ? String(media.seasonYear) : movie.year,
+    heroImageUrl: tmdbAssets.backdropImageUrl ?? movie.heroImageUrl,
+    logoImageUrl: tmdbAssets.logoImageUrl ?? movie.logoImageUrl,
   };
 }
 
@@ -303,6 +268,28 @@ async function fetchMovies(): Promise<Movie[]> {
     return enrichMoviesMedia(data.map(mapToMovie));
   } catch {
     return MOCK_MOVIES;
+  }
+}
+
+/** Titles sharing the most genres with this one ("Похожие"). */
+export async function fetchSimilar(animeId: number, limit = 8): Promise<Movie[]> {
+  try {
+    const res = await fetch(`${API_URL}/${animeId}/similar?limit=${limit}`, { cache: "no-store" });
+    if (!res.ok) return [];
+    return ((await res.json()) as BackendAnime[]).map(mapToMovie);
+  } catch {
+    return [];
+  }
+}
+
+/** Personal picks from the viewer's ratings, bookmarks and history ("Рекомендуем вам"). */
+export async function fetchRecommendations(limit = 20): Promise<Movie[]> {
+  try {
+    const res = await authFetch(`${API_BASE}/api/v1/me/recommendations?limit=${limit}`);
+    if (!res.ok) return [];
+    return ((await res.json()) as BackendAnime[]).map(mapToMovie);
+  } catch {
+    return [];
   }
 }
 
@@ -607,6 +594,38 @@ export async function fetchAnimeDetail(
   return cached(`detail:${malId}`, TTL.long, () => loadAnimeDetail(malId));
 }
 
+// Jikan's fixed vocabularies, shown as-is on the detail page.
+const RU_TYPE: Record<string, string> = {
+  TV: "ТВ-сериал", Movie: "Фильм", OVA: "OVA", ONA: "ONA", Special: "Спецвыпуск",
+  "TV Special": "ТВ-спецвыпуск", Music: "Клип", PV: "Промо", CM: "Реклама",
+};
+const RU_SOURCE: Record<string, string> = {
+  Manga: "Манга", "Light novel": "Ранобэ", "Web novel": "Веб-роман", Novel: "Роман",
+  Original: "Оригинал", "Visual novel": "Визуальная новелла", "Web manga": "Веб-манга",
+  "4-koma manga": "Ёнкома", Game: "Игра", "Video game": "Видеоигра", "Card game": "Карточная игра",
+  Book: "Книга", "Picture book": "Книжка с картинками", Music: "Музыка", Radio: "Радио",
+  Other: "Другое", Mixed: "Смешанный",
+};
+const RU_STATUS: Record<string, string> = {
+  "Finished Airing": "Завершён", "Currently Airing": "Выходит", "Not yet aired": "Анонс",
+};
+const RU_SEASON: Record<string, string> = { winter: "Зима", spring: "Весна", summer: "Лето", fall: "Осень" };
+const RU_DAY: Record<string, string> = {
+  Mondays: "По понедельникам", Tuesdays: "По вторникам", Wednesdays: "По средам",
+  Thursdays: "По четвергам", Fridays: "По пятницам", Saturdays: "По субботам", Sundays: "По воскресеньям",
+};
+const RU_RATING: Record<string, string> = {
+  "G - All Ages": "0+", "PG - Children": "6+", "PG-13 - Teens 13 or older": "13+",
+  "R - 17+ (violence & profanity)": "17+", "R+ - Mild Nudity": "18+", "Rx - Hentai": "18+",
+};
+const ru = (map: Record<string, string>, v: string | null | undefined) => (v ? map[v] ?? v : v ?? null);
+
+/** "24 min per ep" / "1 hr 45 min" → "24 мин" / "1 ч 45 мин". */
+function ruDuration(d: string | null | undefined): string | null {
+  if (!d) return null;
+  return d.replace(/ per ep\.?/, "").replace(/\bhr\b/g, "ч").replace(/\bmin\b/g, "мин").replace(/\bsec\b/g, "сек");
+}
+
 async function loadAnimeDetail(malId: number): Promise<AnimeDetail | null> {
   try {
     const res = await fetch(`${JIKAN_URL}/anime/${malId}`, { cache: "no-store" });
@@ -624,19 +643,19 @@ async function loadAnimeDetail(malId: number): Promise<AnimeDetail | null> {
       titleJapanese: a.title_japanese,
       synopsis: a.synopsis ?? "",
       background: a.background ?? "",
-      type: a.type,
-      source: a.source,
-      status: a.status,
+      type: ru(RU_TYPE, a.type),
+      source: ru(RU_SOURCE, a.source),
+      status: ru(RU_STATUS, a.status),
       episodes: a.episodes,
-      duration: a.duration,
-      rating: a.rating,
+      duration: ruDuration(a.duration),
+      rating: ru(RU_RATING, a.rating),
       score: a.score,
       rank: a.rank,
       popularity: a.popularity,
-      season: a.season ? cap(a.season) : null,
+      season: a.season ? RU_SEASON[a.season] ?? cap(a.season) : null,
       year: a.year,
       airedString: a.aired?.string ?? null,
-      broadcastDay: a.broadcast?.day ?? null,
+      broadcastDay: ru(RU_DAY, a.broadcast?.day),
       genres: a.genres.map((g) => g.name),
       studios: a.studios.map((s) => s.name),
       heroImageUrl:

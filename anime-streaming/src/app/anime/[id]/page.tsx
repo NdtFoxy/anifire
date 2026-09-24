@@ -21,6 +21,7 @@ import {
   fetchEpisodes,
   fetchLatestReleases,
   fetchMovies,
+  fetchSimilar,
 } from "@/data/animeApi";
 import type {
   AniReleaseFull,
@@ -99,6 +100,7 @@ function AnimeDetailContent() {
   const [ready, setReady] = useState(false);
   const [detail, setDetail] = useState<AnimeDetail | null>(null);
   const [episodes, setEpisodes] = useState<Episode[]>([]);
+  const [similar, setSimilar] = useState<Movie[]>([]);
 
   // Real "new episodes" feed from AniLiberty (plays in our own player).
   const [latest, setLatest] = useState<LatestRelease[]>([]);
@@ -128,6 +130,9 @@ function AnimeDetailContent() {
       const found = all.find((m) => m.id === id) ?? all[0];
       setMovie(found);
       setReady(true);
+      fetchSimilar(found.id, 4).then((rows) => {
+        if (!cancelled) setSimilar(rows);
+      });
       if (found.malId) {
         const [d, eps] = await Promise.all([
           fetchAnimeDetail(found.malId),
@@ -174,14 +179,19 @@ function AnimeDetailContent() {
     };
   }, [isAniAlias, params.id]);
 
-  const title = detail?.titleEnglish || detail?.title || movie.title;
+  // Our Russian localization wins; otherwise Jikan's English title, then romaji.
+  const title = movie.localized ? movie.title : detail?.titleEnglish || detail?.title || movie.title;
   const logoImage = detail?.logoImageUrl ?? movie.logoImageUrl ?? null;
   const heroImage = detail?.heroImageUrl ?? movie.heroImageUrl;
   const posterImage = detail?.posterImageUrl ?? movie.imageUrl;
   const rating = detail?.rating ?? movie.rating;
-  const genres = detail?.genres.length
-    ? detail.genres.join(" • ")
-    : movie.genre;
+  // Our categories are already Russian; Jikan's English genres only as a fallback.
+  const ownGenres = movie.localized ? movie.tags.filter((t) => t !== "Топ аниме") : [];
+  const genres = ownGenres.length
+    ? ownGenres.join(" • ")
+    : detail?.genres.length
+      ? detail.genres.join(" • ")
+      : movie.genre;
 
   const epCount = detail?.episodes ?? (episodes.length || 12);
   const totalMinutes = epCount * 24;
@@ -210,7 +220,8 @@ function AnimeDetailContent() {
 
   const others = movies.filter((m) => m.id !== movie.id);
   const newEpisodes = others.slice(0, 3);
-  const recommended = others.slice(0, 4);
+  // Genre-matched titles; the catalogue head only while those are loading.
+  const recommended = similar.length > 0 ? similar : others.slice(0, 4);
 
   const infoRows: { key: string; val: string }[] = [
     { key: "Тип:", val: detail?.type ?? "ТВ-сериал" },
@@ -341,7 +352,7 @@ function AnimeDetailContent() {
           </div>
 
           <div className={styles.description}>
-            <p>{detail?.synopsis || movie.description}</p>
+            <p>{movie.localized ? movie.description : detail?.synopsis || movie.description}</p>
             {detail?.background ? <p>{detail.background}</p> : null}
           </div>
 
@@ -497,7 +508,7 @@ function AnimeDetailContent() {
           <CommentsPanel
             animeId={id}
             animeTitle={title}
-            animeSynopsis={detail?.synopsis || movie.description}
+            animeSynopsis={movie.localized ? movie.description : detail?.synopsis || movie.description}
           />
         </div>
       )}

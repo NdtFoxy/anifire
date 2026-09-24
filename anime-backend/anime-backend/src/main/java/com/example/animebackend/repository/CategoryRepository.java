@@ -12,4 +12,7 @@ public interface CategoryRepository extends JpaRepository<Category, Long> {
     Optional<Category> findByIdAndIsDeletedFalse(Long id);
 
     Optional<Category> findByNameIgnoreCaseAndIsDeletedFalse(String name);
+
+    /** Exact name, deleted or not: names are unique across both. */
+    Optional<Category> findByName(String name);
 }
