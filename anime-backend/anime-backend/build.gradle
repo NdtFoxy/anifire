@@ -24,6 +24,10 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-webmvc'
     implementation 'org.springframework.boot:spring-boot-starter-security'
     implementation 'org.springframework.boot:spring-boot-starter-oauth2-resource-server'
+    // Boot 4 ships per-technology autoconfiguration modules; spring-boot-flyway is
+    // what wires FlywayMigrationInitializer ahead of the EntityManagerFactory.
+    implementation 'org.springframework.boot:spring-boot-flyway'
+    implementation 'org.flywaydb:flyway-database-postgresql'
     implementation 'org.bouncycastle:bcprov-jdk18on:1.79'
     implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:3.0.3'
     compileOnly 'org.projectlombok:lombok'
