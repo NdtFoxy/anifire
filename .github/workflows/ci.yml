@@ -18,9 +18,11 @@ jobs:
           java-version: "21"
           distribution: temurin
       - uses: gradle/actions/setup-gradle@v4
-      # Tests run on in-memory H2 (src/test/resources/application-test.properties),
-      # so no Postgres service is needed here.
+      # Unit/slice tests run on in-memory H2 (src/test/resources/application-test.properties).
       - run: ./gradlew test
+      # Flyway migrations + Hibernate validation + Postgres-only SQL against a
+      # real postgres:16 via Testcontainers (the runner provides Docker).
+      - run: ./gradlew integrationTest
 
   frontend:
     runs-on: ubuntu-latest
