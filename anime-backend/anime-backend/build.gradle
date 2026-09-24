@@ -25,7 +25,12 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-security'
     implementation 'org.springframework.boot:spring-boot-starter-oauth2-resource-server'
     implementation 'org.springframework.boot:spring-boot-starter-mail'
+    implementation 'org.springframework.boot:spring-boot-starter-data-redis'
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    implementation platform('software.amazon.awssdk:bom:2.31.50')
+    implementation 'software.amazon.awssdk:s3'
+    implementation 'software.amazon.awssdk:url-connection-client'
+    implementation 'io.sentry:sentry-logback:8.16.0'
     // Boot 4 ships per-technology autoconfiguration modules; spring-boot-flyway is
     // what wires FlywayMigrationInitializer ahead of the EntityManagerFactory.
     implementation 'org.springframework.boot:spring-boot-flyway'
@@ -49,21 +54,21 @@ dependencies {
     testAnnotationProcessor 'org.projectlombok:lombok'
 }
 
-// `test` stays Docker-free (H2). Tests tagged "postgres" boot against a real
-// Postgres via Testcontainers and run only in `integrationTest`.
+// `test` stays Docker-free (H2). Tests tagged "postgres" / "redis" run against
+// real services via Testcontainers, only in `integrationTest`.
 tasks.named('test') {
     useJUnitPlatform {
-        excludeTags 'postgres'
+        excludeTags 'postgres', 'redis'
     }
 }
 
 tasks.register('integrationTest', Test) {
-    description = 'Runs Testcontainers-backed tests against a real PostgreSQL.'
+    description = 'Runs Testcontainers-backed tests against real PostgreSQL and Redis.'
     group = 'verification'
     testClassesDirs = sourceSets.test.output.classesDirs
     classpath = sourceSets.test.runtimeClasspath
     useJUnitPlatform {
-        includeTags 'postgres'
+        includeTags 'postgres', 'redis'
     }
     shouldRunAfter tasks.named('test')
 }
