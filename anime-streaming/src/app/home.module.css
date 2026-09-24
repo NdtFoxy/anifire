@@ -235,6 +235,21 @@
   letter-spacing: -0.03em;
   text-wrap: balance;
   text-shadow: 0 8px 40px rgba(0, 0, 0, 0.7);
+  /* Every slide gets the same box (two lines here, three on phones): titles of
+     different lengths used to resize the copy on each rotation, and with the
+     hero bottom-aligned that shifted the whole block up and down (CLS 0.13).
+     Up to three lines; two are always reserved (three on phones). */
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  min-height: calc(2 * 1.02em);
+}
+
+@media (max-width: 599px) {
+  .heroTitle {
+    min-height: calc(3 * 1.02em);
+  }
 }
 
 .heroMeta {
@@ -269,6 +284,7 @@
   -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
+  min-height: calc(3 * 1.55em);
 }
 
 .heroBtns {
@@ -305,27 +321,39 @@
   backdrop-filter: blur(6px);
 }
 
+/* Placeholders reuse the real classes for their margins and minimum heights;
+   only the fill differs, so loaded copy lands in exactly the same box. */
 .heroSkeleton {
-  display: grid;
-  gap: 14px;
-  margin-top: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
 }
 
 .heroSkeleton span {
-  height: 22px;
-  border-radius: 8px;
+  display: block;
+  border-radius: 10px;
   background: linear-gradient(90deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.05));
   background-size: 200% 100%;
   animation: shimmer 1.4s linear infinite;
 }
 
-.heroSkeleton span:first-child {
-  width: 62%;
-  height: 46px;
+.heroSkeleton .heroTitle {
+  width: 70%;
 }
 
-.heroSkeleton span:last-child {
+.heroSkeleton .heroMeta {
   width: 40%;
+  min-height: 1.6em;
+}
+
+.heroSkeleton .heroDesc {
+  width: 90%;
+}
+
+.heroSkeleton .heroBtns {
+  width: 300px;
+  max-width: 100%;
+  min-height: var(--tap-lg);
 }
 
 @keyframes shimmer {
@@ -339,6 +367,7 @@
   display: flex;
   gap: 8px;
   margin-top: 28px;
+  min-height: var(--tap);
 }
 
 .heroDot {
@@ -422,6 +451,10 @@
   display: inline-flex;
   align-items: center;
   gap: 4px;
+  /* A text link is still a thumb target on a phone. */
+  min-height: var(--tap);
+  padding-inline: 6px;
+  margin-inline-end: -6px;
   font-size: var(--step-0);
   font-weight: 700;
   color: var(--ember);

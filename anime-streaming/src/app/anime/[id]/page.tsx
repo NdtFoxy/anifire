@@ -225,7 +225,10 @@ function AnimeDetailContent() {
 
   const infoRows: { key: string; val: string }[] = [
     { key: "Тип:", val: detail?.type ?? "ТВ-сериал" },
-    detail?.source ? { key: "Источник:", val: detail.source } : null,
+    // Rows stay in place while the Jikan detail is loading ("…"), and drop out
+    // only once it has loaded without them — otherwise the list grew under the
+    // reader and pushed the description and the Watch button down.
+    detail?.source || !detail ? { key: "Источник:", val: detail?.source ?? "…" } : null,
     {
       key: "Сезон:",
       val:
@@ -237,8 +240,8 @@ function AnimeDetailContent() {
     },
     { key: "Статус:", val: detail?.status ?? "Завершён" },
     { key: "Жанры:", val: genres },
-    detail?.studios.length
-      ? { key: "Студия:", val: detail.studios.join(", ") }
+    detail?.studios.length || !detail
+      ? { key: "Студия:", val: detail ? detail.studios.join(", ") : "…" }
       : null,
     { key: "Длительность серии:", val: `~ ${detail?.duration ?? movie.duration}` },
     { key: "Всего серий:", val: `${epCount}` },
@@ -302,17 +305,12 @@ function AnimeDetailContent() {
             <div>
               {logoImage ? (
                 <h1 className={styles.title} aria-label={title}>
-                  {/* Unoptimized: the logo renders at its natural size (width/height
-                      auto in CSS), which srcset density descriptors would change. */}
-                  <RemoteImage
-                    src={logoImage}
-                    alt={title}
-                    width={440}
-                    height={160}
-                    unoptimized
-                    loading="eager"
-                    className={styles.titleLogo}
-                  />
+                  {/* A plain <img> in a fixed-height box: the logo's width is only
+                      known once it loads, so the box reserves the height up front
+                      (no jump when it arrives) and next/image's fixed-ratio sizing
+                      would distort a logo of unknown proportions. */}
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={logoImage} alt={title} className={styles.titleLogo} decoding="async" />
                 </h1>
               ) : (
                 <h1 className={styles.title}>{title}</h1>
@@ -454,7 +452,7 @@ function AnimeDetailContent() {
               ? latest.map((r) => (
                   <Link key={r.id} href={r.href} className={styles.newEp}>
                     <div className={styles.newEpThumb}>
-                      <RemoteImage src={r.poster} alt={r.title} width={96} height={66} />
+                      <RemoteImage src={r.poster} alt={r.title} fill sizes="96px" />
                     </div>
                     <div className={styles.newEpBody}>
                       <span className={styles.newEpTitle}>{r.title}</span>
@@ -472,7 +470,7 @@ function AnimeDetailContent() {
               : newEpisodes.map((m, i) => (
                   <Link key={m.id} href={`/anime/${m.id}`} className={styles.newEp}>
                     <div className={styles.newEpThumb}>
-                      <RemoteImage src={m.imageUrl} alt={m.title} width={96} height={66} />
+                      <RemoteImage src={m.imageUrl} alt={m.title} fill sizes="96px" />
                     </div>
                     <div className={styles.newEpBody}>
                       <span className={styles.newEpTitle}>{m.title}</span>

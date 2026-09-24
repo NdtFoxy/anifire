@@ -141,16 +141,30 @@
 }
 
 .titleLogo {
+  /* A block so it follows the header's alignment like the text around it:
+     centred on phones (inline, it hugged the left while everything else was
+     centred), flush left from tablet up. */
+  display: block;
+  margin-inline: auto;
   max-width: min(440px, 70vw);
-  max-height: clamp(88px, 18vw, 160px);
+  /* Fixed height, width from the image: reserved before it loads. */
+  height: clamp(88px, 18vw, 160px);
   width: auto;
-  height: auto;
   object-fit: contain;
   object-position: center;
   filter: drop-shadow(0 4px 18px rgba(0, 0, 0, 0.55));
 }
 
+@media (min-width: 600px) {
+  .titleLogo {
+    margin-inline: 0;
+    object-position: left center;
+  }
+}
+
 .romaji {
+  /* One line reserved: it is filled in when the Jikan detail arrives. */
+  min-height: 1.5em;
   margin-top: 8px;
   color: var(--muted);
   font-size: var(--step-0);
@@ -777,6 +791,7 @@ html[data-device="tv"] .epCard:focus {
 }
 
 .newEpThumb {
+  position: relative;
   flex-shrink: 0;
   width: 96px;
   aspect-ratio: 16 / 11;

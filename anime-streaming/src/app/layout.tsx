@@ -60,6 +60,8 @@ export default function RootLayout({
   return (
     <html
       lang="ru"
+      // Smooth in-page anchors, but instant jumps on route changes (Next reads this).
+      data-scroll-behavior="smooth"
       className={`${display.variable} ${sans.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">

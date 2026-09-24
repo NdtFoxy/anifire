@@ -188,7 +188,7 @@ export default function HomePage() {
         <div className={styles.heroInner}>
           <div className={styles.heroCopy} data-hero-copy>
             <span className={styles.heroEyebrow}>
-              <Sparkles size={14} /> Смотрите каталог без регистрации
+              <Sparkles size={14} /> {user ? "Рекомендуем сегодня" : "Смотрите каталог без регистрации"}
             </span>
             {hero ? (
               <>
@@ -209,21 +209,34 @@ export default function HomePage() {
                   >
                     <Play size={19} fill="currentColor" /> Смотреть
                   </button>
-                  <Link href="/register" className={styles.infoBtn} data-tap>
-                    <Info size={19} /> Начать бесплатно
-                  </Link>
+                  {user ? (
+                    <Link href={`/anime/${hero.id}`} className={styles.infoBtn} data-tap>
+                      <Info size={19} /> Подробнее
+                    </Link>
+                  ) : (
+                    <Link href="/register" className={styles.infoBtn} data-tap>
+                      <Info size={19} /> Начать бесплатно
+                    </Link>
+                  )}
                 </div>
               </>
             ) : (
+              // Same boxes as the loaded copy (title, meta, description, buttons),
+              // so the hero does not jump when the catalogue arrives.
               <div className={styles.heroSkeleton} aria-hidden="true">
-                <span />
-                <span />
-                <span />
+                <span className={styles.heroTitle} />
+                <span className={styles.heroMeta} />
+                <span className={styles.heroDesc} />
+                <span className={styles.heroBtns} />
               </div>
             )}
           </div>
 
-          {featured.length > 1 ? (
+          {/* Always rendered: the row's height is part of the layout even before
+              the slides load, or the copy above would jump up by it. */}
+          {featured.length <= 1 ? (
+            <div className={styles.heroDots} aria-hidden="true" />
+          ) : (
             <div className={styles.heroDots} role="tablist" aria-label="Рекомендуемые тайтлы">
               {featured.map((movie, i) => (
                 <button
@@ -240,7 +253,7 @@ export default function HomePage() {
                 </button>
               ))}
             </div>
-          ) : null}
+          )}
         </div>
       </section>
 
@@ -280,7 +293,9 @@ export default function HomePage() {
           <section key={row.title} className={styles.section} data-reveal>
             <div className={styles.sectionHead}>
               <h2 className={styles.sectionTitle}>{row.title}</h2>
-              <Link href="/register" className={styles.sectionMore}>
+              {/* Signed-in viewers go to the catalogue, not to a sign-up form that
+                  would only bounce them back. */}
+              <Link href={user ? "/stream?view=catalog" : "/register"} className={styles.sectionMore}>
                 Смотреть все <ChevronRight size={15} />
               </Link>
             </div>
@@ -374,16 +389,30 @@ export default function HomePage() {
 
       {/* ═══════════ CLOSING CTA ═══════════ */}
       <section className={styles.cta} data-reveal>
-        <h2>Всё готово — дело за вами.</h2>
-        <p>Создайте бесплатный аккаунт и начните первую серию меньше чем через минуту.</p>
-        <div className={styles.ctaRow}>
-          <Link href="/register" className={styles.playBtn} data-tap>
-            Присоединиться бесплатно <ChevronRight size={18} />
-          </Link>
-          <Link href="/login" className={styles.infoBtn} data-tap>
-            У меня уже есть аккаунт
-          </Link>
-        </div>
+        {user ? (
+          <>
+            <h2>С возвращением.</h2>
+            <p>Продолжите с того места, где остановились, или найдите что-то новое в каталоге.</p>
+            <div className={styles.ctaRow}>
+              <Link href="/stream" className={styles.playBtn} data-tap>
+                Перейти в каталог <ChevronRight size={18} />
+              </Link>
+            </div>
+          </>
+        ) : (
+          <>
+            <h2>Всё готово — дело за вами.</h2>
+            <p>Создайте бесплатный аккаунт и начните первую серию меньше чем через минуту.</p>
+            <div className={styles.ctaRow}>
+              <Link href="/register" className={styles.playBtn} data-tap>
+                Присоединиться бесплатно <ChevronRight size={18} />
+              </Link>
+              <Link href="/login" className={styles.infoBtn} data-tap>
+                У меня уже есть аккаунт
+              </Link>
+            </div>
+          </>
+        )}
       </section>
 
       <footer className={styles.footer}>
