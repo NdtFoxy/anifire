@@ -59,8 +59,14 @@ public class StartupSafetyCheck implements ApplicationListener<ApplicationReadyE
         if (jwt.jwkSet() == null || jwt.jwkSet().isBlank()) {
             problems.add("anifire.jwt.jwk-set is empty — a key generated at boot invalidates every session on restart");
         }
-        if (jwt.issuer() == null || jwt.issuer().endsWith(".local")) {
-            problems.add("anifire.jwt.issuer points at a .local host — set the real issuer URL");
+        if (jwt.issuer() == null || jwt.issuer().isBlank() || jwt.issuer().endsWith(".local")) {
+            problems.add("anifire.jwt.issuer is unset or points at a .local host — set ANIFIRE_JWT_ISSUER");
+        }
+        if (env.getProperty("anifire.cors.allowed-origins", "").isBlank()) {
+            problems.add("anifire.cors.allowed-origins is empty — set ANIFIRE_CORS_ALLOWED_ORIGINS");
+        }
+        if (env.getProperty("anifire.app.frontend-url", "").isBlank()) {
+            problems.add("anifire.app.frontend-url is empty — email links would be broken; set ANIFIRE_APP_FRONTEND_URL");
         }
         String datasourcePassword = env.getProperty("spring.datasource.password", "");
         if ("secret".equals(datasourcePassword)) {
@@ -72,9 +78,14 @@ public class StartupSafetyCheck implements ApplicationListener<ApplicationReadyE
         if ("dev".equals(env.getProperty("anifire.billing.provider"))) {
             problems.add("anifire.billing.provider=dev grants subscriptions without taking money");
         }
-        String shopId = env.getProperty("anifire.billing.shop-id", "");
-        if ("yookassa".equals(env.getProperty("anifire.billing.provider")) && shopId.isBlank()) {
-            problems.add("anifire.billing.shop-id is empty — checkout would fail for every buyer");
+        if ("yookassa".equals(env.getProperty("anifire.billing.provider"))) {
+            if (env.getProperty("anifire.billing.shop-id", "").isBlank()
+                    || env.getProperty("anifire.billing.secret-key", "").isBlank()) {
+                problems.add("anifire.billing.shop-id / secret-key are empty — checkout would fail for every buyer");
+            }
+            if (env.getProperty("anifire.billing.return-url", "").isBlank()) {
+                problems.add("anifire.billing.return-url is empty — set ANIFIRE_BILLING_RETURN_URL");
+            }
         }
 
         if (problems.isEmpty()) return;
