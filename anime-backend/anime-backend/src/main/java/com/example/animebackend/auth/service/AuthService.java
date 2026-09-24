@@ -35,6 +35,12 @@ public class AuthService {
 
     private static final Logger log = LoggerFactory.getLogger(AuthService.class);
 
+    /** Sign-ups per address per hour; generous enough for a shared (NAT) address. */
+    static final int REGISTER_PER_IP_HOURLY = 30;
+    static final int MAIL_REQUESTS_PER_IP_HOURLY = 20;
+    /** Mails any one inbox can be made to receive per hour through these endpoints. */
+    static final int MAIL_PER_ADDRESS_HOURLY = 3;
+
     /** Carries the issued tokens back to the controller, which sets the refresh cookie. */
     public record AuthResult(JwtService.AccessToken accessToken, String refreshToken, UserDto user) {
         public AuthResponse toResponse() {
@@ -93,7 +99,12 @@ public class AuthService {
 
     @Transactional
     public void register(RegisterRequest req, String ip, String country) {
-        if (!rateLimiter.allow("register:ip:" + ip, 5, Duration.ofHours(1))) {
+        // Two limits, two threats. Per IP stops scripted mass sign-up but must let
+        // a household, office or mobile carrier NAT (many people, one address)
+        // through; per email stops using sign-up to flood someone's inbox with
+        // verification / "account exists" mails.
+        if (!rateLimiter.allow("register:ip:" + ip, REGISTER_PER_IP_HOURLY, Duration.ofHours(1))
+                || !rateLimiter.allow("register:email:" + normalize(req.email()), MAIL_PER_ADDRESS_HOURLY, Duration.ofHours(1))) {
             throw ApiException.tooManyRequests("Слишком много регистраций. Попробуйте позже.");
         }
         if (security.breachCheckEnabled() && pwned.isBreached(req.password())) {
@@ -303,7 +314,8 @@ public class AuthService {
 
     @Transactional
     public void resendVerification(String email, String ip) {
-        if (!rateLimiter.allow("resend:ip:" + ip, 5, Duration.ofHours(1))) {
+        if (!rateLimiter.allow("resend:ip:" + ip, MAIL_REQUESTS_PER_IP_HOURLY, Duration.ofHours(1))
+                || !rateLimiter.allow("resend:email:" + normalize(email), MAIL_PER_ADDRESS_HOURLY, Duration.ofHours(1))) {
             throw ApiException.tooManyRequests("Слишком много запросов. Попробуйте позже.");
         }
         userRepo.findByEmailAndIsDeletedFalse(normalize(email)).ifPresent(u -> {
@@ -318,7 +330,8 @@ public class AuthService {
 
     @Transactional
     public void forgotPassword(String email, String ip) {
-        if (!rateLimiter.allow("forgot:ip:" + ip, 5, Duration.ofHours(1))) {
+        if (!rateLimiter.allow("forgot:ip:" + ip, MAIL_REQUESTS_PER_IP_HOURLY, Duration.ofHours(1))
+                || !rateLimiter.allow("forgot:email:" + normalize(email), MAIL_PER_ADDRESS_HOURLY, Duration.ofHours(1))) {
             throw ApiException.tooManyRequests("Слишком много запросов. Попробуйте позже.");
         }
         userRepo.findByEmailAndIsDeletedFalse(normalize(email)).ifPresent(u -> {

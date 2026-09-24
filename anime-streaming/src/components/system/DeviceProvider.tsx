@@ -1,5 +1,8 @@
 "use client";
 
+// First client import at the root: runtime polyfills for old TV browsers.
+import "@/lib/polyfills";
+
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 
 /**
