@@ -14,12 +14,22 @@ const API_BASE =
   process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8080";
 const AUTH = `${API_BASE}/api/v1/auth`;
 
+export type SubscriptionPlan = "MONTHLY" | "YEARLY" | "LIFETIME";
+
 export interface AuthUser {
   id: number;
   email: string;
   displayName: string | null;
   role: string;
   emailVerified: boolean;
+  /**
+   * Server-resolved ads-free entitlement. Safe for UI decisions only — ad serving
+   * re-checks this on the backend, so flipping it client-side changes nothing.
+   */
+  adsFree: boolean;
+  plan: SubscriptionPlan | null;
+  /** End of the paid period; null for lifetime purchases and for free users. */
+  premiumUntil: string | null;
 }
 
 export type SocialProvider = "google" | "microsoft" | "apple";
@@ -105,12 +115,42 @@ export async function login(input: {
   return setSession(await parse<AuthResponse>(res));
 }
 
-export async function socialLogin(provider: SocialProvider): Promise<AuthUser> {
+/**
+ * Which providers this deployment can verify. Rendering anything else would be a
+ * button that cannot possibly work — the server rejects unconfigured providers.
+ */
+export async function socialProviders(): Promise<Record<SocialProvider, boolean>> {
+  try {
+    const res = await fetch(`${AUTH}/social/providers`, { cache: "no-store" });
+    if (!res.ok) throw new Error("unavailable");
+    return (await res.json()) as Record<SocialProvider, boolean>;
+  } catch {
+    return { google: false, microsoft: false, apple: false };
+  }
+}
+
+/**
+ * Single-use nonce for one sign-in attempt. It is handed to the identity
+ * provider, comes back inside the signed ID token, and the server only accepts a
+ * token whose nonce it issued and has not yet redeemed — that is what stops a
+ * captured or foreign-audience token from being replayed here.
+ */
+export async function socialNonce(): Promise<string> {
+  const res = await fetch(`${AUTH}/social/nonce`, { method: "POST" });
+  const body = await parse<{ nonce: string }>(res);
+  return body.nonce;
+}
+
+export async function socialLogin(
+  provider: SocialProvider,
+  idToken: string,
+  nonce: string
+): Promise<AuthUser> {
   const res = await fetch(`${AUTH}/social-login`, {
     method: "POST",
     credentials: "include",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ provider }),
+    body: JSON.stringify({ provider, idToken, nonce }),
   });
   return setSession(await parse<AuthResponse>(res));
 }
@@ -169,9 +209,16 @@ export async function authFetch(
   }
   const headers = new Headers(init.headers);
   headers.set("Authorization", `Bearer ${token}`);
-  if (init.body && !headers.has("Content-Type")) {
+  // FormData must keep its browser-generated multipart boundary — never override it.
+  if (init.body && !(init.body instanceof FormData) && !headers.has("Content-Type")) {
     headers.set("Content-Type", "application/json");
   }
+  // Geo preview: an admin can ask the server to answer as if this request came
+  // from another country. The server honours it for administrators only, so a
+  // non-admin setting this value simply changes nothing for them.
+  const simulate =
+    typeof window === "undefined" ? null : window.localStorage.getItem("anifire.geo.simulate");
+  if (simulate) headers.set("X-Geo-Simulate", simulate);
   return fetch(input, {
     ...init,
     credentials: "include",
@@ -222,6 +269,10 @@ export interface Profile {
   commentsCount: number;
   createdAt: string | null;
   lastLoginAt: string | null;
+  /** Mirrors the server-resolved entitlement — UI only, never an ad decision. */
+  adsFree: boolean;
+  plan: SubscriptionPlan | null;
+  premiumUntil: string | null;
 }
 
 export type ProfileUpdate = Partial<
@@ -252,6 +303,70 @@ export async function updateProfile(patch: ProfileUpdate): Promise<Profile> {
 export async function randomizeProfile(): Promise<Profile> {
   const res = await authFetch(`${AUTH}/me/profile/randomize`, { method: "POST" });
   return parse<Profile>(res);
+}
+
+/**
+ * Resolves a stored image reference to something an <img> can load: uploaded
+ * files live on the backend origin, everything else (absolute URLs, bundled
+ * assets under /public) is already fine as-is.
+ */
+export function mediaUrl(path: string | null | undefined): string | null {
+  if (!path) return null;
+  if (path.startsWith("/uploads/")) return `${API_BASE}${path}`;
+  return path;
+}
+
+/** Uploads a new avatar/banner and returns the profile with the stored path. */
+export async function uploadProfileImage(
+  kind: "avatar" | "banner",
+  file: File
+): Promise<Profile> {
+  const form = new FormData();
+  form.append("file", file);
+  // No Content-Type header: the browser adds it with the multipart boundary.
+  const res = await authFetch(`${AUTH}/me/profile/${kind}`, {
+    method: "POST",
+    body: form,
+  });
+  return parse<Profile>(res);
+}
+
+/** Clears the stored avatar/banner (and its file on the server). */
+export async function removeProfileImage(
+  kind: "avatar" | "banner"
+): Promise<Profile> {
+  const res = await authFetch(`${AUTH}/me/profile/${kind}`, {
+    method: "DELETE",
+  });
+  return parse<Profile>(res);
+}
+
+// ── my activity & comments ──────────────────────────────────────────────
+export interface WatchActivity {
+  id: number;
+  animeKey: string;
+  animeTitle: string;
+  episode: number;
+  provider: string | null;
+  watchedAt: string;
+}
+
+export interface MyComment {
+  id: number;
+  animeId: number;
+  animeTitle: string;
+  description: string;
+  creationDate: string;
+}
+
+export async function getMyActivity(limit = 20): Promise<WatchActivity[]> {
+  const res = await authFetch(`${AUTH}/me/activity?limit=${limit}`);
+  return parse<WatchActivity[]>(res);
+}
+
+export async function getMyComments(limit = 20): Promise<MyComment[]> {
+  const res = await authFetch(`${AUTH}/me/comments?limit=${limit}`);
+  return parse<MyComment[]>(res);
 }
 
 export async function verifyEmail(token: string): Promise<{ message: string }> {

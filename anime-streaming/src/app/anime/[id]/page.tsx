@@ -34,7 +34,13 @@ import CommentsPanel from "@/components/anime/CommentsPanel";
 import RequireAuth from "@/components/auth/RequireAuth";
 import styles from "./anime.module.css";
 
-const TABS = ["Episodes", "Related", "Comments", "Production"];
+/** The tab strip jumps to real sections on this page — never a dead control. */
+const SECTION_TABS: { label: string; hash: string; needsComments?: boolean }[] = [
+  { label: "Episodes", hash: "#episodes" },
+  { label: "Related", hash: "#related" },
+  { label: "Comments", hash: "#comments", needsComments: true },
+  { label: "Production", hash: "#production" },
+];
 
 /** Map an AniLiberty release onto the catalog detail shape the page renders. */
 function aniReleaseToDetail(r: AniReleaseFull): AnimeDetail {
@@ -232,7 +238,7 @@ function AnimeDetailContent() {
     return (
       <div className={styles.page}>
         <StreamNav />
-        <div className={styles.detailSkeleton} aria-busy="true">
+        <main id="main" className={styles.detailSkeleton} aria-busy="true">
           <span className={`${styles.skel} ${styles.skelPoster}`} />
           <div className={styles.skelCol}>
             <span className={styles.skel} style={{ width: "55%", height: 40 }} />
@@ -242,7 +248,7 @@ function AnimeDetailContent() {
             <span className={styles.skel} style={{ width: "70%" }} />
             <span className={styles.skel} style={{ width: 180, height: 46, marginTop: 12 }} />
           </div>
-        </div>
+        </main>
       </div>
     );
   }
@@ -258,7 +264,7 @@ function AnimeDetailContent() {
 
       <div className={styles.shell}>
         {/* ───────── MAIN ───────── */}
-        <main>
+        <main id="main">
           <div className={styles.headerRow}>
             <div className={styles.poster}>
               <img src={posterImage} alt={title} className={styles.posterImg} />
@@ -294,7 +300,7 @@ function AnimeDetailContent() {
                 ) : null}
               </div>
 
-              <dl className={styles.infoList}>
+              <dl className={styles.infoList} id="production">
                 {infoRows.map((row) => (
                   <div key={row.key} className={styles.infoRow}>
                     <span className={styles.infoKey}>{row.key}</span>
@@ -303,7 +309,7 @@ function AnimeDetailContent() {
                 ))}
               </dl>
 
-              <Link href={`/watch/${watchId}?ep=1`} className={styles.watchBtn}>
+              <Link href={`/watch/${watchId}?ep=1`} className={styles.watchBtn} data-tap>
                 <Play size={18} fill="currentColor" /> Watch from episode 1
               </Link>
             </div>
@@ -314,23 +320,23 @@ function AnimeDetailContent() {
             {detail?.background ? <p>{detail.background}</p> : null}
           </div>
 
-          {/* Tabs */}
-          <div className={styles.tabs}>
-            {TABS.map((tab, i) => (
-              <button
-                key={tab}
-                type="button"
-                className={`${styles.tab} ${i === 0 ? styles.tabActive : ""} ${
-                  tab === "Comments" ? styles.tabMuted : ""
-                }`}
-              >
-                {tab}
-              </button>
-            ))}
-          </div>
+          {/* Section jumps — these move focus to sections that really exist. */}
+          <nav className={styles.tabs} aria-label="Sections">
+            {SECTION_TABS.filter((t) => !t.needsComments || !isAniAlias).map(
+              (tab, i) => (
+                <a
+                  key={tab.label}
+                  href={tab.hash}
+                  className={`${styles.tab} ${i === 0 ? styles.tabActive : ""}`}
+                >
+                  {tab.label}
+                </a>
+              )
+            )}
+          </nav>
 
           {/* Toolbar */}
-          <div className={styles.toolbar}>
+          <div className={styles.toolbar} id="episodes">
             <input
               className={styles.search}
               placeholder="Search by name or number…"
@@ -443,7 +449,7 @@ function AnimeDetailContent() {
                 ))}
           </section>
 
-          <section className={styles.asideBlock}>
+          <section className={styles.asideBlock} id="related">
             <h2 className={styles.asideTitle}>Recommended</h2>
             <p className={styles.asideSub}>Releases you might enjoy</p>
             <div className={styles.recGrid}>
@@ -460,7 +466,7 @@ function AnimeDetailContent() {
       </div>
 
       {!isAniAlias && (
-        <div className={styles.commentsBottom}>
+        <div className={styles.commentsBottom} id="comments">
           <CommentsPanel
             animeId={id}
             animeTitle={title}

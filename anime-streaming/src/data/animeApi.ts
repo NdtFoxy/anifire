@@ -98,6 +98,10 @@ export interface AdminUser {
   displayName: string | null;
   role: "USER" | "ADMIN";
   emailVerified: boolean;
+  /** Entitlement mirrored from the server (see UserDto). */
+  adsFree: boolean;
+  plan: string | null;
+  premiumUntil: string | null;
 }
 
 export interface AdminAnalytics {
@@ -485,15 +489,18 @@ export async function recordWatchEvent(input: {
   }
 }
 
-/** Generate a short AI viewer review locally (Ollama). Returns null on failure. */
+/**
+ * Generate a short AI viewer review locally (Ollama). The route is signed-in
+ * only and quota-metered, so an anonymous visitor (authFetch throws without a
+ * session) simply gets null and the caller shows "unavailable".
+ */
 export async function fetchAiReview(
   title: string,
   synopsis: string
 ): Promise<string | null> {
   try {
-    const res = await fetch(`/api/ai-review`, {
+    const res = await authFetch(`/api/ai-review`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ title, synopsis }),
     });
     if (!res.ok) return null;
@@ -715,7 +722,7 @@ export async function fetchTranslatedTrack(
   return (
     (await cached(key, TTL.long, async () => {
       try {
-        const res = await fetch(`/api/translate-subs?${query}&to=${to}`);
+        const res = await authFetch(`/api/translate-subs?${query}&to=${to}`);
         if (!res.ok) return null;
         const data = (await res.json()) as { track: SubtitleTrack | null };
         return data.track ?? null;

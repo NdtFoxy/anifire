@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { aiGateResponse, consumeQuota, requireUser } from "../_lib/requireUser";
 
 // Generates a short anime review locally via Ollama. Used as an optional
 // "let the AI rate this for you" helper in the comments box.
@@ -9,6 +10,15 @@ const OLLAMA_HOST = process.env.OLLAMA_HOST ?? "http://localhost:11434";
 const OLLAMA_MODEL = process.env.OLLAMA_REVIEW_MODEL ?? "qwen2.5:3b";
 
 export async function POST(request: Request) {
+  // Signed-in only, and metered: this route spends the owner's GPU, so an
+  // anonymous caller must never reach Ollama.
+  try {
+    const { token } = await requireUser(request);
+    await consumeQuota(token, "REVIEW", 1);
+  } catch (err) {
+    return aiGateResponse(err);
+  }
+
   let body: { title?: string; synopsis?: string; lang?: string };
   try {
     body = (await request.json()) as typeof body;

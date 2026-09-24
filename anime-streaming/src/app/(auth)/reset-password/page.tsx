@@ -75,7 +75,6 @@ function ResetInner() {
           label="New password"
           type="password"
           icon={<Lock size={17} />}
-          placeholder="At least 12 characters"
           autoComplete="new-password"
         />
         <button className={styles.submit} type="submit" disabled={busy}>

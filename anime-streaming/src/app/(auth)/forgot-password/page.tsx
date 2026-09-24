@@ -66,7 +66,6 @@ export default function ForgotPasswordPage() {
               label="Email"
               type="email"
               icon={<Mail size={17} />}
-              placeholder="you@example.com"
               autoComplete="email"
             />
             <button className={styles.submit} type="submit" disabled={busy}>

@@ -10,11 +10,22 @@
   display: flex;
   align-items: center;
   gap: 18px;
-  padding: 110px clamp(16px, 5vw, 64px) 26px;
+  width: 100%;
+  max-width: var(--shell-max);
+  margin-inline: auto;
+  padding: calc(var(--safe-top) + 92px) calc(var(--shell-pad) + var(--safe-right)) 26px
+    calc(var(--shell-pad) + var(--safe-left));
 }
+
+@media (min-width: 1024px) {
+  .header {
+    padding-top: calc(var(--safe-top) + 118px);
+  }
+}
+
 .headIcon {
-  width: 60px;
-  height: 60px;
+  width: 54px;
+  height: 54px;
   flex-shrink: 0;
   display: flex;
   align-items: center;
@@ -24,33 +35,90 @@
   background: linear-gradient(135deg, #ff8a3d, #e62233);
   box-shadow: 0 12px 36px rgba(230, 34, 51, 0.35);
 }
+
+@media (min-width: 600px) {
+  .headIcon {
+    width: 60px;
+    height: 60px;
+  }
+}
+
 .eyebrow {
-  font-size: 12px;
+  font-size: var(--step--1);
   font-weight: 700;
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: #ff7a85;
 }
+
 .title {
   font-family: var(--font-display), sans-serif;
-  font-size: clamp(30px, 5vw, 48px);
+  font-size: var(--step-4);
   font-weight: 800;
   line-height: 1.05;
 }
+
 .sub {
   margin-top: 4px;
   color: rgba(220, 214, 214, 0.6);
-  font-size: 14px;
+  font-size: var(--step-0);
 }
 
 .main {
-  padding: 8px clamp(16px, 5vw, 64px) 80px;
+  width: 100%;
+  max-width: var(--shell-max);
+  margin-inline: auto;
+  padding: 8px calc(var(--shell-pad) + var(--safe-right))
+    calc(var(--mobile-nav-h) + var(--safe-bottom) + 60px)
+    calc(var(--shell-pad) + var(--safe-left));
 }
 
+/* Poster grid — the same rule the catalog uses, so a saved title looks the
+   same wherever you meet it. auto-fill plus a per-step minimum buys columns on
+   a wider display instead of inflating the posters:
+     390 → 2 · 768 → 4 · 1280 → 5 · 1440 → 6 · 1920 → 7 · 2560+ → 8 · TV → 5 */
 .grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-  gap: 22px 18px;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 20px 12px;
+}
+
+@media (min-width: 600px) {
+  .grid {
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 22px 16px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .grid {
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 26px 20px;
+  }
+}
+
+@media (min-width: 1440px) {
+  .grid {
+    grid-template-columns: repeat(auto-fill, minmax(195px, 1fr));
+    gap: 28px 22px;
+  }
+}
+
+@media (min-width: 1920px) {
+  .grid {
+    grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  }
+}
+
+@media (min-width: 2560px) {
+  .grid {
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  }
+}
+
+html[data-device="tv"] .grid {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 40px 28px;
 }
 
 .card {
@@ -59,26 +127,45 @@
   flex-direction: column;
   gap: 9px;
 }
+
 .poster {
   position: relative;
   display: block;
   aspect-ratio: 2 / 3;
-  border-radius: 12px;
+  border-radius: var(--radius-card);
   overflow: hidden;
   background: #160f0f;
   border: 1px solid rgba(255, 255, 255, 0.06);
   transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
 }
-.poster:hover {
-  transform: translateY(-4px);
+
+.poster:focus-visible {
   border-color: rgba(255, 77, 90, 0.5);
   box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5);
 }
+
+.poster:focus-visible .playOverlay {
+  opacity: 1;
+}
+
+@media (hover: hover) {
+  .poster:hover {
+    transform: translateY(-4px);
+    border-color: rgba(255, 77, 90, 0.5);
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5);
+  }
+
+  .poster:hover .playOverlay {
+    opacity: 1;
+  }
+}
+
 .poster img {
   width: 100%;
   height: 100%;
   object-fit: cover;
 }
+
 .playOverlay {
   position: absolute;
   inset: 0;
@@ -90,9 +177,7 @@
   opacity: 0;
   transition: opacity 0.2s ease;
 }
-.poster:hover .playOverlay {
-  opacity: 1;
-}
+
 .score {
   position: absolute;
   top: 8px;
@@ -102,20 +187,23 @@
   gap: 4px;
   padding: 2px 8px;
   border-radius: 999px;
-  font-size: 11px;
+  font-size: var(--step--1);
   font-weight: 700;
   color: #ffe08a;
   background: rgba(10, 7, 7, 0.7);
   backdrop-filter: blur(4px);
 }
+
 .meta {
   display: flex;
   flex-direction: column;
   gap: 2px;
-  padding-right: 30px;
+  /* Room for the always-visible remove button. */
+  padding-right: calc(var(--tap) + 6px);
 }
+
 .name {
-  font-size: 14px;
+  font-size: var(--step-0);
   font-weight: 700;
   color: #f2eef0;
   text-decoration: none;
@@ -123,45 +211,65 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.name:hover {
+
+.name:focus-visible {
   color: #ff8a3d;
 }
+
+@media (hover: hover) {
+  .name:hover {
+    color: #ff8a3d;
+  }
+}
+
 .genre {
-  font-size: 12px;
+  font-size: var(--step--1);
   color: rgba(220, 214, 214, 0.5);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
+/* Removal is a first-class control, not a hover secret: it is always on
+   screen and always a full tap target, on a phone and from the sofa alike. */
 .remove {
   position: absolute;
   right: 0;
-  bottom: 4px;
-  width: 28px;
-  height: 28px;
+  bottom: 0;
+  width: var(--tap);
+  height: var(--tap);
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 8px;
+  border-radius: 10px;
   border: 1px solid rgba(255, 255, 255, 0.1);
   background: rgba(20, 15, 15, 0.7);
   color: #b8b2b2;
   cursor: pointer;
   transition: color 0.15s, border-color 0.15s, background 0.15s;
 }
-.remove:hover {
+
+.remove:focus-visible {
   color: #ff7a85;
   border-color: rgba(230, 34, 51, 0.5);
-  background: rgba(230, 34, 51, 0.12);
+}
+
+@media (hover: hover) {
+  .remove:hover {
+    color: #ff7a85;
+    border-color: rgba(230, 34, 51, 0.5);
+    background: rgba(230, 34, 51, 0.12);
+  }
 }
 
 .skel {
   aspect-ratio: 2 / 3;
-  border-radius: 12px;
+  border-radius: var(--radius-card);
   background: linear-gradient(90deg, #1a1313 25%, #261c1c 37%, #1a1313 63%);
   background-size: 400% 100%;
   animation: mlShimmer 1.4s ease infinite;
 }
+
 @keyframes mlShimmer {
   0% { background-position: 100% 0; }
   100% { background-position: -100% 0; }
@@ -172,24 +280,44 @@
   flex-direction: column;
   align-items: center;
   gap: 10px;
-  padding: 90px 20px;
+  padding: clamp(56px, 12vh, 90px) 20px;
   text-align: center;
   color: rgba(220, 214, 214, 0.6);
 }
+
+/* The Lottie renders an inline SVG that fills its box, so the box is the size. */
+.emptyArt {
+  width: clamp(96px, 22vw, 160px);
+  aspect-ratio: 1;
+  margin-bottom: 2px;
+}
+
 .empty h2 {
-  font-size: 22px;
+  font-size: var(--step-2);
   font-weight: 800;
   color: #fff;
 }
+
 .browseBtn {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
   margin-top: 10px;
-  padding: 11px 20px;
+  min-height: var(--tap-lg);
+  padding: 0 22px;
   border-radius: 9px;
   background: linear-gradient(180deg, #ff8a3d, #e62233);
   color: #fff;
   font-weight: 700;
   text-decoration: none;
+}
+
+html[data-device="tv"] .name {
+  font-size: var(--step-1);
+}
+
+html[data-device="tv"] .genre,
+html[data-device="tv"] .score {
+  font-size: var(--step-0);
 }

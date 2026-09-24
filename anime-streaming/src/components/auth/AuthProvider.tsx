@@ -15,7 +15,7 @@ interface AuthContextValue {
   user: AuthUser | null;
   loading: boolean;
   login: (email: string, password: string) => Promise<AuthUser>;
-  socialLogin: (provider: SocialProvider) => Promise<AuthUser>;
+  socialLogin: (provider: SocialProvider, idToken: string, nonce: string) => Promise<AuthUser>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
 }
@@ -46,8 +46,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return u;
   }, []);
 
-  const socialLogin = useCallback(async (provider: SocialProvider) => {
-    const u = await auth.socialLogin(provider);
+  const socialLogin = useCallback(async (provider: SocialProvider, idToken: string, nonce: string) => {
+    const u = await auth.socialLogin(provider, idToken, nonce);
     setUser(u);
     return u;
   }, []);

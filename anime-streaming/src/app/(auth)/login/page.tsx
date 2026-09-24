@@ -12,10 +12,22 @@ import styles from "../auth.module.css";
 
 type Busy = null | "email" | Provider;
 
+/**
+ * Where to land after signing in. Only a same-origin path is accepted: `//evil`
+ * and `/\evil` are protocol-relative URLs in a browser, and a `next` that parses
+ * to another origin is an open redirect — the classic phishing pivot off a login
+ * page. Anything suspicious falls back to the catalogue.
+ */
 function nextPath() {
   if (typeof window === "undefined") return "/stream";
   const value = new URLSearchParams(window.location.search).get("next");
-  return value?.startsWith("/") && !value.startsWith("//") ? value : "/stream";
+  if (!value || !value.startsWith("/") || value.startsWith("//") || value.startsWith("/\\")) {
+    return "/stream";
+  }
+  const resolved = new URL(value, window.location.origin);
+  return resolved.origin === window.location.origin
+    ? `${resolved.pathname}${resolved.search}${resolved.hash}`
+    : "/stream";
 }
 
 export default function LoginPage() {
@@ -44,11 +56,11 @@ export default function LoginPage() {
     }
   }
 
-  async function handleProvider(provider: Provider) {
+  async function handleProvider(provider: Provider, idToken: string, nonce: string) {
     setBusy(provider);
     setNotice(null);
     try {
-      await socialLogin(provider);
+      await socialLogin(provider, idToken, nonce);
       router.replace(nextPath());
     } catch (err) {
       setBusy(null);
@@ -81,9 +93,9 @@ export default function LoginPage() {
       ) : null}
 
       <SocialButtons
-        onProvider={handleProvider}
-        pending={busy && busy !== "email" ? busy : null}
+        onCredential={handleProvider}
         disabled={busy === "email"}
+        onError={setNotice}
       />
 
       <div className={styles.divider}>or continue with email</div>
@@ -94,7 +106,6 @@ export default function LoginPage() {
           label="Email"
           type="email"
           icon={<Mail size={17} />}
-          placeholder="you@example.com"
           autoComplete="email"
         />
         <Field
@@ -102,7 +113,6 @@ export default function LoginPage() {
           label="Password"
           type="password"
           icon={<Lock size={17} />}
-          placeholder="••••••••"
           autoComplete="current-password"
         />
 

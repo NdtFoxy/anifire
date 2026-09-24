@@ -1,0 +1,427 @@
+/* ════════════════════════════════════════════════════════════════
+   Pricing — the landing page's language (ember on ink, display type,
+   fluid --step-* scale) applied to a decision surface instead of a
+   browsing one. Every width comes from the adaptive tokens, so 280px
+   (folded phone) and 3440px (ultrawide) are the same layout with a
+   different column count, not two hand-tuned pages.
+   ════════════════════════════════════════════════════════════════ */
+
+.page {
+  --ember: #ff4d5a;
+  --crimson: #e62233;
+  --gold: #f7c744;
+  --ink: #070506;
+  --title: #f9f6f6;
+  --muted: #9b9198;
+  --line: rgba(255, 255, 255, 0.1);
+  --line-strong: rgba(255, 255, 255, 0.18);
+  --surface: rgba(255, 255, 255, 0.045);
+
+  /* Narrowest card that still holds a price and a perk line without
+     hyphenating; below it the grid drops to one column on its own. */
+  --card-min: 18rem;
+
+  position: relative;
+  min-height: 100svh;
+  background: var(--ink);
+  color: var(--title);
+  padding-bottom: calc(var(--mobile-nav-h) + var(--safe-bottom));
+  overflow-x: clip;
+}
+
+.page h1,
+.page h2,
+.page h3 {
+  font-family: var(--font-display), sans-serif;
+}
+
+.page :focus-visible {
+  outline: 2px solid var(--ember);
+  outline-offset: 3px;
+  border-radius: 8px;
+}
+
+.shell {
+  width: 100%;
+  max-width: var(--shell-max);
+  margin-inline: auto;
+  padding-inline: calc(var(--shell-pad) + var(--safe-left))
+    calc(var(--shell-pad) + var(--safe-right));
+}
+
+/* ───────────────────────── header ───────────────────────── */
+.head {
+  position: relative;
+  padding-top: clamp(96px, 14vh, 180px);
+  text-align: center;
+}
+
+/* The ember wash sits behind the copy, mirroring the hero scrim. */
+.head::before {
+  content: "";
+  position: absolute;
+  inset: 0 -20% auto;
+  height: clamp(280px, 40vh, 520px);
+  background: radial-gradient(
+    70% 100% at 50% 0%,
+    rgba(230, 34, 51, 0.22),
+    transparent 70%
+  );
+  pointer-events: none;
+}
+
+.eyebrow {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 13px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 77, 90, 0.4);
+  background: rgba(230, 34, 51, 0.14);
+  font-size: var(--step--1);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ember);
+}
+
+.title {
+  position: relative;
+  margin-top: 18px;
+  font-size: var(--step-4);
+  font-weight: 900;
+  line-height: 1.05;
+  letter-spacing: -0.03em;
+}
+
+.lead {
+  position: relative;
+  max-width: var(--measure);
+  margin: 14px auto 0;
+  font-size: var(--step-1);
+  line-height: 1.6;
+  color: var(--muted);
+}
+
+/* ───────────────────────── plan grid ───────────────────────── */
+.grid {
+  display: grid;
+  gap: clamp(14px, 1.6vw, 24px);
+  /* min(100%, --card-min) is what keeps 280px viable: the track can never
+     demand more than the container gives it, so it folds to one column. */
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, var(--card-min)), 1fr));
+  width: 100%;
+  /* Capped by the shell on normal screens and by reading measure on an
+     ultrawide, where three 700px cards would read as three billboards. */
+  max-width: min(var(--shell-max), calc(var(--measure-wide) * 2));
+  margin: clamp(34px, 5vw, 60px) auto 0;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: clamp(20px, 2.6vw, 30px);
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: linear-gradient(
+    160deg,
+    rgba(255, 77, 90, 0.07),
+    rgba(255, 255, 255, 0.02)
+  );
+  transition:
+    border-color var(--dur-swap) var(--ease-out),
+    translate var(--dur-swap) var(--ease-out);
+}
+
+.cardCurrent {
+  border-color: rgba(247, 199, 68, 0.42);
+  background: linear-gradient(
+    160deg,
+    rgba(247, 199, 68, 0.12),
+    rgba(255, 255, 255, 0.02)
+  );
+}
+
+.cardHead {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.planTitle {
+  font-size: var(--step-2);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.currentPill {
+  margin-left: auto;
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(247, 199, 68, 0.45);
+  background: rgba(247, 199, 68, 0.12);
+  font-size: var(--step--1);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--gold);
+}
+
+.priceRow {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.price {
+  font-family: var(--font-display), sans-serif;
+  font-size: var(--step-3);
+  font-weight: 900;
+  letter-spacing: -0.03em;
+}
+
+.period {
+  font-size: var(--step-0);
+  color: var(--muted);
+}
+
+.perks {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  margin: 4px 0 auto;
+}
+
+.perks li {
+  display: grid;
+  grid-template-columns: 17px 1fr;
+  gap: 9px;
+  align-items: start;
+  font-size: var(--step-0);
+  line-height: 1.5;
+  color: var(--title);
+}
+
+.perks svg {
+  margin-top: 3px;
+  color: var(--ember);
+}
+
+.buy {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  width: 100%;
+  min-height: var(--tap);
+  margin-top: 6px;
+  padding: 0 18px;
+  border: none;
+  border-radius: 12px;
+  color: #fff;
+  background: linear-gradient(120deg, var(--ember), var(--crimson));
+  box-shadow: 0 10px 28px rgba(230, 34, 51, 0.3);
+  font-size: var(--step-0);
+  font-weight: 800;
+  cursor: pointer;
+  transition: box-shadow var(--dur-swap) var(--ease-out);
+}
+
+.buy:disabled {
+  cursor: default;
+  box-shadow: none;
+  background: var(--surface);
+  border: 1px solid var(--line-strong);
+  color: var(--muted);
+}
+
+.cardError {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: var(--step--1);
+  line-height: 1.5;
+  color: #ffb4bb;
+}
+
+.cardError svg {
+  flex: none;
+  margin-top: 2px;
+}
+
+/* ───────────────────────── what you get ───────────────────────── */
+.included {
+  max-width: min(var(--shell-max), calc(var(--measure-wide) * 1.4));
+  margin: clamp(44px, 7vw, 84px) auto 0;
+  padding: clamp(22px, 3vw, 34px);
+  border: 1px solid var(--line);
+  border-radius: 22px;
+  background: var(--surface);
+}
+
+.includedHead {
+  font-size: var(--step-2);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.includedNote {
+  margin-top: 8px;
+  max-width: var(--measure);
+  font-size: var(--step-0);
+  line-height: 1.6;
+  color: var(--muted);
+}
+
+.includedList {
+  list-style: none;
+  display: grid;
+  gap: 12px 22px;
+  margin-top: 20px;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, var(--card-min)), 1fr));
+}
+
+.includedList li {
+  display: grid;
+  grid-template-columns: 18px 1fr;
+  gap: 10px;
+  align-items: start;
+  font-size: var(--step-0);
+  line-height: 1.5;
+}
+
+.includedList svg {
+  margin-top: 2px;
+  color: var(--gold);
+}
+
+/* ───────────────────────── states ───────────────────────── */
+.skeletonGrid {
+  display: grid;
+  gap: clamp(14px, 1.6vw, 24px);
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, var(--card-min)), 1fr));
+  width: 100%;
+  max-width: min(var(--shell-max), calc(var(--measure-wide) * 2));
+  margin: clamp(34px, 5vw, 60px) auto 0;
+}
+
+.skeletonCard {
+  height: clamp(300px, 34vh, 400px);
+  border-radius: 20px;
+  border: 1px solid var(--line);
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.03) 25%,
+    rgba(255, 255, 255, 0.08) 37%,
+    rgba(255, 255, 255, 0.03) 63%
+  );
+  background-size: 400% 100%;
+  animation: pricingShimmer 1.5s ease infinite;
+}
+
+@keyframes pricingShimmer {
+  to {
+    background-position: -135% 0;
+  }
+}
+
+.failure {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  max-width: var(--measure);
+  margin: clamp(34px, 5vw, 60px) auto 0;
+  padding: clamp(24px, 4vw, 40px);
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: var(--surface);
+  text-align: center;
+}
+
+.failure p {
+  font-size: var(--step-0);
+  line-height: 1.6;
+  color: var(--muted);
+}
+
+.failureIcon {
+  color: var(--ember);
+}
+
+.retry {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: var(--tap);
+  padding: 0 20px;
+  border: 1px solid rgba(255, 77, 90, 0.4);
+  border-radius: 12px;
+  background: rgba(230, 34, 51, 0.16);
+  color: var(--title);
+  font-size: var(--step-0);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.spin {
+  animation: pricingSpin 0.9s linear infinite;
+}
+
+@keyframes pricingSpin {
+  to {
+    rotate: 360deg;
+  }
+}
+
+/* ───────────────────────── footer note ───────────────────────── */
+.foot {
+  max-width: var(--measure);
+  margin: clamp(40px, 6vw, 80px) auto 0;
+  padding-inline: calc(var(--shell-pad) + var(--safe-left));
+  font-size: var(--step--1);
+  line-height: 1.7;
+  text-align: center;
+  color: var(--muted);
+}
+
+.footLink {
+  color: var(--ember);
+  font-weight: 700;
+}
+
+/* ───────────────────────── input modes ───────────────────────── */
+@media (hover: hover) {
+  .card:hover {
+    border-color: rgba(255, 77, 90, 0.4);
+    translate: 0 -4px;
+  }
+
+  .buy:hover:not(:disabled) {
+    box-shadow: 0 14px 34px rgba(230, 34, 51, 0.45);
+  }
+
+  .retry:hover {
+    background: rgba(230, 34, 51, 0.28);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card,
+  .buy {
+    transition: none;
+  }
+
+  .card:hover {
+    translate: none;
+  }
+
+  .skeletonCard {
+    animation: none;
+  }
+}

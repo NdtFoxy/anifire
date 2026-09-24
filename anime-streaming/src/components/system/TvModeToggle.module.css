@@ -1,0 +1,82 @@
+/**
+ * TV-mode switch as it appears inside the profile dropdown. Compact on a
+ * pointer surface, finger/remote sized on touch and TV, and always three
+ * visibly distinct states — this is a setting people hunt for on a couch.
+ */
+
+.wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px;
+  margin-top: 4px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.title {
+  font-size: var(--step--1);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(220, 214, 214, 0.6);
+}
+
+.group {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+}
+
+.opt {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: var(--tap);
+  padding: 6px 4px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 9px;
+  background: rgba(255, 255, 255, 0.03);
+  color: #e9e3e3;
+  font: inherit;
+  font-size: var(--step--1);
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+@media (hover: hover) {
+  .opt:hover {
+    border-color: rgba(255, 77, 90, 0.45);
+    color: #fff;
+  }
+}
+
+.opt:focus-visible {
+  border-color: rgba(255, 77, 90, 0.45);
+  color: #fff;
+}
+
+.opt[aria-pressed="true"] {
+  color: #fff;
+  border-color: transparent;
+  background: linear-gradient(120deg, #ff4d5a, #e62233);
+  box-shadow: 0 6px 16px rgba(230, 34, 51, 0.28);
+}
+
+.hint {
+  font-size: var(--step--1);
+  line-height: 1.4;
+  color: rgba(220, 214, 214, 0.55);
+}
+
+/* From three metres the whole control has to be readable and D-pad sized. */
+html[data-device="tv"] .wrap {
+  gap: 12px;
+  padding: 14px 16px;
+}
+
+html[data-device="tv"] .opt {
+  min-height: var(--tap-lg);
+  border-radius: 12px;
+  font-size: var(--step-0);
+}

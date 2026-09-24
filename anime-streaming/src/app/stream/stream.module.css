@@ -36,19 +36,50 @@
   background-size: 160px;
 }
 
-/* ---------------- NAV ---------------- */
+/* ---------------- NAV ----------------
+   Mobile-first. On a phone the bar is logo + search: Home / Search / My List /
+   Profile live in the bottom tab bar where thumbs are, and the drawer keeps
+   only what the tab bar does not cover. Inline links appear at tablet, the bar
+   shrinks on scroll from laptop up, and its content is capped at --shell-max so
+   an ultrawide display centres the chrome instead of stretching it. TV comes
+   from html[data-device="tv"] — never from a width. */
+
+/* Group-only wrapper: the bar, the drawer and the tab bar are all positioned
+   elements, so this must not add a box (or a stacking context) around them.
+   --nav-h itself is a shared token in adaptive.css, because sticky page chrome
+   on other routes offsets from the bar too. */
+.navRoot {
+  display: contents;
+}
+
 .nav {
   position: fixed;
   inset: 0 0 auto;
   z-index: 60;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  height: 74px;
-  padding: 0 clamp(16px, 4vw, 56px);
-  transition: background 0.3s ease, backdrop-filter 0.3s ease;
+  /* The notch inset is padding on top of the bar, not part of its height, so
+     the controls stay --nav-h tall on every phone. */
+  height: calc(var(--nav-h) + var(--safe-top));
+  padding-top: var(--safe-top);
+  transition: background 0.3s ease, backdrop-filter 0.3s ease, height 0.25s ease;
   border: none;
   background: transparent;
+}
+
+/* Scroll-shrink: only where there is a pointer and a long page to scroll. On a
+   phone the bar is already minimal, and on TV it must not move at all. */
+@media (min-width: 1024px) {
+  .navSolid {
+    --nav-h: 62px;
+  }
+}
+
+/* A TV is wider than 1024px, so the shrink rule above would catch it. `unset`
+   on a custom property means inherit, which hands the bar back the 104px TV
+   value from adaptive.css: on a couch the bar is a fixed landmark you aim at. */
+html[data-device="tv"] .navSolid {
+  --nav-h: unset;
 }
 
 /* Readability scrim that extends *below* the bar so the fade never ends in a
@@ -71,21 +102,49 @@
   display: none;
 }
 
+/* The row that actually holds the chrome: full width up to --shell-max, then
+   centred, with the overscan/notch insets folded into its padding. */
+.navInner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+  max-width: var(--shell-max);
+  margin-inline: auto;
+  padding-inline: calc(var(--shell-pad) + var(--safe-left))
+    calc(var(--shell-pad) + var(--safe-right));
+}
+
+@media (min-width: 600px) {
+  .navInner {
+    gap: 14px;
+  }
+}
+
+html[data-device="tv"] .navInner {
+  gap: 20px;
+}
+
 .navLeft {
   display: flex;
   align-items: center;
-  gap: clamp(20px, 4vw, 48px);
+  min-width: 0;
+  gap: clamp(16px, 3vw, 44px);
 }
 
 .logo {
   display: flex;
   align-items: center;
   gap: 10px;
+  min-height: var(--tap);
   color: var(--title);
   text-decoration: none;
 }
 
 .logoMark {
+  flex: 0 0 auto;
   width: 38px;
   height: 38px;
   display: flex;
@@ -97,43 +156,102 @@
   box-shadow: inset 0 0 0 1px var(--line), 0 0 22px rgba(230, 34, 51, 0.28);
 }
 
-.logoText {
-  font-family: var(--font-display), sans-serif;
-  font-size: 18px;
-  font-weight: 700;
+html[data-device="tv"] .logoMark {
+  width: 52px;
+  height: 52px;
+  border-radius: 12px;
 }
 
+.logoText {
+  font-family: var(--font-display), sans-serif;
+  font-size: var(--step-1);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+/* Phone: no room for inline links — the tab bar and the drawer carry them. */
 .navLinks {
-  display: flex;
-  align-items: center;
-  gap: 26px;
+  display: none;
+}
+
+@media (min-width: 600px) {
+  .navLinks {
+    display: flex;
+    align-items: center;
+    min-width: 0;
+    gap: clamp(14px, 2vw, 26px);
+  }
 }
 
 .navLink {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--tap);
+  padding-inline: 4px;
+  border-radius: 10px;
   color: var(--text);
-  font-size: 14px;
+  font-size: var(--step-0);
   font-weight: 500;
+  white-space: nowrap;
   text-decoration: none;
   transition: color 0.2s ease;
 }
 
-.navLink:hover {
+@media (hover: hover) {
+  .navLink:hover {
+    color: var(--title);
+  }
+}
+
+.navLink:focus-visible,
+.navLink[aria-current="page"] {
   color: var(--title);
+}
+
+/* TV: pills big enough to hit with a D-pad and read from three metres. */
+html[data-device="tv"] .navLink {
+  min-height: var(--tap-lg);
+  padding-inline: 22px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: rgba(249, 246, 246, 0.04);
+  font-weight: 600;
+}
+
+html[data-device="tv"] .navLink[aria-current="page"] {
+  border-color: transparent;
+  background: linear-gradient(120deg, var(--ember), var(--crimson));
+  color: #fff;
 }
 
 .navRight {
   display: flex;
   align-items: center;
-  gap: 14px;
+  flex: 1 1 auto;
+  justify-content: flex-end;
+  min-width: 0;
+  gap: 8px;
+}
+
+@media (min-width: 600px) {
+  .navRight {
+    flex: 0 1 auto;
+    gap: 12px;
+  }
+}
+
+html[data-device="tv"] .navRight {
+  gap: 18px;
 }
 
 .iconBtn {
-  width: 40px;
-  height: 40px;
+  flex: 0 0 auto;
+  width: var(--tap);
+  height: var(--tap);
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 8px;
+  border-radius: 10px;
   border: 1px solid var(--line);
   background: rgba(249, 246, 246, 0.03);
   color: var(--text);
@@ -141,50 +259,107 @@
   transition: color 0.2s ease, border-color 0.2s ease;
 }
 
-.iconBtn:hover {
+@media (hover: hover) {
+  .iconBtn:hover {
+    color: var(--title);
+    border-color: rgba(255, 77, 90, 0.4);
+  }
+}
+
+.iconBtn:focus-visible {
   color: var(--title);
   border-color: rgba(255, 77, 90, 0.4);
 }
 
+html[data-device="tv"] .iconBtn,
+html[data-device="tv"] .avatar {
+  width: var(--tap-lg);
+  height: var(--tap-lg);
+  border-radius: 14px;
+}
+
 .avatar {
-  width: 38px;
-  height: 38px;
+  flex: 0 0 auto;
+  width: var(--tap);
+  height: var(--tap);
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 8px;
+  border-radius: 10px;
   color: #fff;
   background: linear-gradient(135deg, var(--crimson), var(--blood));
 }
 
+/* The drawer trigger is a phone-only affordance: from tablet up every link it
+   holds is either inline or in the profile menu, and a remote never sees it. */
 .mobileBtn {
+  display: flex;
+}
+
+@media (min-width: 600px) {
+  .mobileBtn {
+    display: none;
+  }
+}
+
+html[data-device="tv"] .mobileBtn {
   display: none;
+}
+
+/* While the field is open the wordmark yields its width to the query, so a
+   390px bar never overflows: mark + field + drawer + avatar all still fit. */
+.navInnerSearching .logoText {
+  display: none;
+}
+
+@media (min-width: 1024px) {
+  .navInnerSearching .logoText {
+    display: inline;
+  }
 }
 
 .mobileMenu {
   position: fixed;
-  inset: 74px 0 auto;
+  inset: calc(var(--nav-h) + var(--safe-top)) 0 auto 0;
   z-index: 55;
-  height: 0;
-  overflow: hidden;
+  max-height: 0;
+  overflow-y: auto;
+  /* Collapsed the drawer is not just invisible but unfocusable — SpatialNav and
+     Tab both skip visibility:hidden subtrees. */
+  visibility: hidden;
   background: rgba(10, 7, 7, 0.97);
   backdrop-filter: blur(14px);
+  transition: max-height 0.28s ease, visibility 0.28s;
+}
+
+.mobileMenuOpen {
+  max-height: calc(100dvh - var(--nav-h) - var(--safe-top));
+  visibility: visible;
+}
+
+@media (min-width: 600px) {
+  .mobileMenu {
+    display: none;
+  }
 }
 
 .mobileInner {
   display: flex;
   flex-direction: column;
-  padding: 16px clamp(16px, 5vw, 40px);
+  /* Clears the tab bar and the home indicator, so the last row is tappable. */
+  padding: 8px calc(var(--shell-pad) + var(--safe-left))
+    calc(var(--mobile-nav-h) + var(--safe-bottom) + 16px);
 }
 
 .mobileLink {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 18px 4px;
+  min-height: var(--tap-lg);
+  padding: 14px 4px;
   border-bottom: 1px solid var(--line);
   color: var(--title);
-  font-size: 18px;
+  font-size: var(--step-1);
   font-weight: 600;
   text-decoration: none;
 }
@@ -192,10 +367,18 @@
 /* ---------------- HERO ---------------- */
 .hero {
   position: relative;
-  height: clamp(560px, 90vh, 920px);
   display: flex;
-  align-items: flex-end;
+  /* Phone-first: a vertical stack (art → copy → controls) so the pager and the
+     audio chip never sit on top of Play / More Info. */
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-end;
   overflow: hidden;
+  /* Fallback for engines without small-viewport units… */
+  min-height: clamp(460px, 78vh, 720px);
+  /* …and the real thing: svh is measured with the browser chrome *shown*, so a
+     collapsing iOS URL bar can never resize the hero under the reader. */
+  min-height: clamp(460px, 78svh, 720px);
 }
 
 .heroBg {
@@ -210,6 +393,9 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
+  /* Key art is composed around the upper third. Holding the focal point there
+     keeps faces in frame whether the crop is 21:9 or 9:19.5. */
+  object-position: 50% 26%;
 }
 
 .heroVideo {
@@ -218,6 +404,7 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
+  object-position: 50% 26%;
   opacity: 0.82;
   background: #000;
 }
@@ -235,8 +422,14 @@
   position: relative;
   z-index: 2;
   width: 100%;
-  max-width: 680px;
-  padding: 0 clamp(16px, 4vw, 56px) clamp(120px, 16vh, 180px);
+  max-width: 100%;
+  padding-inline: calc(var(--shell-pad) + var(--safe-left))
+    calc(var(--shell-pad) + var(--safe-right));
+  /* The nav is fixed and translucent over the hero. Once the copy is tall enough
+     to fill the stage — a short viewport, or TV where the bar is 104px — the tag
+     row slides underneath it, so the content reserves the bar's height. */
+  padding-top: calc(var(--nav-h) + var(--safe-top) + 12px);
+  padding-bottom: 16px;
 }
 
 .heroTags {
@@ -253,9 +446,11 @@
   justify-content: center;
   text-align: center;
   white-space: nowrap;
-  padding: 5px 11px;
+  /* Padding in em so the chip keeps its shape when the type scales — on TV the
+     same rule at 11px drew a 3mm sliver. */
+  padding: 0.45em 1em;
   border-radius: 6px;
-  font-size: 11px;
+  font-size: max(11px, 0.62em);
   font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -266,7 +461,7 @@
 }
 
 .heroTitle {
-  font-size: clamp(36px, 6vw, 80px);
+  font-size: clamp(1.875rem, 6.5vw, 5rem);
   font-weight: 800;
   line-height: 0.96;
   letter-spacing: -0.03em;
@@ -280,10 +475,17 @@
 .heroLogo {
   display: block;
   width: min(72vw, 560px);
-  max-height: 210px;
+  max-height: clamp(96px, 18vw, 210px);
   object-fit: contain;
   object-position: left center;
   filter: drop-shadow(0 5px 28px rgba(0, 0, 0, 0.72));
+}
+
+/* Title art is the loudest thing in the frame, so it must keep its share of the
+   panel: capped at 560px it shrank to a badge on a 4K set. */
+html[data-device="tv"] .heroLogo {
+  width: min(34vw, 1200px);
+  max-height: clamp(140px, 11vw, 420px);
 }
 
 .heroMetaRow {
@@ -314,10 +516,12 @@
 }
 
 .heroDesc {
-  max-width: 540px;
+  /* In a landscape phone the hero column is the full 932px, which put 116
+     characters on one line — the eye loses its place coming back. */
+  max-width: min(100%, var(--measure));
   margin-top: 18px;
   color: var(--text);
-  font-size: 16px;
+  font-size: var(--step-0);
   line-height: 1.6;
   display: -webkit-box;
   -webkit-line-clamp: 3;
@@ -331,6 +535,7 @@
   flex-wrap: wrap;
   gap: 12px;
   margin-top: 26px;
+  width: 100%;
 }
 
 .btnPlay,
@@ -339,10 +544,13 @@
   align-items: center;
   justify-content: center;
   gap: 10px;
-  height: 50px;
-  padding: 0 26px;
+  /* Phone: the two actions split the row so either is a thumb-width target. */
+  flex: 1 1 0;
+  min-width: 0;
+  min-height: var(--tap-lg);
+  padding: 0 18px;
   border-radius: 8px;
-  font-size: 15px;
+  font-size: var(--step-0);
   font-weight: 700;
   cursor: pointer;
   text-decoration: none;
@@ -356,10 +564,9 @@
   border: none;
 }
 
-.btnPlay:hover {
+.btnPlay:focus-visible {
   transform: translateY(-2px);
   background: #fff;
-  box-shadow: 0 10px 30px rgba(249, 246, 246, 0.18);
 }
 
 .btnInfo {
@@ -369,28 +576,41 @@
   backdrop-filter: blur(8px);
 }
 
-.btnInfo:hover {
+.btnInfo:focus-visible {
   transform: translateY(-2px);
   border-color: rgba(255, 77, 90, 0.4);
 }
 
+@media (hover: hover) {
+  .btnPlay:hover {
+    transform: translateY(-2px);
+    background: #fff;
+    box-shadow: 0 10px 30px rgba(249, 246, 246, 0.18);
+  }
+
+  .btnInfo:hover {
+    transform: translateY(-2px);
+    border-color: rgba(255, 77, 90, 0.4);
+  }
+}
+
 .heroFooter {
-  position: absolute;
+  position: relative;
   z-index: 2;
-  left: 0;
-  right: 0;
-  bottom: clamp(56px, 9vh, 96px);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
-  padding: 0 clamp(16px, 4vw, 56px);
+  flex-wrap: wrap;
+  gap: 12px;
+  padding-inline: calc(var(--shell-pad) + var(--safe-left))
+    calc(var(--shell-pad) + var(--safe-right));
+  padding-bottom: 24px;
 }
 
 .pager {
   display: flex;
   align-items: center;
-  gap: 18px;
+  gap: 12px;
 }
 
 .dots {
@@ -399,18 +619,32 @@
 }
 
 .dot {
-  width: 26px;
-  height: 4px;
+  /* A thumb needs ~24px in both axes, not just height: the pill drawn by ::after
+     stays thin while the button around it grows with the room available. */
+  display: grid;
+  place-items: center;
+  width: clamp(24px, 6vw, var(--tap));
+  height: var(--tap);
   padding: 0;
   border: none;
-  border-radius: 999px;
   cursor: pointer;
+  background: none;
+}
+
+.dot::after {
+  content: "";
+  display: block;
+  width: 18px;
+  height: 4px;
+  border-radius: 999px;
   background: rgba(249, 246, 246, 0.25);
   transition: background 0.3s ease, width 0.3s ease;
 }
 
-.dotOn {
-  width: 40px;
+.dotOn::after {
+  /* The active pill widens, not its hit area — targets must not change size
+     under the finger when the carousel advances. */
+  width: 28px;
   background: var(--crimson);
 }
 
@@ -420,8 +654,8 @@
 }
 
 .arrow {
-  width: 42px;
-  height: 42px;
+  width: var(--tap);
+  height: var(--tap);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -434,9 +668,16 @@
   transition: background 0.2s ease, border-color 0.2s ease;
 }
 
-.arrow:hover {
+.arrow:focus-visible {
   background: rgba(139, 13, 23, 0.4);
   border-color: rgba(255, 77, 90, 0.5);
+}
+
+@media (hover: hover) {
+  .arrow:hover {
+    background: rgba(139, 13, 23, 0.4);
+    border-color: rgba(255, 77, 90, 0.5);
+  }
 }
 
 .audio {
@@ -451,7 +692,8 @@
 }
 
 .audioText {
-  display: flex;
+  /* Hidden until there is room for it — the two buttons carry the meaning. */
+  display: none;
   flex-direction: column;
   text-align: right;
   line-height: 1.2;
@@ -470,8 +712,8 @@
 }
 
 .audioBtn {
-  width: 42px;
-  height: 42px;
+  width: var(--tap);
+  height: var(--tap);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -486,7 +728,9 @@
 .rows {
   position: relative;
   z-index: 3;
-  margin-top: clamp(-60px, -6vw, -30px);
+  width: 100%;
+  max-width: var(--shell-max);
+  margin-inline: auto;
   padding-bottom: 60px;
 }
 
@@ -496,8 +740,8 @@
 }
 
 .rowTitle {
-  margin: 0 0 14px clamp(16px, 4vw, 56px);
-  font-size: clamp(18px, 2vw, 24px);
+  margin: 0 0 14px calc(var(--shell-pad) + var(--safe-left));
+  font-size: var(--step-2);
   font-weight: 700;
   letter-spacing: -0.01em;
 }
@@ -505,16 +749,16 @@
 .rowViewport {
   display: flex;
   gap: 12px;
-  padding: 30px clamp(16px, 4vw, 56px);
+  padding: 30px calc(var(--shell-pad) + var(--safe-right)) 30px
+    calc(var(--shell-pad) + var(--safe-left));
   overflow-x: auto;
   overflow-y: hidden;
   scroll-behavior: smooth;
   scrollbar-width: none;
-  scroll-padding-inline: clamp(16px, 4vw, 56px);
-}
-
-.rowViewport::-webkit-scrollbar {
-  display: none;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x mandatory;
+  scroll-padding-inline: var(--shell-pad);
 }
 
 .rowArrow {
@@ -543,25 +787,35 @@
   left: 0;
 }
 
-.row:hover .rowArrow {
+/* Reachable without a mouse: tabbing (or a D-pad) into the row reveals the
+   pagers instead of leaving an invisible button under the finger. */
+.rowArrow:focus-visible,
+.row:focus-within .rowArrow {
   opacity: 1;
+}
+
+@media (hover: hover) {
+  .row:hover .rowArrow {
+    opacity: 1;
+  }
+
+  .rowArrow:hover svg {
+    transform: scale(1.3);
+  }
 }
 
 .rowArrow svg {
   transition: transform 0.2s ease;
 }
 
-.rowArrow:hover svg {
-  transform: scale(1.3);
-}
-
 /* ---------------- CARD ---------------- */
 .card {
   position: relative;
   flex: 0 0 auto;
-  width: clamp(150px, 15vw, 210px);
+  width: clamp(132px, 40vw, 168px);
   aspect-ratio: 2 / 3;
-  border-radius: 8px;
+  scroll-snap-align: start;
+  border-radius: var(--radius-card);
   overflow: hidden;
   cursor: pointer;
   background: var(--surface);
@@ -569,19 +823,45 @@
   transition: transform 0.35s cubic-bezier(0.2, 0.7, 0.2, 1), box-shadow 0.35s ease, border-color 0.2s ease;
 }
 
-.card:hover {
-  transform: scale(1.12);
+.card:focus-visible {
   z-index: 30;
   border-color: rgba(255, 77, 90, 0.4);
   box-shadow: 0 30px 70px rgba(0, 0, 0, 0.75);
 }
 
-.card:first-child:hover {
-  transform: scale(1.12) translateX(6%);
+.card:focus-visible .cardInfo {
+  opacity: 1;
+  transform: none;
 }
 
-.card:last-child:hover {
-  transform: scale(1.12) translateX(-6%);
+.card:focus-visible .cardYear {
+  opacity: 0;
+}
+
+@media (hover: hover) {
+  .card:hover {
+    transform: scale(1.12);
+    z-index: 30;
+    border-color: rgba(255, 77, 90, 0.4);
+    box-shadow: 0 30px 70px rgba(0, 0, 0, 0.75);
+  }
+
+  .card:first-child:hover {
+    transform: scale(1.12) translateX(6%);
+  }
+
+  .card:last-child:hover {
+    transform: scale(1.12) translateX(-6%);
+  }
+
+  .card:hover .cardYear {
+    opacity: 0;
+  }
+
+  .card:hover .cardInfo {
+    opacity: 1;
+    transform: none;
+  }
 }
 
 .cardImg {
@@ -604,10 +884,6 @@
   transition: opacity 0.2s ease;
 }
 
-.card:hover .cardYear {
-  opacity: 0;
-}
-
 .cardInfo {
   position: absolute;
   inset: auto 0 0;
@@ -619,13 +895,8 @@
   transition: opacity 0.3s ease, transform 0.3s ease;
 }
 
-.card:hover .cardInfo {
-  opacity: 1;
-  transform: none;
-}
-
 .cardTitle {
-  font-size: 13px;
+  font-size: var(--step--1);
   font-weight: 700;
   letter-spacing: -0.01em;
 }
@@ -638,8 +909,10 @@
 }
 
 .cBtn {
-  width: 28px;
-  height: 28px;
+  /* 30px is under every published minimum for a pointer target, let alone a
+     thumb; touch and remote push it to --tap through the global floor. */
+  width: 38px;
+  height: 38px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -648,8 +921,14 @@
   transition: transform 0.15s ease, background 0.2s ease;
 }
 
-.cBtn:hover {
+.cBtn:focus-visible {
   transform: scale(1.1);
+}
+
+@media (hover: hover) {
+  .cBtn:hover {
+    transform: scale(1.1);
+  }
 }
 
 .cBtnPlay {
@@ -696,79 +975,119 @@
   color: var(--muted);
 }
 
-/* ---------------- FOOTER ---------------- */
+/* ---------------- FOOTER ----------------
+   One column on a phone, two-up from tablet, capped by the shell tokens, and
+   reduced to a single line on TV where a link farm three metres away is noise.
+   The bottom padding always clears the phone tab bar and the home indicator. */
 .footer {
   width: 100%;
-  padding: clamp(40px, 5vw, 64px) clamp(16px, 4vw, 56px) 32px;
+  padding-block: clamp(32px, 5vw, 64px)
+    calc(var(--mobile-nav-h) + var(--safe-bottom) + 28px);
+  padding-inline: calc(var(--shell-pad) + var(--safe-left))
+    calc(var(--shell-pad) + var(--safe-right));
   border-top: 1px solid var(--line);
   box-shadow: inset 0 2px 0 rgba(230, 34, 51, 0.3);
   background: var(--surface);
 }
 
 .footerInner {
-  max-width: 1500px;
+  max-width: var(--shell-max);
   margin: 0 auto;
 }
 
 .footerTop {
   display: grid;
-  grid-template-columns: 1.3fr 1fr;
-  gap: 48px;
-  padding-bottom: 30px;
+  grid-template-columns: 1fr;
+  gap: 28px;
+  padding-bottom: 26px;
+}
+
+@media (min-width: 600px) {
+  .footerTop {
+    grid-template-columns: 1.3fr 1fr;
+    gap: clamp(28px, 4vw, 48px);
+    padding-bottom: 30px;
+  }
 }
 
 .footerBrand p {
-  max-width: 460px;
+  max-width: 60ch;
   margin-top: 16px;
   color: var(--text);
-  font-size: 14px;
+  font-size: var(--step-0);
   line-height: 1.55;
 }
 
 .footerCols {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 30px;
+  grid-template-columns: 1fr;
+  gap: 22px;
+}
+
+@media (min-width: 600px) {
+  .footerCols {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 30px;
+  }
 }
 
 .footerCols div {
   display: grid;
-  gap: 10px;
+  gap: 2px;
   align-content: start;
 }
 
 .footerCols h3 {
   margin-bottom: 4px;
-  font-size: 13px;
+  font-size: var(--step--1);
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--muted);
 }
 
+/* Footer links are real destinations, so they get a real target height. */
 .footerCols a {
+  display: flex;
+  align-items: center;
+  min-height: var(--tap);
   color: var(--text);
-  font-size: 14px;
+  font-size: var(--step-0);
   text-decoration: none;
   transition: color 0.2s ease;
 }
 
-.footerCols a:hover {
+@media (hover: hover) {
+  .footerCols a:hover {
+    color: var(--title);
+  }
+}
+
+.footerCols a:focus-visible {
   color: var(--title);
 }
 
 .footerBottom {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 20px;
-  flex-wrap: wrap;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 16px;
   padding-top: 24px;
   border-top: 1px solid var(--line);
 }
 
+@media (min-width: 600px) {
+  .footerBottom {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+  }
+}
+
 .footerBottom p {
   color: var(--muted);
-  font-size: 13px;
+  font-size: var(--step--1);
 }
 
 .footerSocials {
@@ -777,8 +1096,8 @@
 }
 
 .footerSocials a {
-  width: 42px;
-  height: 42px;
+  width: var(--tap);
+  height: var(--tap);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -789,10 +1108,37 @@
   transition: color 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
 }
 
-.footerSocials a:hover {
+@media (hover: hover) {
+  .footerSocials a:hover {
+    color: var(--ember);
+    border-color: rgba(255, 77, 90, 0.4);
+    transform: translateY(-2px);
+  }
+}
+
+.footerSocials a:focus-visible {
   color: var(--ember);
   border-color: rgba(255, 77, 90, 0.4);
-  transform: translateY(-2px);
+}
+
+/* TV: keep the legal line, drop the link farm and the social row — nobody
+   D-pads to a Discord icon from the sofa. */
+html[data-device="tv"] .footer {
+  padding-block: 24px calc(var(--safe-bottom) + 24px);
+  border-top: 1px solid var(--line);
+  box-shadow: none;
+  background: transparent;
+}
+
+html[data-device="tv"] .footerTop,
+html[data-device="tv"] .footerSocials {
+  display: none;
+}
+
+html[data-device="tv"] .footerBottom {
+  justify-content: center;
+  padding-top: 0;
+  border-top: none;
 }
 
 /* ---------------- MODAL ---------------- */
@@ -801,10 +1147,12 @@
   inset: 0;
   z-index: 100;
   display: flex;
-  align-items: flex-start;
+  /* Phone: a bottom sheet. It rises into the thumb zone instead of stranding
+     the close button in the top-right corner nobody can reach one-handed. */
+  align-items: flex-end;
   justify-content: center;
-  padding: clamp(20px, 6vh, 80px) 16px 40px;
-  overflow-y: auto;
+  overflow: hidden;
+  overscroll-behavior: contain;
   background: rgba(5, 3, 3, 0.78);
   backdrop-filter: blur(8px);
   animation: modalFade 0.25s ease;
@@ -817,13 +1165,76 @@
 
 .modal {
   position: relative;
-  width: min(880px, 100%);
-  border-radius: 14px;
-  overflow: hidden;
+  width: 100%;
+  max-height: 92vh;
+  max-height: 92svh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  border-radius: 20px 20px 0 0;
   background: #120d0d;
   border: 1px solid var(--line-strong);
-  box-shadow: 0 50px 140px rgba(0, 0, 0, 0.8);
-  animation: modalRise 0.3s cubic-bezier(0.2, 0.7, 0.2, 1);
+  border-bottom: none;
+  box-shadow: 0 -20px 60px rgba(0, 0, 0, 0.8);
+  animation: sheetRise 0.28s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+@keyframes sheetRise {
+  from { transform: translateY(8%); opacity: 0; }
+  to { transform: none; opacity: 1; }
+}
+
+/* Grab bar: the sheet's own affordance. Tapping it closes, dragging it down
+   closes — the two gestures a sheet is expected to answer. */
+.modalHandle {
+  position: sticky;
+  top: 0;
+  z-index: 6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 30px;
+  padding: 0;
+  border: none;
+  cursor: grab;
+  touch-action: none;
+  background: linear-gradient(180deg, rgba(18, 13, 13, 0.95), rgba(18, 13, 13, 0));
+}
+
+.modalHandle::after {
+  content: "";
+  width: 46px;
+  height: 4px;
+  border-radius: 999px;
+  background: rgba(249, 246, 246, 0.45);
+}
+
+.modalDragging {
+  animation: none;
+  transition: none;
+}
+
+/* Tablet and up there is room to centre a real dialog. */
+@media (min-width: 600px) {
+  .modalOverlay {
+    align-items: flex-start;
+    padding: clamp(20px, 6vh, 80px) 16px 40px;
+    overflow-y: auto;
+  }
+
+  .modal {
+    width: min(880px, 100%);
+    max-height: none;
+    overflow: hidden;
+    border-radius: 14px;
+    border-bottom: 1px solid var(--line-strong);
+    box-shadow: 0 50px 140px rgba(0, 0, 0, 0.8);
+    animation: modalRise 0.3s cubic-bezier(0.2, 0.7, 0.2, 1);
+  }
+
+  .modalHandle {
+    display: none;
+  }
 }
 
 @keyframes modalRise {
@@ -835,9 +1246,9 @@
   position: absolute;
   top: 16px;
   right: 16px;
-  z-index: 5;
-  width: 38px;
-  height: 38px;
+  z-index: 7;
+  width: var(--tap);
+  height: var(--tap);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -850,8 +1261,14 @@
   transition: background 0.2s ease;
 }
 
-.modalClose:hover {
+.modalClose:focus-visible {
   background: rgba(139, 13, 23, 0.7);
+}
+
+@media (hover: hover) {
+  .modalClose:hover {
+    background: rgba(139, 13, 23, 0.7);
+  }
 }
 
 .modalHero {
@@ -879,8 +1296,8 @@
   left: 50%;
   top: 46%;
   transform: translate(-50%, -50%);
-  width: 72px;
-  height: 72px;
+  width: clamp(56px, 16vw, 72px);
+  height: clamp(56px, 16vw, 72px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -894,8 +1311,14 @@
   transition: transform 0.2s ease;
 }
 
-.modalBigPlay:hover {
+.modalBigPlay:focus-visible {
   transform: translate(-50%, -50%) scale(1.07);
+}
+
+@media (hover: hover) {
+  .modalBigPlay:hover {
+    transform: translate(-50%, -50%) scale(1.07);
+  }
 }
 
 .modalHeroBottom {
@@ -912,7 +1335,7 @@
 
 .modalTitle {
   font-family: var(--font-display), sans-serif;
-  font-size: clamp(28px, 4vw, 46px);
+  font-size: var(--step-3);
   font-weight: 800;
   letter-spacing: -0.02em;
   text-shadow: 0 2px 24px rgba(0, 0, 0, 0.7);
@@ -920,8 +1343,8 @@
 
 .modalMute {
   flex-shrink: 0;
-  width: 40px;
-  height: 40px;
+  width: var(--tap);
+  height: var(--tap);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -959,38 +1382,46 @@
 }
 
 .modalBody {
-  padding: 22px clamp(20px, 4%, 40px) 30px;
+  padding: 22px clamp(20px, 4%, 40px) calc(var(--safe-bottom) + 30px);
 }
 
 .modalActions {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 10px;
 }
 
 .modalPlayBtn {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 9px;
-  height: 46px;
+  min-height: var(--tap-lg);
   padding: 0 26px;
   border-radius: 8px;
   color: #0a0707;
-  font-size: 15px;
+  font-size: var(--step-0);
   font-weight: 700;
   text-decoration: none;
   background: var(--title);
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
-.modalPlayBtn:hover {
+.modalPlayBtn:focus-visible {
   transform: translateY(-2px);
-  box-shadow: 0 10px 28px rgba(249, 246, 246, 0.16);
+}
+
+@media (hover: hover) {
+  .modalPlayBtn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 28px rgba(249, 246, 246, 0.16);
+  }
 }
 
 .modalRound {
-  width: 44px;
-  height: 44px;
+  width: var(--tap);
+  height: var(--tap);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1002,8 +1433,14 @@
   transition: border-color 0.2s ease, background 0.2s ease;
 }
 
-.modalRound:hover {
+.modalRound:focus-visible {
   border-color: var(--title);
+}
+
+@media (hover: hover) {
+  .modalRound:hover {
+    border-color: var(--title);
+  }
 }
 
 .modalRoundOn {
@@ -1076,136 +1513,114 @@
   color: var(--muted);
 }
 
-/* ---------------- RESPONSIVE ---------------- */
-@media (max-width: 860px) {
-  .navLinks {
-    display: none;
+/* ══════════════ RESPONSIVE — one shared scale, phone first ══════════════ */
+
+/* The page shell. Everything below the nav lives inside <main id="main">, so
+   the bottom tab bar's height is reserved exactly once. */
+.main {
+  display: block;
+  padding-bottom: calc(var(--mobile-nav-h) + var(--safe-bottom));
+}
+
+/* With the audio label hidden the chip is just two buttons — pad it evenly. */
+.audio {
+  padding: 7px;
+}
+
+/* On a phone the action row wraps and "Full page" takes the second line, so a
+   flexible spacer would only punch a hole in it. */
+.modalSpacer {
+  display: none;
+}
+
+.modalDetailsBtn {
+  flex: 1 1 auto;
+  justify-content: center;
+  min-height: var(--tap);
+}
+
+@media (min-width: 600px) {
+  .modalSpacer {
+    display: block;
   }
 
-  .mobileBtn {
-    display: flex;
+  .modalDetailsBtn {
+    flex: 0 0 auto;
   }
 
-  .audioText {
-    display: none;
+  .audio {
+    padding: 8px 8px 8px 18px;
   }
 
-  .footerTop {
-    grid-template-columns: 1fr;
-    gap: 32px;
+  .heroMetaRow {
+    gap: 12px;
   }
 
-  /* Hero becomes a clean vertical stack: image → content → controls,
-     so the pager/audio no longer overlaps the Play / More Info buttons. */
+  .card {
+    width: clamp(160px, 22vw, 192px);
+  }
+}
+
+/* Laptop and up the hero returns to the cinematic overlay: key art behind,
+   copy bottom-left, pager and audio floating over the artwork. */
+@media (min-width: 1024px) {
   .hero {
-    height: auto;
-    min-height: 76vh;
-    flex-direction: column;
-    align-items: stretch;
-    justify-content: flex-end;
+    flex-direction: row;
+    align-items: flex-end;
+    justify-content: flex-start;
+    min-height: clamp(560px, 88vh, 920px);
+    min-height: clamp(560px, 88svh, 920px);
+  }
+
+  .heroBgImg,
+  .heroVideo {
+    object-position: 50% 32%;
   }
 
   .heroContent {
-    max-width: 100%;
-    padding-bottom: 16px;
+    max-width: 680px;
+    padding-bottom: clamp(120px, 16vh, 180px);
   }
 
   .heroDesc {
-    max-width: 100%;
+    max-width: 540px;
   }
 
   .heroBtns {
-    width: 100%;
+    width: auto;
   }
 
   .btnPlay,
   .btnInfo {
-    flex: 1 1 0;
-    min-width: 0;
-    padding: 0 18px;
+    flex: 0 0 auto;
+    padding: 0 26px;
   }
 
   .heroFooter {
-    position: static;
-    bottom: auto;
-    width: 100%;
-    gap: 12px;
-    padding: 0 clamp(16px, 4vw, 56px) 24px;
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: clamp(56px, 9vh, 96px);
+    padding-bottom: 0;
   }
 
-  .audio {
-    padding: 7px;
+  .audioText {
+    display: flex;
   }
 
-  /* View switch stacks */
-  .viewBar {
-    align-items: stretch;
-    flex-direction: column;
-    gap: 14px;
+  /* Rows overlap the hero's lower gradient, the way a shelf should. */
+  .rows {
+    margin-top: clamp(-60px, -6vw, -30px);
   }
 
-  .viewToggle {
-    width: 100%;
-  }
-
-  .viewBtn {
-    flex: 1;
-    justify-content: center;
+  .card {
+    width: clamp(184px, 14vw, 220px);
   }
 }
 
-@media (max-width: 560px) {
-  .heroTitle {
-    font-size: clamp(30px, 9vw, 44px);
-  }
-
-  .heroMetaRow {
-    gap: 8px;
-    font-size: 13px;
-  }
-
-  .pager {
-    gap: 10px;
-  }
-
-  .dot {
-    width: 16px;
-  }
-
-  .dotOn {
-    width: 26px;
-  }
-
-  .arrow {
-    width: 38px;
-    height: 38px;
-  }
-
-  .modalSpacer {
-    display: none;
-  }
-
-  .modalActions {
-    flex-wrap: wrap;
-  }
-
-  .modalDetailsBtn {
-    flex: 1;
-    justify-content: center;
-  }
-
-  .footerBottom {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 16px;
-  }
-}
-
+/* Touch: hover never resolves, so the card overlay stays open and the pager
+   arrows — which only exist to replace a scroll wheel — step aside. */
 @media (hover: none) {
-  .card:hover {
-    transform: none;
-  }
-
   .cardInfo {
     opacity: 1;
     transform: none;
@@ -1219,21 +1634,25 @@
 /* ════════════════════════ VIEW SWITCH ════════════════════════ */
 .viewBar {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  flex-wrap: wrap;
-  padding: 30px clamp(16px, 4vw, 56px) 4px;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 14px;
+  width: 100%;
+  max-width: var(--shell-max);
+  margin-inline: auto;
+  padding: 30px calc(var(--shell-pad) + var(--safe-right)) 4px
+    calc(var(--shell-pad) + var(--safe-left));
 }
 
 .viewHeading {
-  font-size: clamp(20px, 2.4vw, 28px);
+  font-size: var(--step-2);
   font-weight: 800;
   letter-spacing: -0.02em;
 }
 
 .viewToggle {
-  display: inline-flex;
+  display: flex;
+  width: 100%;
   padding: 4px;
   border-radius: 12px;
   border: 1px solid var(--line);
@@ -1243,11 +1662,14 @@
 .viewBtn {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
+  flex: 1;
   gap: 7px;
+  min-height: var(--tap);
   padding: 8px 16px;
   border: none;
   border-radius: 9px;
-  font-size: 13px;
+  font-size: var(--step--1);
   font-weight: 600;
   color: var(--text);
   background: transparent;
@@ -1261,9 +1683,32 @@
   box-shadow: 0 6px 18px rgba(230, 34, 51, 0.28);
 }
 
+@media (min-width: 600px) {
+  .viewBar {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+
+  .viewToggle {
+    display: inline-flex;
+    width: auto;
+  }
+
+  .viewBtn {
+    flex: 0 0 auto;
+  }
+}
+
 /* ════════════════════════ CATALOG ════════════════════════ */
 .catalog {
-  padding: 18px clamp(16px, 4vw, 56px) 40px;
+  width: 100%;
+  max-width: var(--shell-max);
+  margin-inline: auto;
+  padding: 18px calc(var(--shell-pad) + var(--safe-right)) 40px
+    calc(var(--shell-pad) + var(--safe-left));
 }
 
 .catSearch {
@@ -1283,13 +1728,13 @@
 
 .catSearchInput {
   flex: 1;
-  height: 56px;
+  height: var(--tap-lg);
   padding: 0 60px 0 48px;
   border-radius: 14px;
   border: 1px solid var(--line-strong);
   background: var(--surface);
   color: var(--title);
-  font-size: 15px;
+  font-size: var(--step-0);
   font-family: inherit;
   outline: none;
   transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
@@ -1307,9 +1752,9 @@
 
 .catClearBtn {
   position: absolute;
-  right: 10px;
-  width: 40px;
-  height: 40px;
+  right: 6px;
+  width: var(--tap);
+  height: var(--tap);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1321,9 +1766,16 @@
   transition: color 0.2s ease, border-color 0.2s ease, opacity 0.2s ease;
 }
 
-.catClearBtn:hover {
+.catClearBtn:focus-visible {
   color: var(--title);
   border-color: rgba(255, 77, 90, 0.4);
+}
+
+@media (hover: hover) {
+  .catClearBtn:hover {
+    color: var(--title);
+    border-color: rgba(255, 77, 90, 0.4);
+  }
 }
 
 .catClearBtn:disabled {
@@ -1332,50 +1784,99 @@
 }
 
 .catGrid {
-  display: grid;
-  grid-template-columns: 1fr 320px;
-  gap: 22px;
-  align-items: start;
-}
-
-.catList {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 18px;
+}
+
+/* Poster grid. auto-fill plus a per-step minimum means a wider display buys
+   more columns, never a fatter poster:
+     390 → 2 · 768 → 4 · 1280 → 5 · 1440 → 6 · 1920 → 7 · 2560+ → 8 · TV → 5 */
+.catList {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 20px 12px;
+}
+
+@media (min-width: 600px) {
+  .catList {
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 22px 16px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .catList {
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 26px 20px;
+  }
+}
+
+@media (min-width: 1440px) {
+  .catList {
+    grid-template-columns: repeat(auto-fill, minmax(195px, 1fr));
+    gap: 28px 22px;
+  }
+}
+
+@media (min-width: 1920px) {
+  .catList {
+    grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  }
+}
+
+@media (min-width: 2560px) {
+  .catList {
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  }
 }
 
 .catEmpty {
+  grid-column: 1 / -1;
   padding: 40px;
   text-align: center;
   color: var(--muted);
   border: 1px dashed var(--line-strong);
-  border-radius: 14px;
+  border-radius: var(--radius-card);
 }
 
 .catCard {
   display: flex;
-  gap: 18px;
-  padding: 16px;
-  border-radius: 16px;
-  border: 1px solid var(--line);
-  background: var(--surface);
+  flex-direction: column;
+  gap: 9px;
   cursor: pointer;
-  transition: border-color 0.2s ease, background 0.2s ease, transform 0.2s ease;
+  transition: transform 0.2s ease;
 }
 
-.catCard:hover {
-  border-color: rgba(255, 77, 90, 0.35);
-  background: var(--surface-2);
-  transform: translateY(-2px);
+.catCard:focus-visible {
+  outline: none;
+}
+
+.catCard:focus-visible .catPoster {
+  border-color: rgba(255, 77, 90, 0.6);
+  box-shadow: var(--focus-ring), 0 16px 40px rgba(0, 0, 0, 0.55);
+}
+
+@media (hover: hover) {
+  .catCard:hover {
+    transform: translateY(-4px);
+  }
+
+  .catCard:hover .catPoster {
+    border-color: rgba(255, 77, 90, 0.55);
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.55);
+  }
 }
 
 .catPoster {
-  flex: 0 0 auto;
-  width: 116px;
+  position: relative;
+  width: 100%;
   aspect-ratio: 2 / 3;
-  border-radius: 11px;
+  border-radius: var(--radius-card);
   overflow: hidden;
   background: var(--surface-2);
+  border: 1px solid var(--line);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .catPoster img {
@@ -1384,25 +1885,21 @@
   object-fit: cover;
 }
 
-.catBody {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-}
-
 .catTitle {
-  font-size: clamp(16px, 1.6vw, 19px);
+  font-size: var(--step-0);
   font-weight: 700;
   letter-spacing: -0.01em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .catMeta {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 7px;
-  margin-top: 7px;
-  font-size: 12.5px;
+  gap: 6px;
+  font-size: var(--step--1);
   color: var(--muted);
 }
 
@@ -1411,55 +1908,106 @@
   font-weight: 600;
 }
 
-.catSynopsis {
-  margin-top: 10px;
-  font-size: 13.5px;
-  line-height: 1.55;
-  color: var(--text);
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
+/* The two per-title actions sit on the poster and are always visible: with a
+   finger or a D-pad there is no hover to reveal them from behind. */
 .catActions {
+  position: absolute;
+  right: 6px;
+  bottom: 6px;
   display: flex;
-  gap: 8px;
-  margin-top: auto;
-  padding-top: 12px;
+  gap: 6px;
 }
 
 .catIconBtn {
-  width: 38px;
-  height: 38px;
+  width: var(--tap);
+  height: var(--tap);
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 9px;
+  border-radius: 10px;
   border: 1px solid var(--line-strong);
-  background: var(--surface-2);
-  color: var(--text);
+  background: rgba(10, 7, 7, 0.72);
+  backdrop-filter: blur(6px);
+  color: var(--title);
   cursor: pointer;
   transition: color 0.2s ease, border-color 0.2s ease, background 0.2s ease;
 }
 
-.catIconBtn:hover {
+.catIconBtnOn {
   color: var(--ember);
-  border-color: rgba(255, 77, 90, 0.45);
-  background: rgba(255, 77, 90, 0.08);
+  border-color: rgba(255, 77, 90, 0.55);
+  background: rgba(255, 77, 90, 0.18);
+}
+
+.catIconBtn:focus-visible {
+  color: var(--ember);
+  border-color: rgba(255, 77, 90, 0.6);
+}
+
+@media (hover: hover) {
+  .catIconBtn:hover {
+    color: var(--ember);
+    border-color: rgba(255, 77, 90, 0.45);
+    background: rgba(255, 77, 90, 0.16);
+  }
 }
 
 /* ───────── filter panel ───────── */
+/* A full-width band above the grid rather than a sidebar: the grid keeps the
+   whole shell width at every size, and on a phone the filters collapse behind
+   one control instead of burying the catalog under three chip walls. */
 .filterPanel {
-  position: sticky;
-  top: 90px;
   display: flex;
   flex-direction: column;
-  gap: 22px;
-  padding: 22px;
-  border-radius: 16px;
+  gap: 14px;
+  padding: 14px 16px;
+  border-radius: var(--radius-card);
   border: 1px solid var(--line);
   background: var(--surface);
+}
+
+.filterToggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
+  min-height: var(--tap);
+  padding: 0 2px;
+  border: none;
+  background: transparent;
+  color: var(--title);
+  font-size: var(--step-0);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.filterToggleLeft {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.filterCount {
+  padding: 2px 9px;
+  border-radius: 999px;
+  font-size: var(--step--1);
+  font-weight: 700;
+  color: #fff;
+  background: linear-gradient(120deg, var(--ember), var(--crimson));
+}
+
+.filterBody {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 18px;
+}
+
+@media (min-width: 600px) {
+  .filterBody {
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    align-items: start;
+  }
 }
 
 .filterSection {
@@ -1468,13 +2016,13 @@
 }
 
 .filterTitle {
-  font-size: 15px;
+  font-size: var(--step-0);
   font-weight: 700;
 }
 
 .filterHint {
   margin: 5px 0 12px;
-  font-size: 12px;
+  font-size: var(--step--1);
   line-height: 1.45;
   color: var(--muted);
 }
@@ -1486,9 +2034,12 @@
 }
 
 .chip {
-  padding: 7px 13px;
-  border-radius: 9px;
-  font-size: 12.5px;
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--tap);
+  padding: 0 14px;
+  border-radius: 10px;
+  font-size: var(--step--1);
   font-weight: 600;
   color: var(--text);
   border: 1px solid var(--line-strong);
@@ -1497,9 +2048,16 @@
   transition: color 0.18s ease, border-color 0.18s ease, background 0.18s ease;
 }
 
-.chip:hover {
+.chip:focus-visible {
   color: var(--title);
   border-color: rgba(255, 77, 90, 0.35);
+}
+
+@media (hover: hover) {
+  .chip:hover {
+    color: var(--title);
+    border-color: rgba(255, 77, 90, 0.35);
+  }
 }
 
 .chipOn {
@@ -1509,20 +2067,27 @@
 }
 
 .filterReset {
-  height: 44px;
+  min-height: var(--tap);
   border: 1px solid var(--line-strong);
   border-radius: 11px;
   background: transparent;
   color: var(--text);
-  font-size: 13px;
+  font-size: var(--step--1);
   font-weight: 600;
   cursor: pointer;
   transition: color 0.2s ease, border-color 0.2s ease;
 }
 
-.filterReset:hover {
+.filterReset:focus-visible {
   color: var(--title);
   border-color: rgba(255, 77, 90, 0.4);
+}
+
+@media (hover: hover) {
+  .filterReset:hover {
+    color: var(--title);
+    border-color: rgba(255, 77, 90, 0.4);
+  }
 }
 
 .filterReset:disabled {
@@ -1530,29 +2095,105 @@
   cursor: default;
 }
 
-/* ───────── catalog responsive ───────── */
-@media (max-width: 900px) {
-  .catGrid {
-    grid-template-columns: 1fr;
-  }
-  .filterPanel {
-    position: static;
-    order: -1;
-  }
+/* ════════════════════ TV — the 10-foot layout ════════════════════
+   Never a media query: a 4K monitor is 50cm from your face, a 1080p TV is
+   three metres away. `data-device="tv"` is the only signal that means couch. */
+html[data-device="tv"] .hero {
+  min-height: 76vh;
 }
 
-@media (max-width: 560px) {
-  .catCard {
-    flex-direction: column;
-  }
-  .catPoster {
-    width: 100%;
-    max-width: 160px;
-    aspect-ratio: 16 / 9;
-  }
+html[data-device="tv"] .heroContent {
+  /* 680px is 35% of a 1080p frame and 18% of a 4K one — the column has to keep
+     its share, or the copy shrinks into the corner of a big panel. */
+  max-width: clamp(420px, 35.4vw, 1400px);
 }
 
-/* ───────── profile dropdown menu ───────── */
+html[data-device="tv"] .heroTitle {
+  font-size: var(--step-4);
+}
+
+html[data-device="tv"] .heroDesc {
+  max-width: 46ch;
+  font-size: var(--step-0);
+  -webkit-line-clamp: 2;
+}
+
+html[data-device="tv"] .heroBtns {
+  gap: clamp(16px, 1.05vw, 40px);
+  margin-top: clamp(20px, 1.67vw, 64px);
+}
+
+html[data-device="tv"] .btnPlay,
+html[data-device="tv"] .btnInfo {
+  min-height: var(--tap-lg);
+  padding: 0 clamp(30px, 2.3vw, 92px);
+  font-size: var(--step-1);
+  border-radius: clamp(10px, 0.63vw, 24px);
+}
+
+html[data-device="tv"] .rowTitle {
+  font-size: var(--step-2);
+}
+
+html[data-device="tv"] .card {
+  /* The ceiling used to be 320px, so a 4K set drew twice as many cards at half
+     the size. The vw term governs; the ceiling only guards absurd 8K widths. */
+  width: clamp(240px, 17vw, 680px);
+}
+
+html[data-device="tv"] .cardTitle {
+  font-size: var(--step-1);
+}
+
+html[data-device="tv"] .cardInfo {
+  opacity: 1;
+  transform: none;
+  padding: 16px;
+}
+
+html[data-device="tv"] .cBtn {
+  width: clamp(40px, 2.1vw, 84px);
+  height: clamp(40px, 2.1vw, 84px);
+}
+
+/* The pagers are hidden for touch, but a remote has no scroll wheel at all —
+   on TV they are the only way to walk a row, so they are always on and big. */
+html[data-device="tv"] .rowArrow {
+  display: flex;
+  opacity: 1;
+  width: clamp(72px, 6vw, 230px);
+}
+
+html[data-device="tv"] .catList {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: clamp(28px, 2.1vw, 84px) clamp(20px, 1.46vw, 58px);
+}
+
+html[data-device="tv"] .catTitle {
+  font-size: var(--step-1);
+}
+
+html[data-device="tv"] .catMeta {
+  font-size: var(--step-0);
+}
+
+html[data-device="tv"] .viewHeading {
+  font-size: var(--step-3);
+}
+
+html[data-device="tv"] .modal {
+  width: min(1200px, 100%);
+}
+
+html[data-device="tv"] .modalDesc,
+html[data-device="tv"] .modalTags,
+html[data-device="tv"] .modalMeta {
+  font-size: var(--step-0);
+}
+
+/* ───────── profile dropdown menu ─────────
+   Click/Enter driven, never hover-driven: a remote has no hover, and this menu
+   is the only route to the TV-mode switch. */
 .profileWrap {
   position: relative;
 }
@@ -1565,7 +2206,10 @@
   top: calc(100% + 10px);
   right: 0;
   z-index: 60;
-  min-width: 220px;
+  min-width: 240px;
+  /* Never wider than the viewport minus its own gutters — at 390px the menu
+     stays inside the shell instead of pushing a horizontal scrollbar. */
+  max-width: calc(100vw - 2 * var(--shell-pad));
   padding: 6px;
   border-radius: 12px;
   border: 1px solid rgba(255, 255, 255, 0.1);
@@ -1578,6 +2222,12 @@
   from { opacity: 0; transform: translateY(-6px); }
   to { opacity: 1; transform: translateY(0); }
 }
+html[data-device="tv"] .profileMenu {
+  top: calc(100% + 16px);
+  min-width: 420px;
+  padding: 10px;
+  border-radius: 18px;
+}
 .profileHead {
   display: flex;
   flex-direction: column;
@@ -1587,12 +2237,12 @@
   margin-bottom: 4px;
 }
 .profileName {
-  font-size: 14px;
+  font-size: var(--step-0);
   font-weight: 700;
   color: #fff;
 }
 .profileEmail {
-  font-size: 12px;
+  font-size: var(--step--1);
   color: rgba(220, 214, 214, 0.55);
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1603,26 +2253,52 @@
   align-items: center;
   gap: 10px;
   width: 100%;
+  min-height: var(--tap);
   padding: 9px 10px;
   border: none;
   border-radius: 8px;
   background: transparent;
   color: #e9e3e3;
-  font-size: 13.5px;
+  font-size: var(--step-0);
   text-align: left;
+  text-decoration: none;
   cursor: pointer;
   transition: background 0.15s, color 0.15s;
 }
-.profileItem:hover {
-  background: rgba(255, 255, 255, 0.06);
+@media (hover: hover) {
+  .profileItem:hover {
+    background: rgba(255, 255, 255, 0.06);
+    color: #fff;
+  }
+}
+.profileItem:focus-visible {
+  background: rgba(255, 255, 255, 0.1);
   color: #fff;
+}
+html[data-device="tv"] .profileItem {
+  min-height: var(--tap-lg);
+  gap: 16px;
+  padding: 12px 16px;
+  border-radius: 12px;
 }
 .profileDanger {
   color: #ff7a85;
 }
-.profileDanger:hover {
+@media (hover: hover) {
+  .profileDanger:hover {
+    background: rgba(230, 34, 51, 0.14);
+    color: #ff9aa3;
+  }
+}
+.profileDanger:focus-visible {
   background: rgba(230, 34, 51, 0.14);
   color: #ff9aa3;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .profileMenu {
+    animation: none;
+  }
 }
 
 /* Allow <button> to share the .mobileLink look (logout in mobile menu). */
@@ -1641,10 +2317,11 @@
 .searchBox {
   display: flex;
   align-items: center;
+  min-width: 0;
   border-radius: 999px;
   border: 1px solid transparent;
   background: transparent;
-  transition: border-color 0.2s ease, background 0.2s ease, width 0.25s ease;
+  transition: border-color 0.2s ease, background 0.2s ease;
 }
 .searchBoxOpen {
   border-color: var(--line);
@@ -1652,19 +2329,42 @@
   backdrop-filter: blur(8px);
 }
 .searchInput {
+  flex: 0 0 auto;
   width: 0;
+  min-width: 0;
   padding: 0;
   border: none;
   background: transparent;
   color: #fff;
   font: inherit;
-  font-size: 14px;
+  font-size: var(--step-0);
   outline: none;
-  transition: width 0.25s ease, padding 0.25s ease;
+  transition: width 0.25s ease, padding 0.25s ease, flex-grow 0.25s ease;
+}
+/* Phone: the open field takes whatever room is left in the bar. A fixed width
+   here is what used to push the avatar off a 390px screen. */
+.searchBoxOpen {
+  flex: 1 1 auto;
 }
 .searchBoxOpen .searchInput {
-  width: clamp(140px, 22vw, 260px);
-  padding: 8px 12px 8px 4px;
+  flex: 1 1 0;
+  width: auto;
+  /* The field is a tap target in its own right, not just the button. */
+  min-height: var(--tap);
+  padding: 10px 12px 10px 4px;
+}
+@media (min-width: 600px) {
+  .searchBoxOpen {
+    flex: 0 1 auto;
+  }
+  .searchBoxOpen .searchInput {
+    flex: 0 0 auto;
+    width: clamp(140px, 20vw, 280px);
+  }
+}
+html[data-device="tv"] .searchBoxOpen .searchInput {
+  width: 420px;
+  padding: 14px 20px 14px 6px;
 }
 
 /* ───────── My List / Like active state ───────── */
@@ -1677,10 +2377,12 @@
 /* ───────── loading skeletons (no mock flash) ───────── */
 .heroSkeleton {
   position: relative;
-  height: clamp(420px, 70vh, 720px);
+  min-height: clamp(420px, 70vh, 720px);
+  min-height: clamp(420px, 70svh, 720px);
   display: flex;
   align-items: flex-end;
-  padding: 0 clamp(16px, 4vw, 56px) clamp(60px, 10vh, 120px);
+  padding: 0 calc(var(--shell-pad) + var(--safe-right)) clamp(60px, 10vh, 120px)
+    calc(var(--shell-pad) + var(--safe-left));
   background: linear-gradient(180deg, #140f0f, var(--bg));
 }
 .skelHeroText {
@@ -1694,7 +2396,12 @@
   display: flex;
   flex-direction: column;
   gap: 28px;
-  padding: 28px clamp(16px, 4vw, 56px) 80px;
+  width: 100%;
+  max-width: var(--shell-max);
+  margin-inline: auto;
+  padding: 28px calc(var(--shell-pad) + var(--safe-right))
+    calc(var(--mobile-nav-h) + var(--safe-bottom) + 80px)
+    calc(var(--shell-pad) + var(--safe-left));
 }
 .skelRow {
   display: flex;
@@ -1703,7 +2410,7 @@
 }
 .skelCard {
   flex: 0 0 auto;
-  width: clamp(150px, 15vw, 220px);
+  width: clamp(132px, 40vw, 168px);
   aspect-ratio: 2 / 3;
   border-radius: 10px;
 }
@@ -1727,11 +2434,11 @@
   flex-direction: column;
   align-items: center;
   gap: 8px;
-  padding: 100px 20px;
+  padding: clamp(56px, 12vh, 100px) var(--shell-pad);
   text-align: center;
 }
 .emptyList p {
-  font-size: 22px;
+  font-size: var(--step-2);
   font-weight: 700;
   color: var(--title);
 }

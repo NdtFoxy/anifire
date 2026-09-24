@@ -4,634 +4,442 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { gsap } from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { ScrollToPlugin } from "gsap/ScrollToPlugin";
 import {
-  ArrowRight,
-  BarChart3,
-  Boxes,
-  Database,
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
   Flame,
-  Globe,
-  LayoutGrid,
-  Mail,
-  MessageCircle,
-  Palette,
+  Info,
   Play,
-  Rocket,
-  Send,
-  Server,
+  Plus,
+  Sparkles,
   Star,
-  Subtitles,
-  UploadCloud,
-  Users,
-  Wand2,
+  Volume2,
 } from "lucide-react";
-import HeroBeam from "@/components/home/HeroBeam";
-import RedTunnel from "@/components/home/RedTunnel";
+import { useReveal } from "@/lib/useReveal";
+import { fetchRows, fetchMovies } from "@/data/animeApi";
+import type { Movie, Row } from "@/data/mockAnime";
 import { useAuth } from "@/components/auth/AuthProvider";
 import styles from "./home.module.css";
 
-const stackCards = [
-  {
-    kicker: "Frontend",
-    title: "Next.js 16 · React 19",
-    text: "App Router, the React Compiler and server components — instant navigation and a cinematic UI with zero bloat.",
-    icon: LayoutGrid,
-    visual: "globe",
-  },
-  {
-    kicker: "Backend",
-    title: "Spring Boot · Java 21",
-    text: "A clean controller → service → repository architecture running on Java 21 virtual threads.",
-    icon: Server,
-    visual: "rings",
-  },
-  {
-    kicker: "Data",
-    title: "PostgreSQL · Jikan API",
-    text: "Top anime is pulled from MyAnimeList and persisted with soft deletes, so the catalog stays consistent.",
-    icon: Database,
-    visual: "data",
-  },
-  {
-    kicker: "Motion",
-    title: "Three.js · GSAP · Tailwind v4",
-    text: "WebGL shaders, ScrollTrigger choreography and utility-first styling. The whole page is one continuous light flow.",
-    icon: Boxes,
-    visual: "logos",
-  },
-] as const;
+/**
+ * Public home page. Everything here is browsable without an account: the hero,
+ * the Top 10 and every row come from the public catalog endpoints, so a first
+ * time visitor sees the real library instead of a marketing promise. Sign-in is
+ * only demanded at the moment it is actually needed — pressing Play.
+ */
 
-const dashStats = [
-  { label: "Total streams", value: "1.24M", delta: "+18.2%" },
-  { label: "Active viewers", value: "48,920", delta: "+6.4%" },
-  { label: "Uptime", value: "99.98%", delta: "30d" },
-  { label: "Titles served", value: "2,350", delta: "+120" },
-];
-
-const checklist = [
+const HERO_ROTATE_MS = 9000;
+const FAQ = [
   {
-    title: "Upload your catalog",
-    text: "Import titles from the Jikan API or your own library in a few clicks.",
-    icon: UploadCloud,
+    q: "What is Anifire?",
+    a: "A streaming service for anime: series and films in HD with multi-language subtitles and dubs, a personal list, and resume-where-you-left-off across every device.",
   },
   {
-    title: "Brand it your way",
-    text: "Swap colors, banners and typography to match your platform identity.",
-    icon: Palette,
+    q: "How much does it cost?",
+    a: "Browsing the catalogue is free. Watching needs a free account; an optional ad-free plan removes the pre-roll sponsor spots for good.",
   },
   {
-    title: "Go live in minutes",
-    text: "Ship a production-grade streaming front end without touching infra.",
-    icon: Rocket,
+    q: "Where can I watch?",
+    a: "Anywhere with a browser — phone, tablet, laptop, ultrawide desktop and TV. The TV layout is driven entirely by the remote's D-pad.",
+  },
+  {
+    q: "Can I cancel anytime?",
+    a: "Yes. The free tier never charges, and a paid plan stays active until the end of the period you already paid for.",
   },
 ];
 
-const features = [
-  {
-    title: "Deep Audience Analytics",
-    text: "Track viewership in real time, watch server load during premieres, and see exactly which titles keep your audience hooked.",
-    icon: BarChart3,
-    image: "/hero-1.png",
-    tag: "Analytics",
-  },
-  {
-    title: "Dynamic Curation Tools",
-    text: "Update homepage banners, highlight seasonal releases and build custom collections that bring viewers back.",
-    icon: Wand2,
-    image: "/hero-2.png",
-    tag: "Curation",
-  },
-  {
-    title: "Advanced Localization",
-    text: "Attach multiple subtitle tracks (ASS/SRT) and manage dub audio per episode — a service built for a global fandom.",
-    icon: Subtitles,
-    image: "/hero-3.png",
-    tag: "Localization",
-  },
-  {
-    title: "Users & Subscriptions",
-    text: "Manage accounts, track premium subscriptions and securely monitor active sessions from a single panel.",
-    icon: Users,
-    image: "/furnace-bg.png",
-    tag: "Accounts",
-  },
-] as const;
-
-const footerNavigation = [
-  { label: "Stack", href: "#stack" },
-  { label: "Platform", href: "#platform" },
-  { label: "In action", href: "#action" },
-  { label: "Streaming", href: "/stream" },
-  { label: "Pricing", href: "#" },
-];
-const footerProfile = [
-  { label: "Login", href: "/login" },
-  { label: "Sign up", href: "/register" },
-  { label: "Account", href: "/login" },
-  { label: "Watchlist", href: "/stream" },
-  { label: "Settings", href: "/stream" },
-];
-
-export default function Home() {
+export default function HomePage() {
   const router = useRouter();
-  const { user, loading } = useAuth();
-  const rootRef = useRef<HTMLElement>(null);
-  const pinRef = useRef<HTMLDivElement>(null);
-  const igniteScrollRef = useRef<HTMLDivElement>(null);
-  const featureTriggerRef = useRef<ScrollTrigger | null>(null);
-  const [activeFeature, setActiveFeature] = useState(0);
+  const { user } = useAuth();
+  const [rows, setRows] = useState<Row[]>([]);
+  const [featured, setFeatured] = useState<Movie[]>([]);
+  const [top10, setTop10] = useState<Movie[]>([]);
+  const [heroIndex, setHeroIndex] = useState(0);
+  const [openFaq, setOpenFaq] = useState<number | null>(0);
+  const [scrolled, setScrolled] = useState(false);
+  const pageRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
-    if (!loading && user) router.replace("/stream");
-  }, [loading, router, user]);
-
-  useEffect(() => {
-    const root = rootRef.current;
-    if (!root) return;
-
-    gsap.registerPlugin(ScrollTrigger, ScrollToPlugin);
-    const reduceMotion = window.matchMedia(
-      "(prefers-reduced-motion: reduce)"
-    ).matches;
-
-    const mm = gsap.matchMedia();
-
-    const ctx = gsap.context(() => {
-      if (!reduceMotion) {
-        gsap
-          .timeline({ defaults: { ease: "power3.out" } })
-          .from(`.${styles.kicker}`, { y: 24, opacity: 0, duration: 0.7 })
-          .from(
-            `.${styles.heroWord}`,
-            { y: 60, opacity: 0, duration: 0.9, stagger: 0.12 },
-            "-=0.3"
-          )
-          .from(`.${styles.heroSub}`, { y: 24, opacity: 0, duration: 0.7 }, "-=0.4")
-          .from(
-            `.${styles.heroCtas} > *`,
-            { y: 20, opacity: 0, duration: 0.6, stagger: 0.1 },
-            "-=0.4"
-          )
-          .from(
-            `.${styles.heroMeta} > *`,
-            { opacity: 0, duration: 0.8, stagger: 0.15 },
-            "-=0.3"
-          );
-
-        gsap.utils.toArray<HTMLElement>("[data-reveal]").forEach((el) => {
-          gsap.from(el, {
-            y: 48,
-            opacity: 0,
-            duration: 0.9,
-            ease: "power3.out",
-            scrollTrigger: { trigger: el, start: "top 84%" },
-          });
-        });
-
-        const frame = root.querySelector(`.${styles.videoFrame}`);
-        if (frame) {
-          gsap.fromTo(
-            frame,
-            { scale: 0.84, yPercent: 4 },
-            {
-              scale: 1,
-              yPercent: 0,
-              ease: "none",
-              scrollTrigger: {
-                trigger: frame,
-                start: "top 90%",
-                end: "top 30%",
-                scrub: true,
-              },
-            }
-          );
-        }
-      }
-
-      // Pinned, scroll-driven feature highlight — desktop only.
-      mm.add("(min-width: 901px)", () => {
-        const scroller = igniteScrollRef.current;
-        const pin = pinRef.current;
-        if (!scroller || !pin) return;
-        const trigger = ScrollTrigger.create({
-          trigger: scroller,
-          start: "top top",
-          end: "bottom bottom",
-          pin: pin,
-          pinSpacing: true,
-          onUpdate: (self) => {
-            const idx = Math.min(
-              features.length - 1,
-              Math.floor(self.progress * features.length)
-            );
-            setActiveFeature(idx);
-          },
-        });
-        featureTriggerRef.current = trigger;
-        return () => {
-          trigger.kill();
-          featureTriggerRef.current = null;
-        };
+    let cancelled = false;
+    Promise.all([fetchMovies(), fetchRows()])
+      .then(([movies, catalogueRows]) => {
+        if (cancelled) return;
+        const ranked = [...movies].sort((a, b) => b.match - a.match);
+        setFeatured(ranked.filter((m) => m.heroImageUrl).slice(0, 5));
+        setTop10(ranked.slice(0, 10));
+        setRows(catalogueRows.slice(0, 6));
+      })
+      .catch(() => {
+        /* fetchMovies/fetchRows already fall back to a bundled catalogue */
       });
-
-      ScrollTrigger.refresh();
-    }, root);
-
-    const refresh = () => ScrollTrigger.refresh();
-    window.addEventListener("load", refresh);
-    const tid = window.setTimeout(refresh, 600);
-
     return () => {
-      window.removeEventListener("load", refresh);
-      window.clearTimeout(tid);
-      mm.revert();
-      ctx.revert();
+      cancelled = true;
     };
   }, []);
 
-  // Clicking a feature scrolls the pinned section to that segment (desktop),
-  // or just activates it (mobile, where the section is unpinned).
-  const handleFeatureClick = useCallback((i: number) => {
-    setActiveFeature(i);
-    const trigger = featureTriggerRef.current;
-    if (trigger) {
-      const target =
-        trigger.start +
-        ((i + 0.5) / features.length) * (trigger.end - trigger.start);
-      gsap.to(window, {
-        duration: 0.7,
-        ease: "power2.inOut",
-        scrollTo: { y: target, autoKill: false },
-      });
-    }
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 24);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
+  // Hero rotation. Paused when the tab is hidden so a background tab does not
+  // burn through the list, and disabled outright for reduced-motion users.
+  useEffect(() => {
+    if (featured.length < 2) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const id = window.setInterval(() => {
+      if (document.hidden) return;
+      setHeroIndex((i) => (i + 1) % featured.length);
+    }, HERO_ROTATE_MS);
+    return () => window.clearInterval(id);
+  }, [featured.length]);
+
+  // Reveals are shared with the rest of the app now — see lib/useReveal.
+  useReveal(pageRef, [rows.length, top10.length]);
+
+  // Hero copy animates in on every rotation, independent of the reveals above.
+  useEffect(() => {
+    if (!featured.length) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const ctx = gsap.context(() => {
+      gsap.fromTo(
+        "[data-hero-copy] > *",
+        { y: 18, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.55, stagger: 0.07, ease: "power3.out" }
+      );
+    }, pageRef);
+    return () => ctx.revert();
+  }, [heroIndex, featured.length]);
+
+  const hero = featured[heroIndex];
+
+  /** Play is the one action that needs an account — send guests to sign-in with
+   *  a next= hop so they land on the episode they picked, not on a dashboard. */
+  const play = useCallback(
+    (movie: Movie) => {
+      const target = `/watch/${movie.id}`;
+      router.push(user ? target : `/login?next=${encodeURIComponent(target)}`);
+    },
+    [router, user]
+  );
+
   return (
-    <main ref={rootRef} className={styles.page}>
-      <div className={styles.grain} />
-
-      {/* ---------- NAV ---------- */}
-      <nav className={styles.nav}>
-        <Link href="/" className={styles.logo} aria-label="Anifire home">
-          <span className={styles.logoMark}>
-            <Flame size={22} fill="currentColor" />
+    <main id="main" className={styles.page} ref={pageRef}>
+      {/* ═══════════ NAV ═══════════ */}
+      <header className={`${styles.nav} ${scrolled ? styles.navSolid : ""}`}>
+        <Link href="/" className={styles.brand}>
+          <span className={styles.brandMark}>
+            <Flame size={18} fill="currentColor" />
           </span>
-          <span className={styles.logoText}>Anifire</span>
+          Anifire
         </Link>
-
-        <div className={styles.navLinks}>
-          <a href="#stack">Stack</a>
-          <a href="#platform">Platform</a>
-          <a href="#action">In action</a>
-        </div>
-
+        <nav className={styles.navLinks}>
+          <a href="#trending">Trending</a>
+          <a href="#browse">Browse</a>
+          <a href="#faq">FAQ</a>
+        </nav>
         <div className={styles.navActions}>
-          <Link href="/login" className={styles.login}>
-            Login
-          </Link>
-          <Link href="/register" className={styles.signup}>
-            Sign up
-          </Link>
+          {user ? (
+            <Link href="/stream" className={styles.navPrimary} data-tap>
+              Go to catalogue
+            </Link>
+          ) : (
+            <>
+              <Link href="/login" className={styles.navGhost} data-tap>
+                Sign in
+              </Link>
+              <Link href="/register" className={styles.navPrimary} data-tap>
+                Join free
+              </Link>
+            </>
+          )}
         </div>
-      </nav>
+      </header>
 
-      {/* ---------- HERO ---------- */}
-      <section className={styles.hero}>
-        <HeroBeam className={styles.heroCanvas} />
-        <div className={styles.heroVignette} />
+      {/* ═══════════ HERO ═══════════ */}
+      <section className={styles.hero} aria-label="Featured title">
+        <div className={styles.heroStage}>
+          {featured.map((movie, i) => (
+            <div
+              key={movie.id}
+              className={styles.heroSlide}
+              data-active={i === heroIndex}
+              aria-hidden={i !== heroIndex}
+            >
+              <img src={movie.heroImageUrl} alt="" className={styles.heroImg} />
+            </div>
+          ))}
+          <div className={styles.heroScrim} />
+          <div className={styles.heroVignette} />
+        </div>
 
         <div className={styles.heroInner}>
-          <p className={styles.kicker}>Anime streaming platform · 2026</p>
-
-          <h1 className={styles.heroHeadline}>
-            <span className={styles.heroWord}>Stream</span>
-            <span className={styles.heroWordGap} aria-hidden="true" />
-            <span className={styles.heroWord}>Onward</span>
-          </h1>
-
-          <p className={styles.heroSub}>
-            A cinematic gateway into anime. The light leads from brand to playback —
-            a fast start, a dark interface and a full streaming showcase.
-          </p>
-
-          <div className={styles.heroCtas}>
-            <Link href="/stream" className={styles.primaryCta}>
-              <Play size={18} fill="currentColor" />
-              Start watching
-            </Link>
-            <a href="#stack" className={styles.secondaryCta}>
-              Explore the stack
-              <ArrowRight size={18} />
-            </a>
-          </div>
-        </div>
-
-        <div className={styles.heroMeta}>
-          <span>Anifire Studio</span>
-          <span>Always · Onward · 2026</span>
-        </div>
-      </section>
-
-      {/* ---------- VIDEO ---------- */}
-      {/* ---------- STACK / BENTO ---------- */}
-      <section id="stack" className={styles.stackSection}>
-        <div className={styles.sectionHead} data-reveal>
-          <p className={styles.eyebrow}>The stack behind the fire</p>
-          <h2 className={styles.sectionTitle}>
-            Built on a modern, full-stack foundation.
-          </h2>
-          <p className={styles.sectionLead}>
-            Anifire is a finished product, not a landing page: a typed front end, a
-            strict back end and a real database — held together by one design
-            language.
-          </p>
-        </div>
-
-        <div className={styles.bentoGrid}>
-          {stackCards.map((card) => {
-            const Icon = card.icon;
-            return (
-              <article
-                key={card.title}
-                className={`${styles.bentoCard} ${styles[card.visual]}`}
-                data-reveal
-              >
-                <div className={styles.cardTop}>
-                  <span className={styles.cardIcon}>
-                    <Icon size={18} />
-                  </span>
-                  <span className={styles.cardKicker}>{card.kicker}</span>
+          <div className={styles.heroCopy} data-hero-copy>
+            <span className={styles.heroEyebrow}>
+              <Sparkles size={14} /> No account needed to look around
+            </span>
+            {hero ? (
+              <>
+                <h1 className={styles.heroTitle}>{hero.title}</h1>
+                <div className={styles.heroMeta}>
+                  <span className={styles.heroMatch}>{hero.match}% match</span>
+                  <span>{hero.year}</span>
+                  <span className={styles.heroPill}>{hero.rating}</span>
+                  <span>{hero.duration}</span>
+                  <span className={styles.heroPill}>HD</span>
                 </div>
-                <h3 className={styles.cardTitle}>{card.title}</h3>
-                <p className={styles.cardText}>{card.text}</p>
-                <div className={styles.cardVisual} aria-hidden="true" />
-              </article>
-            );
-          })}
-        </div>
-      </section>
-
-      {/* ---------- QUALITY / IMPRESSION ---------- */}
-      <section id="quality" className={styles.qualitySection}>
-        <div className={styles.qualityHead} data-reveal>
-          <p className={styles.eyebrow}>Quality you can trust</p>
-          <h2 className={styles.sectionTitle}>
-            Built to scale.
-            <br />
-            And built to last.
-          </h2>
-          <p className={styles.sectionLead}>
-            Every layer follows best practices out of the box — blazing-fast
-            delivery, real persistence and motion that never gets in the way.
-          </p>
-        </div>
-
-        <div className={styles.planetStage} aria-hidden="true">
-          <div className={styles.planet} />
-          <div className={styles.planetGlow} />
-        </div>
-
-        <div className={styles.impression} data-reveal>
-          <h3>Make the right impression</h3>
-          <p>
-            Anifire makes it effortless to launch a streaming front end that
-            resonates with a design-centric, premium audience.
-          </p>
-        </div>
-
-        <div className={styles.showcase}>
-          <ul className={styles.checklist} data-reveal>
-            {checklist.map((item) => {
-              const Icon = item.icon;
-              return (
-                <li key={item.title} className={styles.checkItem}>
-                  <span className={styles.checkIcon}>
-                    <Icon size={18} />
-                  </span>
-                  <div>
-                    <h4>{item.title}</h4>
-                    <p>{item.text}</p>
-                  </div>
-                </li>
-              );
-            })}
-            <Link href="/stream" className={styles.primaryCta}>
-              <Play size={16} fill="currentColor" /> Launch the platform
-            </Link>
-          </ul>
-
-          <div className={styles.dashboard} data-reveal>
-            <div className={styles.dashboardBar}>
-              <span className={styles.dashDot} />
-              <span>Anifire · Dashboard</span>
-            </div>
-            <div className={styles.dashboardStats}>
-              {dashStats.map((s) => (
-                <div key={s.label} className={styles.statCell}>
-                  <span className={styles.statLabel}>{s.label}</span>
-                  <span className={styles.statValue}>{s.value}</span>
-                  <span className={styles.statDelta}>{s.delta}</span>
-                </div>
-              ))}
-            </div>
-            <div className={styles.dashboardChart} aria-hidden="true">
-              {[42, 64, 38, 78, 56, 90, 70, 84].map((h, i) => (
-                <span key={i} style={{ height: `${h}%` }} />
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ---------- IGNITE / STICKY FEATURES ---------- */}
-      <section id="platform" className={styles.igniteSection}>
-        <div className={styles.igniteIntro} data-reveal>
-          <p className={styles.eyebrow}>Built for operators</p>
-          <h2 className={styles.sectionTitle}>Ignite your streaming platform.</h2>
-          <p className={styles.sectionLead}>
-            Anifire is engineered for maximum uptime and blazing-fast delivery. We
-            handle the heavy lifting — you bring the best anime to your audience.
-          </p>
-        </div>
-
-        <div ref={igniteScrollRef} className={styles.igniteScroll}>
-          <div ref={pinRef} className={styles.ignitePin}>
-            <div className={styles.igniteGrid}>
-              <ul className={styles.featureList}>
-                {features.map((f, i) => {
-                  const Icon = f.icon;
-                  const active = i === activeFeature;
-                  return (
-                    <li
-                      key={f.title}
-                      className={`${styles.featureItem} ${
-                        active ? styles.featureActive : ""
-                      }`}
-                      onClick={() => handleFeatureClick(i)}
-                      role="button"
-                      tabIndex={0}
-                      aria-pressed={active}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter" || e.key === " ") {
-                          e.preventDefault();
-                          handleFeatureClick(i);
-                        }
-                      }}
-                    >
-                      <div className={styles.featureHead}>
-                        <span className={styles.featureIcon}>
-                          <Icon size={18} />
-                        </span>
-                        <h3>{f.title}</h3>
-                      </div>
-                      <p>{f.text}</p>
-                      <span className={styles.featureBar} aria-hidden="true" />
-                    </li>
-                  );
-                })}
-              </ul>
-
-              <div className={styles.mediaPanel}>
-                {features.map((f, i) => (
-                  <div
-                    key={f.title}
-                    className={`${styles.mediaItem} ${
-                      i === activeFeature ? styles.mediaActive : ""
-                    }`}
-                    style={{ backgroundImage: `url(${f.image})` }}
+                <p className={styles.heroDesc}>{hero.description}</p>
+                <div className={styles.heroBtns}>
+                  <button
+                    type="button"
+                    className={styles.playBtn}
+                    onClick={() => play(hero)}
                   >
-                    <div className={styles.mediaScrim} />
-                    <span className={styles.mediaTag}>{f.tag}</span>
-                    <span className={styles.mediaTitle}>{f.title}</span>
-                  </div>
-                ))}
-                <div className={styles.mediaProgress}>
-                  {features.map((_, i) => (
-                    <button
-                      key={i}
-                      type="button"
-                      aria-label={`Show feature ${i + 1}`}
-                      className={i === activeFeature ? styles.dotActive : ""}
-                      onClick={() => handleFeatureClick(i)}
-                    />
-                  ))}
+                    <Play size={19} fill="currentColor" /> Play
+                  </button>
+                  <Link href="/register" className={styles.infoBtn} data-tap>
+                    <Info size={19} /> Start free
+                  </Link>
                 </div>
+              </>
+            ) : (
+              <div className={styles.heroSkeleton} aria-hidden="true">
+                <span />
+                <span />
+                <span />
               </div>
-            </div>
+            )}
           </div>
+
+          {featured.length > 1 ? (
+            <div className={styles.heroDots} role="tablist" aria-label="Featured titles">
+              {featured.map((movie, i) => (
+                <button
+                  key={movie.id}
+                  type="button"
+                  role="tab"
+                  aria-selected={i === heroIndex}
+                  aria-label={movie.title}
+                  className={styles.heroDot}
+                  data-on={i === heroIndex}
+                  onClick={() => setHeroIndex(i)}
+                >
+                  <span style={{ animationDuration: `${HERO_ROTATE_MS}ms` }} />
+                </button>
+              ))}
+            </div>
+          ) : null}
         </div>
       </section>
 
-      {/* ---------- RED TUNNEL CTA ---------- */}
-      <section id="action" className={styles.tunnelSection}>
-        <RedTunnel className={styles.tunnelCanvas} />
-        <div className={styles.tunnelInner}>
-          <Link href="/stream" className={styles.watchBtn}>
-            <Play size={16} fill="currentColor" /> Watch now
-          </Link>
-          <h2 className={styles.tunnelTitle}>See it in action</h2>
-
-          <div className={styles.browserMock} data-reveal>
-            <div className={styles.browserChrome}>
-              <span className={styles.browserDots}>
-                <i />
-                <i />
-                <i />
+      {/* ═══════════ TOP 10 ═══════════ */}
+      <section id="trending" className={styles.section} data-reveal>
+        <div className={styles.sectionHead}>
+          <h2 className={styles.sectionTitle}>Top 10 this week</h2>
+          <span className={styles.sectionNote}>Ranked by viewer match</span>
+        </div>
+        <Rail>
+          {top10.map((movie, i) => (
+            <article key={movie.id} className={styles.rankCard} data-focusable tabIndex={0}>
+              <span className={styles.rankNum} aria-hidden="true">
+                {i + 1}
               </span>
-              <span className={styles.browserUrl}>anifire.app / stream</span>
-            </div>
-            <div
-              className={styles.browserScreen}
-              style={{ backgroundImage: "url(/hero-2.png)" }}
-            >
-              <div className={styles.browserScrim} />
-              <div className={styles.browserOverlay}>
-                <span className={styles.browserBadge}>
-                  <Flame size={14} fill="currentColor" /> Now streaming
+              <button type="button" className={styles.rankArt} onClick={() => play(movie)}>
+                <img src={movie.imageUrl} alt={movie.title} loading="lazy" />
+                <span className={styles.rankPlay}>
+                  <Play size={18} fill="currentColor" />
                 </span>
-                <div className={styles.browserTitleRow}>
-                  <h3>Fire Blade</h3>
-                  <span className={styles.browserRating}>
-                    <Star size={14} fill="currentColor" /> 9.2
-                  </span>
-                </div>
-                <p>Fantasy · Action — the new season is already in the catalog.</p>
-                <Link href="/stream" className={styles.primaryCta}>
-                  <Play size={16} fill="currentColor" /> Enter /stream
-                </Link>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ---------- FOOTER (full width) ---------- */}
-      <footer className={styles.footer}>
-        <div className={styles.footerInner}>
-          <div className={styles.footerTop}>
-            <div className={styles.footerBrand}>
-              <div className={styles.footerLogoBox}>
-                <Flame size={48} fill="currentColor" />
-              </div>
-              <div>
-                <h2>Anifire</h2>
+              </button>
+              <div className={styles.rankBody}>
+                <h3>{movie.title}</h3>
                 <p>
-                  A fiery gateway into anime streaming: a branded landing page, fast
-                  sign-up and a seamless transition into playback. Built on Next.js,
-                  Spring Boot and PostgreSQL.
+                  <Star size={12} fill="currentColor" /> {movie.match}% ·{" "}
+                  {movie.tags[0] ?? movie.genre.split("•")[0]?.trim()}
                 </p>
               </div>
-            </div>
+            </article>
+          ))}
+        </Rail>
+      </section>
 
-            <div className={styles.footerColumns}>
-              <div>
-                <h3>Navigation</h3>
-                {footerNavigation.map((item) => (
-                  <a key={item.label} href={item.href}>
-                    {item.label}
-                  </a>
-                ))}
+      {/* ═══════════ CATALOGUE ROWS ═══════════ */}
+      <div id="browse">
+        {rows.map((row) => (
+          <section key={row.title} className={styles.section} data-reveal>
+            <div className={styles.sectionHead}>
+              <h2 className={styles.sectionTitle}>{row.title}</h2>
+              <Link href="/register" className={styles.sectionMore}>
+                See all <ChevronRight size={15} />
+              </Link>
+            </div>
+            <Rail>
+              {row.items.map((movie) => (
+                <article
+                  key={movie.id}
+                  className={styles.card}
+                  data-focusable
+                  tabIndex={0}
+                  data-reveal-child
+                >
+                  <button
+                    type="button"
+                    className={styles.cardArt}
+                    onClick={() => play(movie)}
+                    aria-label={`Play ${movie.title}`}
+                  >
+                    <img src={movie.imageUrl} alt={movie.title} loading="lazy" />
+                    <span className={styles.cardHover}>
+                      <span className={styles.cardPlay}>
+                        <Play size={16} fill="currentColor" />
+                      </span>
+                      <span className={styles.cardAdd}>
+                        <Plus size={16} />
+                      </span>
+                    </span>
+                  </button>
+                  <h3 className={styles.cardTitle}>{movie.title}</h3>
+                  <p className={styles.cardMeta}>
+                    {movie.match}%
+                    {movie.year && movie.year !== "—" ? ` · ${movie.year}` : ""}
+                    {movie.tags[0] ? ` · ${movie.tags[0]}` : ""}
+                  </p>
+                </article>
+              ))}
+            </Rail>
+          </section>
+        ))}
+      </div>
+
+      {/* ═══════════ VALUE STRIP ═══════════ */}
+      <section className={styles.value} data-reveal>
+        {[
+          {
+            icon: <Play size={22} fill="currentColor" />,
+            title: "Watch on any screen",
+            body: "Phone, tablet, laptop, ultrawide and TV — the TV layout is fully drivable from a remote.",
+          },
+          {
+            icon: <Volume2 size={22} />,
+            title: "Subs and dubs",
+            body: "Multi-language subtitle tracks with styling controls, and dubbed audio where the release has it.",
+          },
+          {
+            icon: <Flame size={22} fill="currentColor" />,
+            title: "Pick up where you left off",
+            body: "Every episode remembers its position, and your list follows the account, not the device.",
+          },
+        ].map((item) => (
+          <article key={item.title} className={styles.valueCard}>
+            <span className={styles.valueIcon}>{item.icon}</span>
+            <h3>{item.title}</h3>
+            <p>{item.body}</p>
+          </article>
+        ))}
+      </section>
+
+      {/* ═══════════ FAQ ═══════════ */}
+      <section id="faq" className={styles.faq} data-reveal>
+        <h2 className={styles.faqHead}>Frequently asked questions</h2>
+        <div className={styles.faqList}>
+          {FAQ.map((item, i) => (
+            <div key={item.q} className={styles.faqItem} data-open={openFaq === i}>
+              <button
+                type="button"
+                className={styles.faqQ}
+                aria-expanded={openFaq === i}
+                onClick={() => setOpenFaq((cur) => (cur === i ? null : i))}
+              >
+                {item.q}
+                <ChevronDown size={20} />
+              </button>
+              <div className={styles.faqA}>
+                <p>{item.a}</p>
               </div>
-              <div>
-                <h3>Profile</h3>
-                {footerProfile.map((item) => (
-                  <Link key={item.label} href={item.href}>
-                    {item.label}
-                  </Link>
-                ))}
-              </div>
             </div>
-          </div>
-
-          <div className={styles.footerRule} />
-
-          <div className={styles.footerBottom}>
-            <p className={styles.footerNote}>
-              Anifire keeps the landing focused on conversion while the streaming
-              route handles the watch experience.
-              <a href="mailto:hello@anifire.app" className={styles.footerMail}>
-                <Mail size={15} /> hello@anifire.app
-              </a>
-            </p>
-            <div className={styles.socials} aria-label="Social links">
-              <a href="/stream" aria-label="Anifire on Telegram">
-                <Send size={18} />
-              </a>
-              <a href="/stream" aria-label="Anifire on Discord">
-                <MessageCircle size={18} />
-              </a>
-              <a href="/stream" aria-label="Anifire website">
-                <Globe size={18} />
-              </a>
-              <a href="/stream" aria-label="Anifire live">
-                <Flame size={18} />
-              </a>
-            </div>
-          </div>
+          ))}
         </div>
+      </section>
+
+      {/* ═══════════ CLOSING CTA ═══════════ */}
+      <section className={styles.cta} data-reveal>
+        <h2>Ready when you are.</h2>
+        <p>Create a free account and start the first episode in under a minute.</p>
+        <div className={styles.ctaRow}>
+          <Link href="/register" className={styles.playBtn} data-tap>
+            Join free <ChevronRight size={18} />
+          </Link>
+          <Link href="/login" className={styles.infoBtn} data-tap>
+            I already have an account
+          </Link>
+        </div>
+      </section>
+
+      <footer className={styles.footer}>
+        <span>© 2026 Anifire</span>
+        <a href="#privacy">Privacy</a>
+        <a href="#terms">Terms</a>
       </footer>
     </main>
+  );
+}
+
+/**
+ * Horizontal rail: snap scrolling for touch and remote, pager buttons for
+ * pointer users only (a finger swipes, a D-pad moves focus — neither needs
+ * arrows, and on touch they just steal space).
+ */
+function Rail({ children }: { children: React.ReactNode }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [edge, setEdge] = useState<{ start: boolean; end: boolean }>({
+    start: true,
+    end: false,
+  });
+
+  const sync = useCallback(() => {
+    const el = ref.current;
+    if (!el) return;
+    setEdge({
+      start: el.scrollLeft < 8,
+      end: el.scrollLeft + el.clientWidth >= el.scrollWidth - 8,
+    });
+  }, []);
+
+  useEffect(() => {
+    sync();
+  }, [sync, children]);
+
+  const page = (dir: 1 | -1) => {
+    const el = ref.current;
+    if (!el) return;
+    el.scrollBy({ left: dir * el.clientWidth * 0.86, behavior: "smooth" });
+  };
+
+  return (
+    <div className={styles.rail}>
+      <button
+        type="button"
+        className={`${styles.railBtn} ${styles.railPrev}`}
+        onClick={() => page(-1)}
+        disabled={edge.start}
+        aria-label="Scroll left"
+      >
+        <ChevronLeft size={22} />
+      </button>
+      <div className={styles.railTrack} ref={ref} onScroll={sync}>
+        {children}
+      </div>
+      <button
+        type="button"
+        className={`${styles.railBtn} ${styles.railNext}`}
+        onClick={() => page(1)}
+        disabled={edge.end}
+        aria-label="Scroll right"
+      >
+        <ChevronRight size={22} />
+      </button>
+    </div>
   );
 }

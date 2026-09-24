@@ -2,8 +2,18 @@
 
 import { useMemo, useRef, useState, useEffect } from "react";
 import { gsap } from "gsap";
-import { ListPlus, Search, Star, X } from "lucide-react";
+import {
+  Check,
+  ChevronDown,
+  ListPlus,
+  Search,
+  SlidersHorizontal,
+  Star,
+  X,
+} from "lucide-react";
 import type { Movie } from "@/data/mockAnime";
+import { useDevice } from "@/components/system/DeviceProvider";
+import { useMyList } from "@/lib/mylist";
 import styles from "@/app/stream/stream.module.css";
 
 const GENRES = [
@@ -29,16 +39,27 @@ export default function CatalogView({
   onOpen: (m: Movie) => void;
   initialQuery?: string;
 }) {
-  const [query, setQuery] = useState(initialQuery);
-
-  // Sync the search box when the URL query changes (navbar search).
-  useEffect(() => {
-    setQuery(initialQuery);
-  }, [initialQuery]);
+  // The navbar search drives `initialQuery`; local typing only overrides it
+  // until the URL moves again, so no effect has to copy the prop into state.
+  const [typed, setTyped] = useState<{ from: string; value: string } | null>(null);
+  const query = typed && typed.from === initialQuery ? typed.value : initialQuery;
+  const setQuery = (value: string) => setTyped({ from: initialQuery, value });
   const [genres, setGenres] = useState<Set<string>>(new Set());
   const [types, setTypes] = useState<Set<string>>(new Set());
   const [statuses, setStatuses] = useState<Set<string>>(new Set());
   const listRef = useRef<HTMLDivElement>(null);
+  const { device } = useDevice();
+  const { inList, isLiked, toggleList, toggleLike } = useMyList();
+
+  // On a phone three chip walls would push the catalog off the screen, so the
+  // filters start folded; anywhere with room they are open by default. The
+  // toggle overrides that default until the device class itself changes.
+  const [folded, setFolded] = useState<{ device: string; open: boolean } | null>(
+    null
+  );
+  const filtersOpen =
+    folded && folded.device === device ? folded.open : device !== "phone";
+  const setFiltersOpen = (next: boolean) => setFolded({ device, open: next });
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -64,8 +85,8 @@ export default function CatalogView({
     );
   }, [filtered]);
 
-  const hasFilters =
-    query || genres.size || types.size || statuses.size;
+  const activeFilters = genres.size + types.size + statuses.size;
+  const hasFilters = Boolean(query) || activeFilters > 0;
   const clearAll = () => {
     setQuery("");
     setGenres(new Set());
@@ -98,7 +119,98 @@ export default function CatalogView({
       </div>
 
       <div className={styles.catGrid}>
-        {/* ───────── list ───────── */}
+        {/* ───────── filters ───────── */}
+        <aside className={styles.filterPanel}>
+          <button
+            type="button"
+            className={styles.filterToggle}
+            aria-expanded={filtersOpen}
+            onClick={() => setFiltersOpen(!filtersOpen)}
+          >
+            <span className={styles.filterToggleLeft}>
+              <SlidersHorizontal size={17} />
+              Filters
+              {activeFilters > 0 ? (
+                <span className={styles.filterCount}>{activeFilters}</span>
+              ) : null}
+            </span>
+            <ChevronDown
+              size={18}
+              style={{ transform: filtersOpen ? "rotate(180deg)" : undefined }}
+            />
+          </button>
+
+          {filtersOpen ? (
+            <div className={styles.filterBody}>
+              <div className={styles.filterSection}>
+                <h4 className={styles.filterTitle}>Genres</h4>
+                <p className={styles.filterHint}>
+                  Pick genres — multiple selections are combined.
+                </p>
+                <div className={styles.filterChips}>
+                  {GENRES.map((g) => (
+                    <button
+                      key={g}
+                      type="button"
+                      aria-pressed={genres.has(g)}
+                      className={`${styles.chip} ${genres.has(g) ? styles.chipOn : ""}`}
+                      onClick={() => setGenres((s) => toggle(s, g))}
+                    >
+                      {g}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className={styles.filterSection}>
+                <h4 className={styles.filterTitle}>Type</h4>
+                <p className={styles.filterHint}>Filter releases by format.</p>
+                <div className={styles.filterChips}>
+                  {TYPES.map((t) => (
+                    <button
+                      key={t}
+                      type="button"
+                      aria-pressed={types.has(t)}
+                      className={`${styles.chip} ${types.has(t) ? styles.chipOn : ""}`}
+                      onClick={() => setTypes((s) => toggle(s, t))}
+                    >
+                      {t}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className={styles.filterSection}>
+                <h4 className={styles.filterTitle}>Release status</h4>
+                <p className={styles.filterHint}>Airing or finished.</p>
+                <div className={styles.filterChips}>
+                  {STATUSES.map((s) => (
+                    <button
+                      key={s}
+                      type="button"
+                      aria-pressed={statuses.has(s)}
+                      className={`${styles.chip} ${statuses.has(s) ? styles.chipOn : ""}`}
+                      onClick={() => setStatuses((set) => toggle(set, s))}
+                    >
+                      {s}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <button
+                className={styles.filterReset}
+                type="button"
+                onClick={clearAll}
+                disabled={!hasFilters}
+              >
+                Reset filters
+              </button>
+            </div>
+          ) : null}
+        </aside>
+
+        {/* ───────── poster grid ───────── */}
         <div ref={listRef} className={styles.catList}>
           {filtered.length === 0 ? (
             <p className={styles.catEmpty}>Nothing matches your filters.</p>
@@ -110,6 +222,8 @@ export default function CatalogView({
                 onClick={() => onOpen(m)}
                 role="button"
                 tabIndex={0}
+                data-focusable
+                aria-label={m.title}
                 onKeyDown={(e) => {
                   if (e.key === "Enter" || e.key === " ") {
                     e.preventDefault();
@@ -118,107 +232,52 @@ export default function CatalogView({
                 }}
               >
                 <div className={styles.catPoster}>
-                  <img src={m.imageUrl} alt={m.title} loading="lazy" />
-                </div>
-                <div className={styles.catBody}>
-                  <h3 className={styles.catTitle}>{m.title}</h3>
-                  <div className={styles.catMeta}>
-                    <span>{m.year}</span>
-                    <span>·</span>
-                    <span>{m.genre}</span>
-                    <span>·</span>
-                    <span>{m.rating}</span>
-                    <span className={styles.catMatch}>{m.match}% Match</span>
-                  </div>
-                  <p className={styles.catSynopsis}>{m.description}</p>
+                  <img src={m.imageUrl} alt="" loading="lazy" />
                   <div className={styles.catActions}>
                     <button
-                      className={styles.catIconBtn}
+                      className={`${styles.catIconBtn} ${
+                        isLiked(m.id) ? styles.catIconBtnOn : ""
+                      }`}
                       type="button"
-                      aria-label="Add to favorites"
-                      onClick={(e) => e.stopPropagation()}
+                      aria-label={isLiked(m.id) ? `Unlike ${m.title}` : `Like ${m.title}`}
+                      aria-pressed={isLiked(m.id)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleLike(m.id);
+                      }}
                     >
-                      <Star size={16} />
+                      <Star size={16} fill={isLiked(m.id) ? "currentColor" : "none"} />
                     </button>
                     <button
-                      className={styles.catIconBtn}
+                      className={`${styles.catIconBtn} ${
+                        inList(m.id) ? styles.catIconBtnOn : ""
+                      }`}
                       type="button"
-                      aria-label="Add to list"
-                      onClick={(e) => e.stopPropagation()}
+                      aria-label={
+                        inList(m.id)
+                          ? `Remove ${m.title} from My List`
+                          : `Add ${m.title} to My List`
+                      }
+                      aria-pressed={inList(m.id)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleList(m.id);
+                      }}
                     >
-                      <ListPlus size={16} />
+                      {inList(m.id) ? <Check size={16} /> : <ListPlus size={16} />}
                     </button>
                   </div>
+                </div>
+                <h3 className={styles.catTitle}>{m.title}</h3>
+                <div className={styles.catMeta}>
+                  <span>{m.year}</span>
+                  <span className={styles.catMatch}>{m.match}% Match</span>
+                  <span>{m.rating}</span>
                 </div>
               </article>
             ))
           )}
         </div>
-
-        {/* ───────── filters ───────── */}
-        <aside className={styles.filterPanel}>
-          <div className={styles.filterSection}>
-            <h4 className={styles.filterTitle}>Genres</h4>
-            <p className={styles.filterHint}>
-              Pick genres — multiple selections are combined.
-            </p>
-            <div className={styles.filterChips}>
-              {GENRES.map((g) => (
-                <button
-                  key={g}
-                  type="button"
-                  className={`${styles.chip} ${genres.has(g) ? styles.chipOn : ""}`}
-                  onClick={() => setGenres((s) => toggle(s, g))}
-                >
-                  {g}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className={styles.filterSection}>
-            <h4 className={styles.filterTitle}>Type</h4>
-            <p className={styles.filterHint}>Filter releases by format.</p>
-            <div className={styles.filterChips}>
-              {TYPES.map((t) => (
-                <button
-                  key={t}
-                  type="button"
-                  className={`${styles.chip} ${types.has(t) ? styles.chipOn : ""}`}
-                  onClick={() => setTypes((s) => toggle(s, t))}
-                >
-                  {t}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className={styles.filterSection}>
-            <h4 className={styles.filterTitle}>Release status</h4>
-            <p className={styles.filterHint}>Airing or finished.</p>
-            <div className={styles.filterChips}>
-              {STATUSES.map((s) => (
-                <button
-                  key={s}
-                  type="button"
-                  className={`${styles.chip} ${statuses.has(s) ? styles.chipOn : ""}`}
-                  onClick={() => setStatuses((set) => toggle(set, s))}
-                >
-                  {s}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <button
-            className={styles.filterReset}
-            type="button"
-            onClick={clearAll}
-            disabled={!hasFilters}
-          >
-            Reset filters
-          </button>
-        </aside>
       </div>
     </div>
   );

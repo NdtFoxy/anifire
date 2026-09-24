@@ -2,8 +2,29 @@
 
 import Link from "next/link";
 import { Flame, Globe, MessageCircle, Send } from "lucide-react";
-import { NAV_ITEMS } from "@/data/mockAnime";
 import styles from "@/app/stream/stream.module.css";
+
+/**
+ * Site footer: one column on a phone (and padded clear of the bottom tab bar),
+ * two-up from tablet, and reduced to the legal line on TV — see the FOOTER
+ * block in stream.module.css.
+ *
+ * The links are spelled out rather than derived from NAV_ITEMS because that
+ * list still carries placeholder hash hrefs, which resolve to nothing on
+ * /profile or /anime/[id] where this footer also renders.
+ */
+const BROWSE = [
+  { label: "Home", href: "/stream" },
+  { label: "Catalog", href: "/stream?view=catalog" },
+  { label: "Genres", href: "/stream?view=genres" },
+  { label: "My List", href: "/mylist" },
+];
+
+const ACCOUNT = [
+  { label: "Profile", href: "/profile" },
+  { label: "Subscription", href: "/profile?tab=subscription" },
+  { label: "Activity", href: "/profile?tab=activity" },
+];
 
 export default function StreamFooter() {
   return (
@@ -26,18 +47,19 @@ export default function StreamFooter() {
           <div className={styles.footerCols}>
             <div>
               <h3>Browse</h3>
-              {NAV_ITEMS.map((item) => (
+              {BROWSE.map((item) => (
                 <Link key={item.label} href={item.href}>
                   {item.label}
                 </Link>
               ))}
             </div>
             <div>
-              <h3>Company</h3>
-              <Link href="/stream">Home</Link>
-              <Link href="#catalog">Catalog</Link>
-              <Link href="#genres">Genres</Link>
-              <Link href="#my-list">My List</Link>
+              <h3>Account</h3>
+              {ACCOUNT.map((item) => (
+                <Link key={item.label} href={item.href}>
+                  {item.label}
+                </Link>
+              ))}
             </div>
           </div>
         </div>

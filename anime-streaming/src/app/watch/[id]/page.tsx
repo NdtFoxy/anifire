@@ -36,6 +36,14 @@ function Watch() {
   const isAniAlias = !/^\d+$/.test(params.id);
   const id = Number(params.id);
   const episode = Math.max(1, Number(search.get("ep") ?? "1"));
+  /**
+   * "?t=" deep link, used by the vocabulary list to jump back to the exact second
+   * where a word was met. Clamped so a hand-edited URL cannot ask for -1.
+   */
+  const startAt = (() => {
+    const raw = Number(search.get("t"));
+    return Number.isFinite(raw) && raw > 0 ? Math.min(raw, 86_400) : undefined;
+  })();
 
   // Track the latest mode so the unmount cleanup can read it without re-subscribing.
   const modeRef = useRef(mode);
@@ -150,8 +158,8 @@ function Watch() {
           const anilistId = await fetchAniListId(movie.malId);
           const ctx = { malId: movie.malId, anilistId: anilistId ?? undefined, episode };
           const subs = await fetchSubtitleTracks({ malId: movie.malId, anilistId, episode });
-          if (subs.length > 0 && !cancelled) open({ ...source, ...ctx, tracks: subs });
-          else if (!cancelled) open({ ...source, ...ctx });
+          if (subs.length > 0 && !cancelled) open({ ...source, ...ctx, startAt, tracks: subs });
+          else if (!cancelled) open({ ...source, ...ctx, startAt });
         }
         return;
       }

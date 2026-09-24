@@ -13,7 +13,14 @@ export default function AuthLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <div className={styles.wrap}>
-      {/* ───────── Brand panel (desktop) ───────── */}
+      {/* Form first: it is what the visitor came for, and on one column it
+          has to sit above the marketing panel. Grid placement puts the brand
+          back on the left from laptop up. */}
+      <main id="main" className={styles.panel}>
+        {children}
+      </main>
+
+      {/* ───────── Brand / marketing panel ───────── */}
       <aside className={styles.brand}>
         <div className={styles.brandGrain} />
         <Flame className={styles.brandFlame} strokeWidth={1} aria-hidden="true" />
@@ -46,9 +53,6 @@ export default function AuthLayout({
           <a href="#terms">Terms</a>
         </div>
       </aside>
-
-      {/* ───────── Form panel ───────── */}
-      <main className={styles.panel}>{children}</main>
     </div>
   );
 }

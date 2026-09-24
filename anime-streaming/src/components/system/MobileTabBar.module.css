@@ -1,0 +1,95 @@
+/**
+ * Phone-only bottom tab bar. Mobile-first: it exists by default and is switched
+ * off from the tablet breakpoint up, which is also where --mobile-nav-h drops to
+ * 0px so no larger layout pays for the space it reserves.
+ */
+
+.bar {
+  position: fixed;
+  inset: auto 0 0 0;
+  z-index: 70;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  align-items: stretch;
+  /* The bar itself is --mobile-nav-h tall; the home-indicator inset is extra
+     padding underneath so the labels never sit under the gesture pill. */
+  height: calc(var(--mobile-nav-h) + var(--safe-bottom));
+  padding-bottom: var(--safe-bottom);
+  padding-inline: max(var(--safe-left), 4px) max(var(--safe-right), 4px);
+  border-top: 1px solid var(--line, rgba(249, 246, 246, 0.08));
+  background: rgba(16, 11, 11, 0.94);
+  backdrop-filter: blur(18px);
+}
+
+@media (min-width: 600px) {
+  .bar {
+    display: none;
+  }
+}
+
+/* A TV is never a phone, but a forced-TV layout in a small window would still
+   be under 600px — the couch layout drives the top nav instead. */
+html[data-device="tv"] .bar {
+  display: none;
+}
+
+.tab {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-width: var(--tap);
+  min-height: var(--tap);
+  padding: 6px 2px;
+  border: none;
+  border-radius: 12px;
+  background: transparent;
+  color: var(--muted, #7a7272);
+  font: inherit;
+  text-decoration: none;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: color 0.18s ease;
+}
+
+.label {
+  font-size: var(--step--1);
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: 0.01em;
+}
+
+.tab[aria-current="page"],
+.tab[aria-expanded="true"] {
+  color: var(--ember, #ff4d5a);
+}
+
+/* Active tabs get a mark as well as a colour — colour alone is not a state. */
+.tab[aria-current="page"]::before,
+.tab[aria-expanded="true"]::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 50%;
+  translate: -50% 0;
+  width: 26px;
+  height: 3px;
+  border-radius: 0 0 3px 3px;
+  background: var(--ember, #ff4d5a);
+}
+
+.tab:active {
+  color: var(--title, #f9f6f6);
+}
+
+.tab:focus-visible {
+  color: var(--title, #f9f6f6);
+}
+
+@media (hover: hover) {
+  .tab:hover {
+    color: var(--title, #f9f6f6);
+  }
+}

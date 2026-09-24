@@ -1,0 +1,248 @@
+/**
+ * Adaptive foundation — one scale for every surface.
+ *
+ * Breakpoints (the ONLY ones any stylesheet should use):
+ *   phone      <= 599px
+ *   tablet      600px – 1023px
+ *   laptop     1024px – 1439px
+ *   desktop    1440px – 1919px
+ *   ultrawide  >= 1920px
+ *
+ * Device/input mode lives on <html data-device> and <html data-input>, set by
+ * DeviceProvider. `data-device="tv"` opts into the 10-foot layout (bigger type,
+ * overscan-safe padding, always-visible focus); `data-input="remote"` means the
+ * user is driving with a D-pad, so hover-only affordances stay open and the
+ * focus ring is loud. CSS must never infer a TV from width alone — a 4K desktop
+ * monitor is not a couch.
+ */
+
+:root {
+  /* ── Breakpoint values, exported for JS (matchMedia) parity ── */
+  --bp-phone: 599px;
+  --bp-tablet: 1023px;
+  --bp-laptop: 1439px;
+  --bp-desktop: 1919px;
+
+  /* ── Content width: grows with the display, capped so ultrawide
+        doesn't stretch a row of posters into a horizon line ── */
+  --shell-max: 1400px;
+  --shell-pad: 20px;
+
+  /* ── Reading measure. Line length, not viewport width, decides where prose
+        stops: past ~75 characters the eye loses the line on the way back, and
+        an ultrawide monitor turns a synopsis into a single unreadable ribbon. ── */
+  --measure: 68ch;
+  --measure-wide: 78ch;
+
+  /* ── Fluid type scale: min at 360px, max at 1440px ── */
+  --step--1: clamp(0.75rem, 0.71rem + 0.19vw, 0.875rem);
+  --step-0: clamp(0.875rem, 0.83rem + 0.19vw, 1rem);
+  --step-1: clamp(1rem, 0.93rem + 0.31vw, 1.25rem);
+  --step-2: clamp(1.25rem, 1.12rem + 0.56vw, 1.625rem);
+  --step-3: clamp(1.5rem, 1.24rem + 1.11vw, 2.25rem);
+  --step-4: clamp(1.875rem, 1.4rem + 2.04vw, 3.25rem);
+
+  /* ── Touch ergonomics: 44px is the smallest reliably tappable target ── */
+  --tap: 44px;
+  --tap-lg: 52px;
+
+  /* ── Safe areas. On phones these are the notch/home-indicator insets; on TV
+        they become overscan margins so nothing hugs the bezel. ── */
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+
+  /* Height of the fixed mobile tab bar; pages add it to their bottom padding. */
+  --mobile-nav-h: 0px;
+
+  /* Height of the fixed top nav, so sticky page chrome can offset from the bar
+     instead of hard-coding it. StreamNav owns the bar; this is the contract. */
+  --nav-h: 60px;
+
+  --focus-ring: 0 0 0 3px rgba(230, 34, 51, 0.85), 0 0 0 6px rgba(10, 7, 7, 0.9);
+  --radius-card: 14px;
+}
+
+@media (min-width: 600px) {
+  :root {
+    --shell-pad: 28px;
+    --nav-h: 68px;
+  }
+}
+
+@media (min-width: 1024px) {
+  :root {
+    --shell-pad: 40px;
+    --nav-h: 74px;
+  }
+}
+
+@media (min-width: 1920px) {
+  :root {
+    /* Ultrawide: a wider shell plus more grid columns beats a bigger card. */
+    --shell-max: 1760px;
+    --shell-pad: 56px;
+  }
+}
+
+@media (min-width: 2560px) {
+  :root {
+    --shell-max: 2200px;
+  }
+}
+
+/* ── Phones: the bottom tab bar is the primary navigation, so every page
+      reserves room for it and for the home indicator. ── */
+@media (max-width: 599px) {
+  :root {
+    --mobile-nav-h: 64px;
+  }
+}
+
+/* ── TV: 10-foot layout.
+
+   A television's CSS viewport is 1280, 1920 or 3840 px depending on the set, yet
+   the panel size and the three metres of couch never change: only the pixel count
+   does. So TV sizing is a share of the viewport (vw), taken from the 1080p
+   baseline — 18px body ≈ 0.94vw — and clamped so a 720p set stays legible and an
+   8K one does not turn into billboards. This is the same convention the TV rules
+   in the page stylesheets already follow.
+
+   Two shortcuts were tried and rejected. `zoom: 2` scales hand-written pixels but
+   leaves vh/vw measuring the raw panel, so every full-height stage came out twice
+   as tall as the screen. Pinning the layout viewport (`width=1920`) is ignored by
+   desktop-class browsers, which is what TV browsers are — measured, not assumed.
+
+   TV only: a 4K desktop monitor is a working distance, not a couch. ── */
+html[data-device="tv"] {
+  --shell-max: min(3600px, 93vw);
+  --shell-pad: 0px;
+  --tap: clamp(48px, 2.9vw, 112px);
+  --tap-lg: clamp(64px, 3.75vw, 144px);
+  --radius-card: clamp(14px, 0.94vw, 36px);
+  --nav-h: clamp(88px, 5.4vw, 208px);
+  /* Overscan guard — older panels crop up to 5% of the frame. */
+  --safe-top: 3vh;
+  --safe-bottom: 3vh;
+  --safe-left: 3.5vw;
+  --safe-right: 3.5vw;
+  --step--1: clamp(0.875rem, 0.89vw, 2rem);
+  --step-0: clamp(1rem, 1.04vw, 2.25rem);
+  --step-1: clamp(1.125rem, 1.3vw, 2.75rem);
+  --step-2: clamp(1.375rem, 1.67vw, 3.5rem);
+  --step-3: clamp(1.75rem, 2.34vw, 5rem);
+  --step-4: clamp(2.25rem, 3.33vw, 7rem);
+  /* Ten-foot prose is read in wider chunks than a phone's, but the same limit
+     applies: characters per line, never pixels. */
+  --measure: 62ch;
+  --measure-wide: 72ch;
+  font-size: clamp(18px, 0.94vw, 36px);
+}
+
+/* Icon glyphs carry their size as an SVG attribute (lucide writes width/height in
+   pixels), so a 14px meta icon stayed 14px on a 4K panel — invisible from a couch
+   and mismatched next to type that scaled. On TV they follow the text: never
+   smaller than the authored size, growing with the panel. */
+html[data-device="tv"] svg {
+  width: max(1em, 1.05vw);
+  height: max(1em, 1.05vw);
+}
+
+/* Utility for page shells: centred, padded, overscan-safe. */
+.shell,
+.appShell {
+  width: 100%;
+  max-width: var(--shell-max);
+  margin-inline: auto;
+  padding-inline: calc(var(--shell-pad) + var(--safe-left));
+}
+
+/* ── Focus. Keyboard and remote users must always see where they are; mouse
+      users never should. :focus-visible handles keyboards, and remote mode
+      forces the ring on because D-pad focus IS the cursor. ── */
+:focus:not(:focus-visible) {
+  outline: none;
+}
+
+:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+  border-radius: 10px;
+}
+
+html[data-input="remote"] :focus {
+  outline: none;
+  box-shadow: var(--focus-ring);
+  border-radius: 10px;
+  /* Lift the focused element so the ring is never clipped by a sibling. */
+  position: relative;
+  z-index: 5;
+}
+
+html[data-device="tv"] {
+  --focus-ring: 0 0 0 4px #ff2f3f, 0 0 0 10px rgba(10, 7, 7, 0.92),
+    0 0 42px rgba(230, 34, 51, 0.55);
+}
+
+/* On TV the focused card grows — from three metres, colour alone is not enough. */
+html[data-device="tv"] [data-focusable]:focus,
+html[data-device="tv"] a:focus,
+html[data-device="tv"] button:focus {
+  transform: scale(1.06);
+  transition: transform 140ms ease-out;
+}
+
+/* ── Touch: no hover states, bigger hit areas, no sticky :hover residue. ── */
+@media (hover: none) {
+  * {
+    -webkit-tap-highlight-color: transparent;
+  }
+}
+
+/* A D-pad cursor is even coarser than a thumb: the focused element must be big
+   enough to read from three metres, so remote mode gets the same floor. */
+html[data-input="touch"] button,
+html[data-input="touch"] a[role="button"],
+html[data-input="touch"] [data-tap],
+html[data-input="remote"] button,
+html[data-input="remote"] a[role="button"],
+html[data-input="remote"] [data-tap] {
+  min-height: var(--tap);
+  min-width: var(--tap);
+}
+
+/* Skip link — keyboard and remote users land here first. */
+.skipLink {
+  position: fixed;
+  top: calc(var(--safe-top) + 8px);
+  left: 50%;
+  /* Percentages are of the link's own height, so on TV — where --safe-top is 3vh
+     of overscan guard — twice its height was not enough to clear the offset and
+     the pill stayed visible above the nav. Retracting by the offset as well is
+     exact at any inset. */
+  translate: -50% calc(-100% - var(--safe-top) - 12px);
+  z-index: 200;
+  padding: 12px 20px;
+  border-radius: 999px;
+  background: #e62233;
+  color: #fff;
+  font-weight: 700;
+  transition: translate 160ms ease-out;
+}
+
+.skipLink:focus {
+  translate: -50% 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  html[data-device="tv"] [data-focusable]:focus,
+  html[data-device="tv"] a:focus,
+  html[data-device="tv"] button:focus {
+    transform: none;
+  }
+}

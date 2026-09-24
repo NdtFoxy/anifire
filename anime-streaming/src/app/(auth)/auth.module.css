@@ -14,10 +14,41 @@
   --muted: #7a7272;
 
   display: grid;
-  grid-template-columns: 1.05fr 1fr;
+  grid-template-columns: minmax(0, 1fr);
+  align-content: start;
   min-height: 100dvh;
   background: var(--bg);
   color: var(--title);
+}
+
+/* Laptop and up: the marketing panel earns its own column. The form still
+   comes first in the DOM — it is what the visitor came for. */
+@media (min-width: 1024px) {
+  .wrap {
+    grid-template-columns: 1.05fr minmax(0, 1fr);
+    align-content: stretch;
+  }
+  .brand {
+  /* The oversized flame artwork is intentional bleed — clip it here so it never
+     becomes horizontal page overflow on a phone. */
+  overflow: clip;
+    grid-column: 1;
+    grid-row: 1;
+  }
+  .panel {
+    grid-column: 2;
+    grid-row: 1;
+  }
+}
+
+/* Ultrawide: a 3440px-wide login screen is a poster, not a form. Cap it. */
+@media (min-width: 1920px) {
+  .wrap {
+    width: 100%;
+    max-width: var(--shell-max);
+    margin-inline: auto;
+    border-inline: 1px solid var(--line);
+  }
 }
 
 /* ───────────────────────── Brand panel (left) ───────────────────────── */
@@ -27,12 +58,33 @@
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  padding: clamp(36px, 4vw, 64px);
+  gap: 28px;
+  padding: 32px calc(var(--shell-pad) + var(--safe-left))
+    calc(var(--mobile-nav-h) + var(--safe-bottom) + 32px)
+    calc(var(--shell-pad) + var(--safe-left));
+  border-top: 1px solid var(--line);
   background:
     radial-gradient(120% 80% at 85% 8%, rgba(230, 34, 51, 0.22), transparent 55%),
     radial-gradient(90% 70% at 12% 95%, rgba(139, 13, 23, 0.28), transparent 60%),
     linear-gradient(155deg, #150b0b 0%, #0a0707 60%);
-  border-right: 1px solid var(--line);
+}
+
+@media (min-width: 1024px) {
+  .brand {
+    padding: clamp(36px, 4vw, 64px);
+    border-top: none;
+    border-right: 1px solid var(--line);
+  }
+}
+
+/* The brand logo is already at the top of the form panel on one column. */
+@media (max-width: 1023px) {
+  .brandTop {
+    display: none;
+  }
+  .brandFlame {
+    width: 52%;
+  }
 }
 
 /* huge outlined flame watermark */
@@ -82,7 +134,7 @@
 
 .brandHeadline {
   font-family: var(--font-display), sans-serif;
-  font-size: clamp(34px, 3.6vw, 58px);
+  font-size: var(--step-4);
   font-weight: 800;
   line-height: 1.02;
   letter-spacing: -0.03em;
@@ -98,8 +150,8 @@
 
 .brandSub {
   margin-top: 20px;
-  max-width: 400px;
-  font-size: 16px;
+  max-width: 45ch;
+  font-size: var(--step-0);
   line-height: 1.6;
   color: var(--text);
 }
@@ -108,32 +160,54 @@
   position: relative;
   z-index: 1;
   display: flex;
-  gap: 22px;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0 22px;
   font-size: 13px;
   color: var(--muted);
 }
 
 .brandFooter a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: var(--tap);
+  min-height: var(--tap);
   color: var(--muted);
   text-decoration: none;
   transition: color 0.2s ease;
 }
 
-.brandFooter a:hover {
+@media (hover: hover) {
+  .brandFooter a:hover {
+    color: var(--text);
+  }
+}
+
+.brandFooter a:focus-visible {
   color: var(--text);
 }
 
 /* ───────────────────────── Form panel (right) ───────────────────────── */
 .panel {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
-  padding: clamp(28px, 5vw, 56px) clamp(20px, 4vw, 48px);
+  padding: 28px calc(var(--shell-pad) + var(--safe-right)) 36px
+    calc(var(--shell-pad) + var(--safe-left));
+}
+
+@media (min-width: 1024px) {
+  .panel {
+    align-items: center;
+    padding: clamp(28px, 5vw, 56px) clamp(20px, 4vw, 48px);
+  }
 }
 
 .card {
   width: 100%;
   max-width: 392px;
+  min-width: 0;
   animation: authIn 0.5s cubic-bezier(0.2, 0.7, 0.2, 1) both;
 }
 
@@ -152,7 +226,8 @@
   display: inline-flex;
   align-items: center;
   gap: 10px;
-  margin-bottom: 30px;
+  min-height: var(--tap);
+  margin-bottom: 12px;
   color: var(--title);
   text-decoration: none;
 }
@@ -177,18 +252,44 @@
 
 .head {
   font-family: var(--font-display), sans-serif;
-  font-size: clamp(26px, 3vw, 32px);
+  font-size: var(--step-3);
   font-weight: 800;
   letter-spacing: -0.02em;
 }
 
 .sub {
   margin-top: 8px;
-  margin-bottom: 26px;
-  font-size: 15px;
+  margin-bottom: 14px;
+  font-size: var(--step-0);
   line-height: 1.5;
   color: var(--text);
 }
+
+@media (min-width: 600px) {
+  .logoLink {
+    margin-bottom: 30px;
+  }
+  .sub {
+    margin-bottom: 26px;
+  }
+}
+html[data-device="tv"] .card {
+  /* Signing in with a remote happens at three metres: the form keeps its share
+     of the panel instead of shrinking into the middle of a 4K frame. */
+  max-width: clamp(520px, 27vw, 1100px);
+}
+
+/* Same reason for the brand column: pinned at 460px it wrapped the headline into
+   six short lines on a 4K panel while the type around it scaled. */
+html[data-device="tv"] .brandBody {
+  max-width: clamp(460px, 24vw, 980px);
+}
+
+html[data-device="tv"] .brandEyebrow {
+  font-size: var(--step--1);
+  padding: 0.5em 1em;
+}
+
 
 /* social buttons */
 .social {
@@ -202,7 +303,8 @@
   align-items: center;
   justify-content: center;
   gap: 8px;
-  height: 48px;
+  min-height: max(48px, var(--tap));
+  padding: 0 8px;
   border-radius: 11px;
   border: 1px solid var(--line-strong);
   background: var(--surface);
@@ -213,10 +315,29 @@
   transition: transform 0.18s ease, border-color 0.2s ease, background 0.2s ease;
 }
 
-.socialBtn:hover {
+@media (hover: hover) {
+  .socialBtn:hover {
+    transform: translateY(-2px);
+    border-color: rgba(255, 77, 90, 0.4);
+    background: var(--surface-2);
+  }
+}
+
+.socialBtn:focus-visible {
   transform: translateY(-2px);
   border-color: rgba(255, 77, 90, 0.4);
   background: var(--surface-2);
+}
+
+/* Under 600px three labelled buttons collide; the aria-label carries the name. */
+.socialLabel {
+  display: none;
+}
+
+@media (min-width: 600px) {
+  .socialLabel {
+    display: inline;
+  }
 }
 
 .socialBtn:active {
@@ -242,7 +363,7 @@
   display: flex;
   align-items: center;
   gap: 14px;
-  margin: 22px 0;
+  margin: 14px 0;
   color: var(--muted);
   font-size: 12px;
   letter-spacing: 0.02em;
@@ -260,7 +381,16 @@
 .form {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 14px;
+}
+
+@media (min-width: 600px) {
+  .divider {
+    margin: 22px 0;
+  }
+  .form {
+    gap: 16px;
+  }
 }
 
 .field {
@@ -291,7 +421,7 @@
 
 .input {
   width: 100%;
-  height: 50px;
+  min-height: max(50px, var(--tap));
   padding: 0 14px 0 42px;
   border-radius: 11px;
   border: 1px solid var(--line-strong);
@@ -317,11 +447,16 @@
   border-color: rgba(230, 34, 51, 0.6) !important;
 }
 
+/* Password fields keep the text clear of the reveal button. */
+.inputWithEye {
+  padding-right: calc(var(--tap) + 10px);
+}
+
 .eyeBtn {
   position: absolute;
-  right: 8px;
-  width: 34px;
-  height: 34px;
+  right: 4px;
+  width: var(--tap);
+  height: var(--tap);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -333,7 +468,14 @@
   transition: color 0.2s ease, background 0.2s ease;
 }
 
-.eyeBtn:hover {
+@media (hover: hover) {
+  .eyeBtn:hover {
+    color: var(--text);
+    background: rgba(249, 246, 246, 0.05);
+  }
+}
+
+.eyeBtn:focus-visible {
   color: var(--text);
   background: rgba(249, 246, 246, 0.05);
 }
@@ -348,6 +490,8 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 4px 12px;
   margin-top: -2px;
 }
 
@@ -355,6 +499,7 @@
   display: inline-flex;
   align-items: center;
   gap: 9px;
+  min-height: var(--tap);
   font-size: 13px;
   color: var(--text);
   cursor: pointer;
@@ -392,6 +537,9 @@
 }
 
 .link {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--tap);
   font-size: 13px;
   font-weight: 600;
   color: var(--ember);
@@ -399,15 +547,22 @@
   transition: color 0.2s ease;
 }
 
-.link:hover {
+@media (hover: hover) {
+  .link:hover {
+    color: var(--gold);
+  }
+}
+
+.link:focus-visible {
   color: var(--gold);
 }
 
 /* primary submit */
 .submit {
   position: relative;
-  height: 52px;
+  min-height: max(52px, var(--tap));
   margin-top: 6px;
+  padding: 0 18px;
   border: none;
   border-radius: 12px;
   font-size: 15px;
@@ -424,7 +579,15 @@
   gap: 10px;
 }
 
-.submit:hover {
+@media (hover: hover) {
+  .submit:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 34px rgba(230, 34, 51, 0.42);
+    filter: brightness(1.06);
+  }
+}
+
+.submit:focus-visible:not(:disabled) {
   transform: translateY(-2px);
   box-shadow: 0 12px 34px rgba(230, 34, 51, 0.42);
   filter: brightness(1.06);
@@ -458,19 +621,28 @@
 
 /* switch link under form */
 .alt {
-  margin-top: 26px;
+  margin-top: 20px;
   text-align: center;
   font-size: 14px;
   color: var(--text);
 }
 
 .alt a {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--tap);
   color: var(--ember);
   font-weight: 600;
   text-decoration: none;
 }
 
-.alt a:hover {
+@media (hover: hover) {
+  .alt a:hover {
+    color: var(--gold);
+  }
+}
+
+.alt a:focus-visible {
   color: var(--gold);
 }
 
@@ -520,7 +692,8 @@
   display: inline-flex;
   align-items: center;
   gap: 7px;
-  margin-top: 26px;
+  min-height: var(--tap);
+  margin-top: 20px;
   font-size: 14px;
   font-weight: 600;
   color: var(--text);
@@ -528,7 +701,13 @@
   transition: color 0.2s ease;
 }
 
-.back:hover {
+@media (hover: hover) {
+  .back:hover {
+    color: var(--title);
+  }
+}
+
+.back:focus-visible {
   color: var(--title);
 }
 
@@ -546,18 +725,347 @@
   border: 1px solid rgba(255, 77, 90, 0.25);
 }
 
-/* ───────────────────────── Responsive ───────────────────────── */
-@media (max-width: 1024px) {
-  .wrap {
-    grid-template-columns: 1fr;
-  }
-  .brand {
-    display: none;
+@media (prefers-reduced-motion: reduce) {
+  .card {
+    animation: none;
   }
 }
 
-@media (max-width: 420px) {
-  .social {
-    grid-template-columns: 1fr;
+
+/* ═══════════════ Sign-up: floating labels, strength meter, motion ═══════════════
+   Everything below is state-driven off `data-state` on .field / .submit, so the
+   markup stays declarative and there is exactly one source of truth per state. */
+
+.card {
+  position: relative;
+}
+
+/* Soft ember aura behind the card. Purely decorative, never intercepts input. */
+.cardAura {
+  position: absolute;
+  /* Kept inside the card box: a decorative glow must never widen the page. */
+  inset: -18% 0 auto 0;
+  height: 320px;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(60% 60% at 20% 0%, rgba(255, 77, 90, 0.22), transparent 70%),
+    radial-gradient(50% 50% at 85% 15%, rgba(247, 199, 68, 0.14), transparent 72%);
+  filter: blur(26px);
+  opacity: 0.9;
+  animation: auraDrift 14s ease-in-out infinite alternate;
+}
+
+@keyframes auraDrift {
+  from {
+    transform: translate3d(-2%, -1%, 0) scale(1);
+  }
+  to {
+    transform: translate3d(3%, 2%, 0) scale(1.08);
+  }
+}
+
+/* ── Field: the label rides inside the input until it is needed ── */
+.field {
+  position: relative;
+  gap: 0;
+}
+
+.field .inputWrap {
+  position: relative;
+  isolation: isolate;
+}
+
+.field .input {
+  /* Room for the floating label to sit above the value. */
+  padding-top: 18px;
+  padding-bottom: 4px;
+  transition: border-color 0.18s ease, background 0.18s ease, box-shadow 0.2s ease;
+}
+
+.field .label {
+  position: absolute;
+  left: 42px;
+  top: 50%;
+  translate: 0 -50%;
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--muted);
+  pointer-events: none;
+  transition: translate 0.16s ease, font-size 0.16s ease, color 0.16s ease;
+}
+
+/* Raise the label once the field holds a value or has focus. `:placeholder-shown`
+   is not usable here because these inputs deliberately have no placeholder. */
+.field .input:focus + .label,
+.field .input:not(:placeholder-shown) + .label,
+.field .input[value]:not([value=""]) + .label {
+  translate: 0 -140%;
+  font-size: 11.5px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ember);
+}
+
+.field[data-state="valid"] .input:not(:focus) + .label {
+  color: var(--muted);
+}
+
+.optional {
+  margin-left: 6px;
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+  opacity: 0.75;
+}
+
+/* Animated underline that reports the field state without shouting. */
+.fieldGlow {
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: 0;
+  height: 2px;
+  border-radius: 2px;
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform 0.24s cubic-bezier(0.2, 0.7, 0.2, 1), background 0.2s ease;
+  background: linear-gradient(90deg, var(--ember), var(--gold));
+}
+
+.field[data-state="focus"] .fieldGlow,
+.field[data-state="valid"] .fieldGlow,
+.field[data-state="error"] .fieldGlow {
+  transform: scaleX(1);
+}
+
+.field[data-state="valid"] .fieldGlow {
+  background: linear-gradient(90deg, #38d39f, #7cc4ff);
+}
+
+.field[data-state="error"] .fieldGlow {
+  background: linear-gradient(90deg, #e62233, #ff8a3d);
+}
+
+.field[data-state="error"] .input {
+  border-color: rgba(230, 34, 51, 0.55);
+}
+
+.field[data-state="valid"] .input {
+  border-color: rgba(56, 211, 159, 0.4);
+}
+
+.validMark {
+  position: absolute;
+  right: 14px;
+  display: flex;
+  color: #38d39f;
+  animation: markPop 0.28s cubic-bezier(0.2, 1.4, 0.4, 1) both;
+}
+
+@keyframes markPop {
+  from {
+    opacity: 0;
+    scale: 0.5;
+  }
+  to {
+    opacity: 1;
+    scale: 1;
+  }
+}
+
+.fieldError,
+.capsHint {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 7px;
+  font-size: 12.5px;
+  line-height: 1.35;
+  animation: hintIn 0.2s ease-out both;
+}
+
+.fieldError {
+  color: #ff8792;
+}
+
+.capsHint {
+  color: var(--gold);
+}
+
+@keyframes hintIn {
+  from {
+    opacity: 0;
+    translate: 0 -4px;
+  }
+  to {
+    opacity: 1;
+    translate: 0 0;
+  }
+}
+
+/* ── Password strength ── */
+.strength {
+  margin-top: 14px;
+}
+
+.strengthBar {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 5px;
+}
+
+.strengthSeg {
+  height: 4px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.1);
+  transition: background 0.3s ease, box-shadow 0.3s ease;
+}
+
+.strengthSeg[data-on="true"] {
+  background: linear-gradient(90deg, var(--ember), var(--gold));
+  box-shadow: 0 0 12px rgba(255, 77, 90, 0.45);
+}
+
+.strengthBar[data-score="4"] .strengthSeg[data-on="true"] {
+  background: linear-gradient(90deg, #38d39f, #7cc4ff);
+  box-shadow: 0 0 12px rgba(56, 211, 159, 0.45);
+}
+
+.strengthLabel {
+  display: block;
+  margin-top: 7px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.strengthLabel[data-score="3"] {
+  color: var(--gold);
+}
+
+.strengthLabel[data-score="4"] {
+  color: #38d39f;
+}
+
+.rules {
+  display: grid;
+  gap: 5px;
+  margin-top: 9px;
+  list-style: none;
+}
+
+.rule {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12.5px;
+  color: var(--muted);
+  transition: color 0.2s ease;
+}
+
+.rule[data-ok="true"] {
+  color: #9fe7cd;
+}
+
+.ruleIcon {
+  display: grid;
+  place-items: center;
+  width: 17px;
+  height: 17px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.07);
+  transition: background 0.2s ease, scale 0.2s ease;
+}
+
+.rule[data-ok="true"] .ruleIcon {
+  background: rgba(56, 211, 159, 0.18);
+  scale: 1.05;
+}
+
+@media (min-width: 600px) {
+  .rules {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+/* ── Submit: one button, four honest states ── */
+.submitLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  transition: opacity 0.2s ease, translate 0.2s ease;
+}
+
+.submit[data-state="idle"]:disabled {
+  /* Not "broken", just not armed yet — keep it legible. */
+  opacity: 0.55;
+  box-shadow: none;
+  cursor: not-allowed;
+}
+
+.submit[data-state="ready"] {
+  background-size: 160% 100%;
+  animation: submitSheen 3.2s ease-in-out infinite;
+}
+
+@keyframes submitSheen {
+  0%,
+  100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+.submit[data-state="busy"] .submitLabel {
+  opacity: 0.75;
+}
+
+.submit[data-state="done"] {
+  background: linear-gradient(120deg, #1f9d6b, #38d39f);
+  box-shadow: 0 10px 30px rgba(56, 211, 159, 0.35);
+}
+
+.submit[data-state="done"] .submitLabel {
+  animation: markPop 0.3s cubic-bezier(0.2, 1.4, 0.4, 1) both;
+}
+
+/* Hover lift only where hovering exists; touch and remote get focus states. */
+@media (hover: hover) {
+  .submit:hover:not(:disabled) {
+    transform: translateY(-2px);
+    filter: brightness(1.06);
+  }
+
+  .field:hover .input:not(:focus) {
+    border-color: rgba(255, 255, 255, 0.22);
+  }
+}
+
+/* TV: the sign-up form is rarely used from a couch, but when it is, the field
+   states have to read from three metres. */
+html[data-device="tv"] .field .input {
+  min-height: var(--tap-lg);
+  font-size: var(--step-0);
+}
+
+html[data-device="tv"] .rule,
+html[data-device="tv"] .strengthLabel {
+  font-size: var(--step--1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cardAura,
+  .submit[data-state="ready"] {
+    animation: none;
+  }
+
+  .fieldGlow,
+  .field .label,
+  .submitLabel {
+    transition: none;
   }
 }

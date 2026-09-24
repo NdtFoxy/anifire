@@ -64,6 +64,37 @@ export interface PlayerQuality {
   src: string;
 }
 
+/**
+ * One creative the server decided to play. Every field the law requires is data
+ * from the campaign, never something the client composes: «Реклама», the
+ * advertiser's legal name, the age marker and the disclaimer are rendered
+ * verbatim or not at all.
+ */
+export interface AdSlot {
+  /** Opaque server decision id. Required on every reported event. */
+  decisionId: string;
+  kind: "PREROLL";
+  src: string;
+  durationSec: number;
+  /** Seconds before Skip appears; null means the roll cannot be skipped. */
+  skipAfterSec: number | null;
+  clickUrl: string | null;
+  advertiser: string;
+  /** Legal marker, always «Реклама». Server-provided so it can never drift. */
+  label: string;
+  disclaimer: string | null;
+  ageRating: number | null;
+}
+
+/**
+ * The whole ad decision for one playback. Absent, null or empty means "no ad":
+ * there is no client-side ad decision, and the JWT's `adsFree` claim is UI-only
+ * and must never be consulted here.
+ */
+export interface AdPlan {
+  slots: AdSlot[];
+}
+
 export interface PlayerSource {
   key: string; // stable id, e.g. `${animeId}-${episode}` — dedupes full/mini handoff
   selfHref: string; // URL of this player's own watch page, for "maximize"
@@ -86,4 +117,15 @@ export interface PlayerSource {
   anilistId?: number;
   malId?: number;
   episode?: number;
+  /**
+   * Where to start, in seconds. Set when the viewer arrived from a deep link
+   * ("watch this scene again"), and it wins over the saved resume position —
+   * they asked for this exact moment.
+   */
+  startAt?: number;
+  /**
+   * Advertising the server decided to play before this episode. Present only
+   * for a viewer it applies to; an ads-free viewer gets null or no slots.
+   */
+  adPlan?: AdPlan | null;
 }

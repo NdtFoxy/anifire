@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { Bookmark, Play, Star, Trash2 } from "lucide-react";
 import StreamNav from "@/components/stream/StreamNav";
@@ -9,10 +9,13 @@ import RequireAuth from "@/components/auth/RequireAuth";
 import { useMyList } from "@/lib/mylist";
 import { fetchMovies } from "@/data/animeApi";
 import type { Movie } from "@/data/mockAnime";
+import { useReveal } from "@/lib/useReveal";
+import Lottie from "@/components/system/Lottie";
 import styles from "./mylist.module.css";
 
 function MyListContent() {
   const { list, toggleList } = useMyList();
+  const pageRef = useRef<HTMLDivElement | null>(null);
   const [movies, setMovies] = useState<Movie[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -33,8 +36,10 @@ function MyListContent() {
     [movies, list]
   );
 
+  useReveal(pageRef, [items.length, loading]);
+
   return (
-    <div className={styles.page}>
+    <div className={styles.page} ref={pageRef}>
       <StreamNav />
 
       <header className={styles.header}>
@@ -52,7 +57,7 @@ function MyListContent() {
         </div>
       </header>
 
-      <main className={styles.main}>
+      <main id="main" className={styles.main}>
         {loading ? (
           <div className={styles.grid}>
             {Array.from({ length: 10 }).map((_, i) => (
@@ -60,18 +65,24 @@ function MyListContent() {
             ))}
           </div>
         ) : items.length === 0 ? (
-          <div className={styles.empty}>
-            <Bookmark size={40} />
+          <div className={`${styles.empty} popIn`}>
+            {/* The only illustration on the page: worth a moving one, and worth
+                degrading to the icon if the file is ever missing. */}
+            <Lottie
+              src="/lottie/ember-pulse.json"
+              className={styles.emptyArt}
+              fallback={<Bookmark size={40} />}
+            />
             <h2>Nothing here yet</h2>
             <p>Tap the + on any title to add it to your list.</p>
-            <Link href="/stream" className={styles.browseBtn}>
+            <Link href="/stream" className={styles.browseBtn} data-tap>
               <Play size={16} fill="currentColor" /> Browse catalog
             </Link>
           </div>
         ) : (
-          <div className={styles.grid}>
+          <div className={styles.grid} data-reveal>
             {items.map((m) => (
-              <div key={m.id} className={styles.card}>
+              <div key={m.id} className={styles.card} data-reveal-child>
                 <Link href={`/anime/${m.id}`} className={styles.poster}>
                   <img src={m.imageUrl} alt={m.title} />
                   <span className={styles.playOverlay}>

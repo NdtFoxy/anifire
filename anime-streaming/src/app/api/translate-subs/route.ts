@@ -4,6 +4,12 @@ import path from "path";
 import { parseSrt, guessLang } from "@/data/srt";
 import { resolveAnilistId } from "@/lib/anilist-server";
 import type { Cue, SubtitleTrack } from "@/components/player/types";
+import {
+  AiGateError,
+  aiGateResponse,
+  consumeQuota,
+  requireUser,
+} from "../_lib/requireUser";
 
 // Translating a whole episode through a local LLM can take a minute on a cold
 // model, so give the route room and keep it on the Node runtime (needs fs).
@@ -193,7 +199,8 @@ async function translate(
   code: string,
   targetName: string,
   label: string,
-  cacheKey: string
+  cacheKey: string,
+  token: string
 ): Promise<SubtitleTrack | null> {
   const tag = `[translate-subs] anilist=${anilistId} ep=${episode} → ${label} (${OLLAMA_MODEL})`;
   const entryId = await searchEntryId(anilistId);
@@ -207,6 +214,11 @@ async function translate(
     console.warn(`${tag}: no .srt source cues found`);
     return null;
   }
+
+  // Charged per source line, once the real size of the job is known and before
+  // any GPU time is spent. A quota refusal aborts the job instead of
+  // translating for free.
+  await consumeQuota(token, "TRANSLATE", source.cues.length);
 
   const sourceName = LANG_NAMES[source.sourceLang] ?? "Japanese";
   const totalBatches = Math.ceil(source.cues.length / BATCH);
@@ -260,6 +272,14 @@ async function translate(
  * language is never translated twice. Returns { track } or { track: null }.
  */
 export async function GET(request: Request) {
+  // Signed-in only: this route burns the owner's GPU and jimaku key.
+  let token: string;
+  try {
+    token = (await requireUser(request)).token;
+  } catch (err) {
+    return aiGateResponse(err);
+  }
+
   const { searchParams } = new URL(request.url);
   const episode = Math.max(1, Number(searchParams.get("episode") ?? "1"));
   const toRaw = (searchParams.get("to") ?? "pl").trim();
@@ -280,6 +300,7 @@ export async function GET(request: Request) {
   const label = LANG_LABELS[code] ?? titleCase(toRaw);
   const cacheKey = `${anilistId}-${episode}-${slug(code)}`;
 
+  // Cache hits cost nothing to serve, so they are not metered.
   const cached = await readCache(cacheKey);
   if (cached) {
     return NextResponse.json(
@@ -293,7 +314,7 @@ export async function GET(request: Request) {
     if (!job) {
       // Serialized so only one translation hits Ollama at a time (no model thrash).
       job = enqueue(() =>
-        translate(anilistId, episode, code, targetName, label, cacheKey)
+        translate(anilistId, episode, code, targetName, label, cacheKey, token)
       ).finally(() => inFlight.delete(cacheKey));
       inFlight.set(cacheKey, job);
     }
@@ -304,7 +325,8 @@ export async function GET(request: Request) {
         ? { headers: { "Cache-Control": "public, max-age=86400" } }
         : undefined
     );
-  } catch {
+  } catch (err) {
+    if (err instanceof AiGateError) return aiGateResponse(err);
     return NextResponse.json({ track: null });
   }
 }

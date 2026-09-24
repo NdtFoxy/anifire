@@ -11,11 +11,23 @@
   cursor: default;
   user-select: none;
   font-family: var(--font-sans), system-ui, sans-serif;
+  /* Distance from the bottom of the frame to the top of the control bar's
+     content, home-indicator padding included. Anything that has to ride above
+     the bar — the subtitles (PlayerRoot reads this as the subtitle lift) and the
+     skip button — offsets by exactly this, so the bar and the things dodging it
+     can never disagree. Re-declared per device below, where the bar changes size. */
+  --osd-h: calc(var(--safe-bottom) + 150px);
+  /* The picture is a gesture surface: a volume/brightness drag or a double-tap
+     seek must never scroll or pinch-zoom the page underneath. */
+  touch-action: none;
 }
 .shell:not(.shellActive) {
   cursor: none;
 }
 
+/* One <video>, always letterboxed: `contain` keeps the real aspect ratio, so a
+   16:9 episode is pillarboxed on a 21:9 monitor and letterboxed on a 4:3 panel,
+   and is never stretched. */
 .video {
   position: absolute;
   inset: 0;
@@ -24,7 +36,6 @@
   object-fit: contain;
   background: #000;
 }
-
 /* top violet accent line from the mock */
 .topAccent {
   position: absolute;
@@ -54,7 +65,20 @@
   display: flex;
   align-items: center;
   gap: 16px;
-  padding: 22px 26px 56px;
+  /* Content is capped at --shell-max and centred, while the scrim still spans
+     the full frame: on ultrawide the controls stay together instead of drifting
+     to opposite bezels. The safe-area terms are the notch on a landscape phone
+     and the overscan guard on a TV. */
+  padding-top: calc(var(--safe-top) + 16px);
+  padding-bottom: 48px;
+  padding-left: max(
+    calc(var(--shell-pad) + var(--safe-left)),
+    calc((100% - var(--shell-max)) / 2)
+  );
+  padding-right: max(
+    calc(var(--shell-pad) + var(--safe-right)),
+    calc((100% - var(--shell-max)) / 2)
+  );
   background: linear-gradient(
     180deg,
     rgba(10, 7, 7, 0.85) 0%,
@@ -73,8 +97,8 @@
 .backBtn {
   display: grid;
   place-items: center;
-  width: 44px;
-  height: 44px;
+  width: var(--tap);
+  height: var(--tap);
   flex-shrink: 0;
   border-radius: 50%;
   border: none;
@@ -84,23 +108,41 @@
   cursor: pointer;
   transition: background 0.2s ease, transform 0.2s ease;
 }
-.backBtn:hover {
-  background: rgba(52, 56, 74, 0.9);
-  transform: scale(1.05);
-}
 
 .titleBlock {
+  /* A flex item defaults to its content width, so on a 280px folded phone the
+     title ran straight under the back and mini buttons. It takes the leftover
+     column and truncates instead. */
+  flex: 1 1 auto;
+  min-width: 0;
   line-height: 1.25;
 }
+
+.titleMain,
+.titleSub {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .titleMain {
-  font-size: 16px;
+  font-size: var(--step-0);
   font-weight: 700;
   color: #f7f6ff;
 }
+
 .titleSub {
-  font-size: 12.5px;
+  font-size: var(--step--1);
   color: rgba(214, 210, 230, 0.62);
   margin-top: 1px;
+}
+
+/* Under ~340px the subtitle is the first thing to go: one readable line beats
+   two truncated ones. */
+@media (max-width: 340px) {
+  .titleSub {
+    display: none;
+  }
 }
 
 .statusDot {
@@ -126,8 +168,8 @@
   z-index: 4;
   display: grid;
   place-items: center;
-  width: 84px;
-  height: 84px;
+  width: clamp(64px, 13vmin, 96px);
+  height: clamp(64px, 13vmin, 96px);
   padding-left: 4px;
   border: none;
   border-radius: 50%;
@@ -137,35 +179,31 @@
   cursor: pointer;
   transition: transform 0.18s ease, background 0.18s ease;
 }
-.bigPlay:hover {
-  transform: translate(-50%, -50%) scale(1.06);
-  background: rgba(230, 34, 51, 0.5);
-}
 
 .skipBtn {
   position: absolute;
-  right: 40px;
-  bottom: 150px;
+  /* Rides above the control bar and clears the home indicator. */
+  right: max(
+    calc(var(--shell-pad) + var(--safe-right)),
+    calc((100% - var(--shell-max)) / 2)
+  );
+  bottom: calc(var(--osd-h) + 12px);
   z-index: 5;
   display: inline-flex;
   align-items: center;
   gap: 8px;
+  min-height: var(--tap);
   padding: 11px 18px;
   border: 1px solid rgba(255, 255, 255, 0.35);
   border-radius: 8px;
   background: rgba(14, 16, 24, 0.72);
   backdrop-filter: blur(8px);
   color: #fff;
-  font-size: 14px;
+  font-size: var(--step-0);
   font-weight: 600;
   cursor: pointer;
   transition: background 0.2s ease, transform 0.2s ease;
 }
-.skipBtn:hover {
-  background: rgba(230, 34, 51, 0.5);
-  transform: translateY(-1px);
-}
-
 /* ──────────── subtitles ──────────── */
 .subtitleLayer {
   position: absolute;
@@ -176,7 +214,11 @@
   flex-direction: column;
   align-items: center;
   gap: 6px;
-  width: min(86%, 1100px);
+  /* Never wider than the readable measure, never into the notch. */
+  width: min(
+    calc(100% - 2 * (var(--shell-pad) + var(--safe-left))),
+    var(--shell-max)
+  );
   text-align: center;
   pointer-events: none;
   transition: bottom 0.25s ease;
@@ -202,7 +244,10 @@
   bottom: 16%;
   transform: translateX(-50%);
   z-index: 7;
-  width: min(92%, 1400px);
+  width: min(
+    calc(100% - 2 * (var(--shell-pad) + var(--safe-left))),
+    var(--shell-max)
+  );
   pointer-events: none;
 }
 .seekBar {
@@ -266,12 +311,11 @@
 .seekTime {
   margin-top: 10px;
   text-align: right;
-  font-size: 13px;
+  font-size: var(--step--1);
   font-variant-numeric: tabular-nums;
   color: rgba(255, 255, 255, 0.92);
   text-shadow: 0 1px 4px rgba(0, 0, 0, 0.8);
 }
-
 /* ──────────── bottom bar ──────────── */
 .bottomBar {
   position: absolute;
@@ -279,7 +323,17 @@
   right: 0;
   bottom: 0;
   z-index: 5;
-  padding: 70px 26px 22px;
+  /* Same capped-and-centred measure as the top bar, plus the home indicator. */
+  padding-top: 70px;
+  padding-bottom: calc(var(--safe-bottom) + 20px);
+  padding-left: max(
+    calc(var(--shell-pad) + var(--safe-left)),
+    calc((100% - var(--shell-max)) / 2)
+  );
+  padding-right: max(
+    calc(var(--shell-pad) + var(--safe-right)),
+    calc((100% - var(--shell-max)) / 2)
+  );
   background: linear-gradient(
     0deg,
     rgba(10, 7, 7, 0.92) 0%,
@@ -306,39 +360,39 @@
   line-height: 1.25;
 }
 .epLabel {
-  font-size: 19px;
+  font-size: var(--step-1);
   font-weight: 800;
   color: #fff;
 }
 .epTitle {
-  font-size: 14px;
+  font-size: var(--step--1);
   color: rgba(218, 214, 230, 0.72);
   margin-top: 2px;
 }
 .timecode {
-  font-size: 14px;
+  font-size: var(--step-0);
   font-variant-numeric: tabular-nums;
   color: rgba(230, 227, 240, 0.82);
+  white-space: nowrap;
 }
-
 /* progress line */
+/* The scrubber's hit area is a full touch strip; only the track inside it is
+   thin, so a thumb can land anywhere along the bar. */
 .progress {
   position: relative;
-  height: 18px;
+  height: var(--tap);
   display: flex;
   align-items: center;
   cursor: pointer;
+  touch-action: none;
 }
 .progressTrack {
   position: relative;
   width: 100%;
-  height: 3px;
+  height: 4px;
   border-radius: 99px;
   background: rgba(255, 255, 255, 0.22);
   transition: height 0.15s ease;
-}
-.progress:hover .progressTrack {
-  height: 6px;
 }
 .progressBuffer,
 .progressHover,
@@ -368,11 +422,10 @@
   border-radius: 50%;
   background: #fff;
   box-shadow: 0 0 8px rgba(230, 34, 51, 0.8);
-  transform: translateY(-50%) scale(0);
-  transition: transform 0.15s ease;
-}
-.progress:hover .progressKnob {
+  /* Visible by default: a finger and a D-pad have no hover to reveal it with.
+     Pointer devices hide it until the bar is hovered (see the hover section). */
   transform: translateY(-50%) scale(1);
+  transition: transform 0.15s ease;
 }
 .chapterTick {
   position: absolute;
@@ -421,19 +474,14 @@
   position: relative;
   display: grid;
   place-items: center;
-  width: 40px;
-  height: 40px;
+  width: var(--tap);
+  height: var(--tap);
   border: none;
   border-radius: 9px;
   color: rgba(236, 233, 245, 0.86);
   background: transparent;
   cursor: pointer;
   transition: background 0.18s ease, color 0.18s ease, transform 0.18s ease;
-}
-.iconBtn:hover {
-  background: rgba(255, 255, 255, 0.1);
-  color: #fff;
-  transform: translateY(-1px);
 }
 .iconBtn:disabled {
   opacity: 0.35;
@@ -459,7 +507,7 @@
   gap: 4px;
   padding: 4px 9px;
   border-radius: 99px;
-  font-size: 11px;
+  font-size: var(--step--1);
   font-weight: 700;
   color: #fff;
   background: linear-gradient(90deg, rgba(230, 34, 51, 0.85), rgba(255, 77, 90, 0.85));
@@ -468,8 +516,8 @@
 .transportBtn {
   display: grid;
   place-items: center;
-  width: 50px;
-  height: 50px;
+  width: var(--tap-lg);
+  height: var(--tap-lg);
   border: none;
   border-radius: 12px;
   color: #f2f0fa;
@@ -478,10 +526,6 @@
   cursor: pointer;
   transition: background 0.18s ease, transform 0.18s ease;
 }
-.transportBtn:hover:not(:disabled) {
-  background: rgba(52, 54, 74, 0.85);
-  transform: scale(1.05);
-}
 .transportBtn:disabled {
   opacity: 0.35;
   cursor: not-allowed;
@@ -489,8 +533,8 @@
 .playBtn {
   display: grid;
   place-items: center;
-  width: 58px;
-  height: 58px;
+  width: calc(var(--tap-lg) + 8px);
+  height: calc(var(--tap-lg) + 8px);
   border: none;
   border-radius: 14px;
   color: #fff;
@@ -499,41 +543,32 @@
   cursor: pointer;
   transition: background 0.18s ease, transform 0.18s ease;
 }
-.playBtn:hover {
-  background: rgba(230, 34, 51, 0.6);
-  transform: scale(1.05);
-}
-
-/* volume */
+/* Volume. On a pointer device the slider unfurls on hover; touch and remote
+   users have no hover, so for them it is simply always there. */
 .volume {
   display: flex;
   align-items: center;
+  gap: 6px;
 }
 .volumeSlider {
-  width: 0;
-  opacity: 0;
-  height: 4px;
-  margin-left: 0;
-  accent-color: #FF5A66;
+  width: 88px;
+  height: var(--tap);
+  accent-color: #ff5a66;
   cursor: pointer;
+  touch-action: none;
   transition: width 0.2s ease, opacity 0.2s ease, margin 0.2s ease;
 }
-.volume:hover .volumeSlider {
-  width: 80px;
-  opacity: 1;
-  margin-left: 6px;
-}
-
-/* ──────────── settings menu ──────────── */
 .settingsWrap {
   position: relative;
 }
 .menu {
   position: absolute;
   right: 0;
-  bottom: 52px;
+  bottom: calc(var(--tap) + 10px);
+  display: flex;
+  flex-direction: column;
   width: 300px;
-  max-height: 60vh;
+  max-height: min(60dvh, 520px);
   overflow: hidden;
   border-radius: 14px;
   border: 1px solid rgba(255, 255, 255, 0.08);
@@ -541,7 +576,7 @@
   backdrop-filter: blur(20px);
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
   color: #ececf4;
-  font-size: 14px;
+  font-size: var(--step--1);
   animation: menuIn 0.16s ease;
 }
 @keyframes menuIn {
@@ -551,11 +586,15 @@
 .menuList {
   list-style: none;
   padding: 6px;
+  overflow-y: auto;
+  min-height: 0;
 }
+/* One flex chain from .menu down, so a phone sheet and a TV panel only have to
+   change the outer height. */
 .menuPane {
   display: flex;
   flex-direction: column;
-  max-height: 60vh;
+  min-height: 0;
 }
 .menuHeader {
   display: flex;
@@ -576,6 +615,7 @@
 }
 .menuScroll {
   overflow-y: auto;
+  min-height: 0;
   padding: 6px;
 }
 .menuItem {
@@ -584,18 +624,16 @@
   justify-content: space-between;
   gap: 10px;
   width: 100%;
+  min-height: var(--tap);
   padding: 10px 12px;
   border: none;
   border-radius: 9px;
   background: transparent;
   color: #e7e5f0;
-  font-size: 13.5px;
+  font-size: var(--step--1);
   text-align: left;
   cursor: pointer;
   transition: background 0.15s ease;
-}
-.menuItem:hover {
-  background: rgba(255, 255, 255, 0.07);
 }
 .menuItemLabel {
   display: flex;
@@ -643,16 +681,14 @@
 }
 .menuReset {
   width: 100%;
+  min-height: var(--tap);
   padding: 9px;
   border: none;
   border-radius: 8px;
   background: transparent;
   color: rgba(230, 120, 130, 0.9);
-  font-size: 13px;
+  font-size: var(--step--1);
   cursor: pointer;
-}
-.menuReset:hover {
-  background: rgba(230, 34, 51, 0.12);
 }
 .soon {
   margin-left: 8px;
@@ -699,8 +735,10 @@
 }
 .slider {
   width: 100%;
-  accent-color: #FF5A66;
+  height: var(--tap);
+  accent-color: #ff5a66;
   cursor: pointer;
+  touch-action: none;
 }
 .swatches {
   display: flex;
@@ -708,18 +746,15 @@
   flex-wrap: wrap;
 }
 .swatch {
-  width: 26px;
-  height: 26px;
+  width: var(--tap);
+  height: var(--tap);
   border-radius: 50%;
   border: 2px solid rgba(255, 255, 255, 0.15);
   cursor: pointer;
   transition: transform 0.15s ease;
 }
-.swatch:hover {
-  transform: scale(1.1);
-}
 .swatchOn {
-  border-color: #FF5A66;
+  border-color: #ff5a66;
   box-shadow: 0 0 0 2px rgba(255, 77, 90, 0.4);
 }
 .seg {
@@ -728,17 +763,15 @@
 }
 .segBtn {
   flex: 1;
+  min-height: var(--tap);
   padding: 8px 4px;
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 8px;
   background: transparent;
   color: rgba(220, 216, 232, 0.7);
-  font-size: 12.5px;
+  font-size: var(--step--1);
   cursor: pointer;
-  transition: all 0.15s ease;
-}
-.segBtn:hover {
-  background: rgba(255, 255, 255, 0.06);
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
 }
 .segOn {
   border-color: #FF4D5A;
@@ -751,8 +784,8 @@
   margin-left: auto;
   display: grid;
   place-items: center;
-  width: 40px;
-  height: 40px;
+  width: var(--tap);
+  height: var(--tap);
   border: none;
   border-radius: 10px;
   color: rgba(245, 240, 240, 0.85);
@@ -761,12 +794,6 @@
   cursor: pointer;
   transition: background 0.18s ease, color 0.18s ease, transform 0.18s ease;
 }
-.miniTrigger:hover {
-  background: rgba(230, 34, 51, 0.55);
-  color: #fff;
-  transform: scale(1.05);
-}
-
 /* ──────────── subtitle preview (settings) ──────────── */
 .subPreview {
   position: relative;
@@ -817,12 +844,6 @@
   transition: opacity 0.2s ease, box-shadow 0.2s ease;
   animation: miniIn 0.22s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
-.mini:hover {
-  box-shadow:
-    0 22px 60px rgba(0, 0, 0, 0.7),
-    0 0 0 1px rgba(255, 77, 90, 0.5),
-    0 0 34px rgba(230, 34, 51, 0.35);
-}
 @keyframes miniIn {
   from { opacity: 0; transform: translateY(16px) scale(0.96); }
   to { opacity: 1; transform: translateY(0) scale(1); }
@@ -840,14 +861,13 @@
   padding: 8px 10px;
   cursor: grab;
   background: linear-gradient(180deg, rgba(10, 7, 7, 0.85), rgba(10, 7, 7, 0));
-  opacity: 0;
+  /* Visible by default so a finger can reach it; pointer devices reveal it on
+     hover instead (see the hover section). */
+  opacity: 1;
   transition: opacity 0.18s ease;
 }
 .miniDrag:active {
   cursor: grabbing;
-}
-.mini:hover .miniDrag {
-  opacity: 1;
 }
 .miniTitle {
   flex: 1;
@@ -876,9 +896,6 @@
   cursor: pointer;
   transition: background 0.16s ease;
 }
-.miniBtn:hover {
-  background: rgba(230, 34, 51, 0.7);
-}
 
 .miniPlay {
   position: absolute;
@@ -896,15 +913,8 @@
   background: rgba(20, 14, 14, 0.5);
   backdrop-filter: blur(6px);
   cursor: pointer;
-  opacity: 0;
-  transition: opacity 0.18s ease, background 0.18s ease, transform 0.18s ease;
-}
-.mini:hover .miniPlay {
   opacity: 1;
-}
-.miniPlay:hover {
-  background: rgba(230, 34, 51, 0.65);
-  transform: translate(-50%, -50%) scale(1.06);
+  transition: opacity 0.18s ease, background 0.18s ease, transform 0.18s ease;
 }
 
 .miniBottom {
@@ -918,22 +928,32 @@
   gap: 8px;
   padding: 12px 10px 9px;
   background: linear-gradient(0deg, rgba(10, 7, 7, 0.9), rgba(10, 7, 7, 0));
-  opacity: 0;
+  opacity: 1;
   transition: opacity 0.18s ease;
 }
-.mini:hover .miniBottom {
-  opacity: 1;
-}
+/* The visible line stays thin; the hit strip around it is what a thumb aims at,
+   so the track is drawn as a pseudo-element behind a centred fill. */
 .miniProgress {
+  position: relative;
   flex: 1;
+  height: 14px;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  touch-action: none;
+}
+.miniProgress::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
   height: 4px;
   border-radius: 99px;
   background: rgba(255, 255, 255, 0.25);
-  cursor: pointer;
-  overflow: hidden;
 }
 .miniProgressFill {
-  height: 100%;
+  position: relative;
+  height: 4px;
   border-radius: 99px;
   background: linear-gradient(90deg, #ff8a3d, #e62233);
   box-shadow: 0 0 8px rgba(230, 34, 51, 0.6);
@@ -941,9 +961,13 @@
 }
 .miniOpacity {
   width: 74px;
+  height: var(--tap);
   accent-color: #e62233;
   cursor: pointer;
+  touch-action: none;
 }
+/* Resize grip. A finger needs a bigger corner than a mouse; the visual wedge is
+   drawn with a gradient so growing the box does not grow the decoration. */
 .miniResize {
   position: absolute;
   right: 0;
@@ -954,13 +978,13 @@
   cursor: nwse-resize;
   background: linear-gradient(135deg, transparent 50%, rgba(255, 90, 102, 0.9) 50%);
   border-bottom-right-radius: 14px;
+  touch-action: none;
 }
-
-@media (max-width: 640px) {
-  .ctrlLeft .upBadge { display: none; }
-  .menu { width: 260px; }
-  .bottomBar { padding: 60px 16px 18px; }
-  .topBar { padding: 18px 16px 48px; }
+@media (hover: none) {
+  .miniResize {
+    width: 28px;
+    height: 28px;
+  }
 }
 
 /* ───────── AI translation language picker (subtitles pane) ───────── */
@@ -1072,4 +1096,865 @@
 @keyframes posterFade {
   from { opacity: 0; }
   to { opacity: 1; }
+}
+
+/* ════════════════════ GESTURE FEEDBACK ════════════════════
+   The centre HUD (volume/brightness drag, D-pad volume) and the double-tap seek
+   ripple. Both are pure feedback: pointer-events stay off so neither can eat the
+   next tap, and neither belongs to the OSD. */
+.hud {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 8;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 18px;
+  border-radius: 99px;
+  background: rgba(10, 7, 7, 0.72);
+  backdrop-filter: blur(10px);
+  color: #fff;
+  font-size: var(--step--1);
+  font-variant-numeric: tabular-nums;
+  pointer-events: none;
+  animation: hudIn 0.14s ease;
+}
+@keyframes hudIn {
+  from { opacity: 0; transform: translate(-50%, -50%) scale(0.94); }
+  to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+}
+.hudTrack {
+  position: relative;
+  width: clamp(88px, 22vw, 180px);
+  height: 5px;
+  border-radius: 99px;
+  background: rgba(255, 255, 255, 0.24);
+  overflow: hidden;
+}
+.hudFill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  border-radius: 99px;
+  background: linear-gradient(90deg, #ff8a3d, #e62233);
+}
+.hudValue {
+  min-width: 3.2em;
+  text-align: right;
+}
+
+.ripple {
+  position: absolute;
+  top: 50%;
+  z-index: 8;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  width: clamp(96px, 26vw, 168px);
+  aspect-ratio: 1;
+  transform: translateY(-50%);
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.14);
+  color: #fff;
+  font-size: var(--step--1);
+  font-weight: 700;
+  pointer-events: none;
+  animation: rippleOut 0.5s ease-out forwards;
+}
+.rippleLeft {
+  left: 4%;
+}
+.rippleRight {
+  right: 4%;
+}
+.rippleLabel {
+  font-variant-numeric: tabular-nums;
+}
+@keyframes rippleOut {
+  from { opacity: 0; scale: 0.7; }
+  40% { opacity: 1; scale: 1; }
+  to { opacity: 0; scale: 1.08; }
+}
+
+/* ════════════════════ HOVER & FOCUS ════════════════════
+   Every hover affordance lives here, behind `hover: hover`, and every one of
+   them is mirrored on :focus-visible so a keyboard or a remote gets the same
+   signal. Touch devices get neither, so nothing stays stuck "hovered" after a
+   tap, and nothing is hidden behind a hover a finger cannot perform. */
+@media (hover: hover) {
+  .backBtn:hover {
+    background: rgba(52, 56, 74, 0.9);
+    transform: scale(1.05);
+  }
+  .bigPlay:hover {
+    transform: translate(-50%, -50%) scale(1.06);
+    background: rgba(230, 34, 51, 0.5);
+  }
+  .skipBtn:hover {
+    background: rgba(230, 34, 51, 0.5);
+    transform: translateY(-1px);
+  }
+  .iconBtn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+    transform: translateY(-1px);
+  }
+  .transportBtn:hover:not(:disabled) {
+    background: rgba(52, 54, 74, 0.85);
+    transform: scale(1.05);
+  }
+  .playBtn:hover {
+    background: rgba(230, 34, 51, 0.6);
+    transform: scale(1.05);
+  }
+  .miniTrigger:hover {
+    background: rgba(230, 34, 51, 0.55);
+    color: #fff;
+    transform: scale(1.05);
+  }
+  .progress:hover .progressTrack {
+    height: 7px;
+  }
+  .menuItem:hover {
+    background: rgba(255, 255, 255, 0.07);
+  }
+  .menuReset:hover {
+    background: rgba(230, 34, 51, 0.12);
+  }
+  .segBtn:hover {
+    background: rgba(255, 255, 255, 0.06);
+  }
+  .swatch:hover {
+    transform: scale(1.1);
+  }
+  .langChip:hover:not(:disabled) {
+    border-color: #ff4d5a;
+  }
+  .miniBtn:hover {
+    background: rgba(230, 34, 51, 0.7);
+  }
+  .miniPlay:hover {
+    background: rgba(230, 34, 51, 0.65);
+    transform: translate(-50%, -50%) scale(1.06);
+  }
+  .mini:hover {
+    box-shadow:
+      0 22px 60px rgba(0, 0, 0, 0.7),
+      0 0 0 1px rgba(255, 77, 90, 0.5),
+      0 0 34px rgba(230, 34, 51, 0.35);
+  }
+  /* Mini chrome is a hover reveal for a mouse, and permanent for a finger. It
+     also opens on :focus-within, so a keyboard can reach the buttons. */
+  .miniDrag,
+  .miniPlay,
+  .miniBottom {
+    opacity: 0;
+  }
+  .mini:hover .miniDrag,
+  .mini:hover .miniPlay,
+  .mini:hover .miniBottom,
+  .mini:focus-within .miniDrag,
+  .mini:focus-within .miniPlay,
+  .mini:focus-within .miniBottom {
+    opacity: 1;
+  }
+  /* The volume slider unfurls out of the mute button. */
+  .volumeSlider {
+    width: 0;
+    margin-left: 0;
+    opacity: 0;
+  }
+  .volume:hover .volumeSlider,
+  .volume:focus-within .volumeSlider {
+    width: 88px;
+    opacity: 1;
+  }
+}
+
+/* Focus mirrors — a ring alone does not say "this is the button that will act". */
+.backBtn:focus-visible {
+  background: rgba(52, 56, 74, 0.9);
+}
+.iconBtn:focus-visible {
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+}
+.transportBtn:focus-visible:not(:disabled),
+.playBtn:focus-visible {
+  background: rgba(230, 34, 51, 0.5);
+}
+.skipBtn:focus-visible {
+  background: rgba(230, 34, 51, 0.5);
+}
+.miniTrigger:focus-visible {
+  background: rgba(230, 34, 51, 0.55);
+  color: #fff;
+}
+.menuItem:focus-visible,
+.menuHeader:focus-visible,
+.menuReset:focus-visible,
+.segBtn:focus-visible,
+.langChip:focus-visible {
+  background: rgba(255, 255, 255, 0.1);
+}
+.progress:focus-visible .progressTrack {
+  height: 7px;
+}
+
+/* The global remote-focus rule adds `position: relative` and the TV rule adds a
+   scale transform. These controls are absolutely placed and centre themselves
+   with a transform, so they restate that geometry instead of losing it. */
+html[data-input="remote"] .bigPlay:focus,
+html[data-input="remote"] .skipBtn:focus,
+html[data-input="remote"] .miniPlay:focus,
+html[data-input="remote"] .miniResize:focus {
+  position: absolute;
+}
+html[data-device="tv"] .bigPlay:focus,
+html[data-device="tv"] .miniPlay:focus {
+  transform: translate(-50%, -50%) scale(1.06);
+}
+
+/* ════════════════════ SIZE STEPS ════════════════════
+   Mobile-first, on the shared scale only. The control bar grows with the screen,
+   and --osd-h grows with it so the subtitles and the skip button follow. */
+@media (max-width: 599px) {
+  /* Phone: a landscape phone is only ~390px tall, so the bar has to be lean —
+     the metadata line collapses to one row and the scrims get shorter. */
+  .topBar {
+    padding-bottom: 34px;
+  }
+  .bottomBar {
+    padding-top: 48px;
+  }
+  .metaRow {
+    margin-bottom: 6px;
+  }
+  .epTitle {
+    display: none;
+  }
+  .upBadge {
+    display: none;
+  }
+  .controlsRow {
+    margin-top: 2px;
+    gap: 4px;
+  }
+  .ctrlCenter {
+    gap: 8px;
+  }
+  /* The settings menu becomes a bottom sheet: a popover hung off a 44px button
+     is unusable on a phone, and a sheet can use the whole width. `.settingsWrap`
+     goes static so the sheet resolves against the control bar, which spans the
+     frame edge to edge. */
+  .settingsWrap {
+    position: static;
+  }
+  .menu {
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: auto;
+    max-height: min(78dvh, 420px);
+    padding-top: 14px;
+    padding-bottom: var(--safe-bottom);
+    border-radius: 18px 18px 0 0;
+    border-bottom: none;
+    animation: sheetIn 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+  /* Sheet grab handle. Decoration only — the sheet closes by tapping the picture
+     or the settings button, both of which already work. */
+  .menu::before {
+    content: "";
+    position: absolute;
+    top: 6px;
+    left: 50%;
+    translate: -50% 0;
+    width: 36px;
+    height: 4px;
+    border-radius: 99px;
+    background: rgba(255, 255, 255, 0.28);
+  }
+  @keyframes sheetIn {
+    from { opacity: 0; transform: translateY(28px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .miniProgress {
+    height: var(--tap);
+  }
+  .miniBottom {
+    padding: 2px 8px;
+  }
+}
+
+@media (min-width: 600px) {
+  .shell {
+    --osd-h: 140px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .shell {
+    --osd-h: 156px;
+  }
+  /* Laptop and up: the bar has room to breathe again. */
+  .topBar {
+    padding-bottom: 56px;
+  }
+  .bottomBar {
+    padding-top: 70px;
+  }
+}
+
+/* Touch, at any width: the scrubber and the mini bar need real hit strips even
+   when the visible line stays thin. */
+@media (hover: none) {
+  .miniProgress {
+    height: var(--tap);
+  }
+  .miniBottom {
+    padding: 2px 8px;
+  }
+  .progressTrack {
+    height: 6px;
+  }
+}
+
+/* ════════════════════ TV (10-FOOT) ════════════════════
+   Never a media query: a 4K monitor is not a couch. Everything here keys off
+   `data-device="tv"`, which DeviceProvider sets from the UA or a manual override.
+   Sizes come from --tap-lg (72px on TV) and the fluid steps, which the TV block
+   in adaptive.css already scales up. */
+html[data-device="tv"] .shell {
+  --osd-h: 260px;
+}
+html[data-device="tv"] .topBar {
+  gap: 24px;
+  padding-top: calc(var(--safe-top) + 12px);
+  padding-bottom: 64px;
+}
+html[data-device="tv"] .bottomBar {
+  padding-top: 96px;
+  /* Overscan guard: --safe-bottom is 3vh on TV, so nothing lands on the bezel. */
+  padding-bottom: calc(var(--safe-bottom) + 16px);
+}
+html[data-device="tv"] .titleMain {
+  font-size: var(--step-2);
+}
+html[data-device="tv"] .titleSub,
+html[data-device="tv"] .epTitle {
+  font-size: var(--step-0);
+}
+html[data-device="tv"] .epLabel {
+  font-size: var(--step-2);
+}
+/* Time labels are read from three metres, so they get a full step up and stay on
+   one line. */
+html[data-device="tv"] .timecode,
+html[data-device="tv"] .seekTime {
+  font-size: var(--step-1);
+}
+html[data-device="tv"] .backBtn,
+html[data-device="tv"] .iconBtn,
+html[data-device="tv"] .miniTrigger {
+  width: var(--tap-lg);
+  height: var(--tap-lg);
+  border-radius: clamp(10px, 0.73vw, 28px);
+}
+html[data-device="tv"] .transportBtn {
+  width: calc(var(--tap-lg) + 12px);
+  height: calc(var(--tap-lg) + 12px);
+}
+html[data-device="tv"] .playBtn {
+  width: calc(var(--tap-lg) + 28px);
+  height: calc(var(--tap-lg) + 28px);
+}
+html[data-device="tv"] .ctrlCenter {
+  gap: clamp(18px, 1.46vw, 56px);
+}
+html[data-device="tv"] .ctrlLeft,
+html[data-device="tv"] .ctrlRight {
+  gap: clamp(12px, 0.83vw, 32px);
+}
+html[data-device="tv"] .bigPlay {
+  width: clamp(96px, 7.3vw, 280px);
+  height: clamp(96px, 7.3vw, 280px);
+}
+html[data-device="tv"] .skipBtn {
+  min-height: var(--tap-lg);
+  padding: clamp(10px, 0.73vw, 28px) clamp(18px, 1.35vw, 52px);
+  font-size: var(--step-1);
+}
+/* A 4px line is invisible across a room: the timeline is thick, the knob is a
+   real dot, and the chapter ticks keep up. */
+html[data-device="tv"] .progress {
+  height: var(--tap-lg);
+}
+html[data-device="tv"] .progressTrack {
+  height: clamp(8px, 0.63vw, 24px);
+}
+html[data-device="tv"] .progressKnob {
+  width: clamp(20px, 1.56vw, 60px);
+  height: clamp(20px, 1.56vw, 60px);
+  margin-left: calc(clamp(20px, 1.56vw, 60px) / -2);
+}
+html[data-device="tv"] .seekBar {
+  height: clamp(28px, 2.1vw, 80px);
+  border-width: max(2px, 0.1vw);
+}
+/* The focus ring is 10px of shadow plus a 6% scale, so the scrolling panes get
+   padding to sit it in and the panel itself stops clipping. */
+html[data-device="tv"] .menu {
+  width: min(640px, 56vw);
+  bottom: calc(var(--tap-lg) + 24px);
+  max-height: 64vh;
+  font-size: var(--step-0);
+}
+html[data-device="tv"] .menuList,
+html[data-device="tv"] .menuScroll {
+  padding: 12px 14px;
+}
+html[data-device="tv"] .menuItem {
+  min-height: var(--tap-lg);
+  padding: 14px 18px;
+  font-size: var(--step-0);
+}
+html[data-device="tv"] .menuHeader {
+  min-height: var(--tap-lg);
+  font-size: var(--step-1);
+}
+html[data-device="tv"] .menuItemValue,
+html[data-device="tv"] .menuItemNote,
+html[data-device="tv"] .menuHint {
+  font-size: var(--step--1);
+}
+html[data-device="tv"] .segBtn,
+html[data-device="tv"] .langChip {
+  min-height: var(--tap);
+  font-size: var(--step--1);
+}
+html[data-device="tv"] .swatch {
+  width: var(--tap);
+  height: var(--tap);
+}
+/* The volume slider is not remote-operable, so on TV it is always open and the
+   D-pad's ↑/↓ (handled by PlayerRoot) drives volume through the centre HUD. */
+html[data-device="tv"] .volumeSlider {
+  width: 140px;
+  opacity: 1;
+}
+html[data-device="tv"] .hud {
+  gap: 18px;
+  padding: 18px 28px;
+  font-size: var(--step-1);
+}
+html[data-device="tv"] .hudTrack {
+  width: 320px;
+  height: 10px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hud,
+  .ripple,
+  .menu,
+  .mini {
+    animation-duration: 0.01ms;
+  }
+  .ripple {
+    /* The ripple IS its animation; without motion it just needs to disappear. */
+    animation: none;
+    opacity: 0.9;
+  }
+}
+
+
+/* ═══════════ vocabulary layer ═══════════
+   Highlighting has to be legible over any frame yet quiet enough that someone
+   who is just watching is not distracted: a dotted underline in the subtitle's
+   own colour, not a coloured block. Intensity rises with rarity. */
+.studyWord {
+  padding: 0;
+  border: none;
+  background: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  border-bottom: 2px dotted rgba(255, 200, 90, 0.75);
+  transition: color 0.14s ease, border-color 0.14s ease;
+}
+
+.studyWord[data-level="4"] {
+  border-bottom-color: rgba(255, 150, 80, 0.85);
+}
+
+.studyWord[data-level="5"],
+.studyWord[data-level="6"] {
+  border-bottom-style: solid;
+  border-bottom-color: rgba(255, 90, 90, 0.9);
+}
+
+.studyWord[data-status="LEARNING"] {
+  color: #ffd166;
+  border-bottom-color: #ffd166;
+}
+
+@media (hover: hover) {
+  .studyWord:hover {
+    color: #ffd166;
+  }
+}
+
+.studyWord:focus-visible {
+  outline: none;
+  color: #ffd166;
+  border-radius: 3px;
+  box-shadow: 0 0 0 2px rgba(255, 209, 102, 0.8);
+}
+
+.wordCard {
+  position: absolute;
+  left: 50%;
+  bottom: calc(var(--safe-bottom) + 22%);
+  z-index: 12;
+  translate: -50% 0;
+  width: min(420px, 90%);
+  padding: 16px 18px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 16px;
+  background: rgba(12, 10, 14, 0.94);
+  backdrop-filter: blur(14px);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.6);
+  color: #f6f4f7;
+  animation: wordCardIn 0.16s ease-out;
+}
+
+@keyframes wordCardIn {
+  from {
+    opacity: 0;
+    translate: -50% 8px;
+  }
+}
+
+.wordCard header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.wordCard header b {
+  font-size: var(--step-2);
+  font-weight: 800;
+}
+
+.wordCard header em {
+  display: block;
+  font-style: normal;
+  font-size: var(--step--1);
+  color: #9b9198;
+}
+
+.wordCard header button {
+  margin-left: auto;
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 9px;
+  background: transparent;
+  color: #9b9198;
+  cursor: pointer;
+}
+
+.wordLevel {
+  padding: 3px 9px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #ffd166;
+  background: rgba(255, 209, 102, 0.14);
+}
+
+.wordLevel[data-level="5"],
+.wordLevel[data-level="6"] {
+  color: #ff8792;
+  background: rgba(230, 34, 51, 0.16);
+}
+
+.wordLine {
+  font-size: var(--step-0);
+  line-height: 1.5;
+}
+
+.wordTranslation {
+  margin-top: 6px;
+  font-size: var(--step--1);
+  color: #9b9198;
+}
+
+.wordMeta {
+  margin-top: 8px;
+  font-size: var(--step--1);
+  color: #9b9198;
+}
+
+.wordActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.wordActions button {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: var(--tap);
+  padding: 0 14px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 11px;
+  background: rgba(255, 255, 255, 0.05);
+  color: inherit;
+  font-size: var(--step--1);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.wordActions button:first-child {
+  border-color: rgba(255, 209, 102, 0.5);
+  color: #ffd166;
+}
+
+/* The meaning is the reason the card exists: it sits directly under the word. */
+.wordGloss {
+  margin: 0;
+  font-size: var(--step-0);
+  font-weight: 700;
+  line-height: 1.4;
+  color: #ffd166;
+}
+
+.wordGlossMissing {
+  margin: 0;
+  font-size: var(--step--1);
+  color: rgba(255, 255, 255, 0.45);
+}
+
+/* ═══════════ pre-roll advertising ═══════════
+   The roll is a lid, not a layer: it covers the picture AND the chrome, because
+   a viewer who can reach the scrubber can seek past an ad the advertiser paid
+   for. Covering is not enough on its own — a hidden button is still tabbable —
+   so every sibling of the overlay is taken out of the frame entirely while
+   `data-ad` is set on the shell. The <video> stays: it keeps its hls.js
+   instance, its buffer and its position behind the ad. */
+.shell[data-ad="playing"] > *:not(video):not([data-ad-overlay]),
+.mini[data-ad="playing"] > *:not(video):not([data-ad-overlay]) {
+  visibility: hidden;
+}
+
+.adOverlay {
+  position: absolute;
+  inset: 0;
+  /* Above the whole player: the OSD tops out at 8, the word card at 12. */
+  z-index: 40;
+  background: #000;
+  color: #fff;
+  /* The shell hides the cursor while its OSD is idle; an ad is not idle. */
+  cursor: default;
+}
+
+.adOverlay[data-clickable="true"] {
+  cursor: pointer;
+}
+
+.adOverlay:focus-visible {
+  outline: 2px solid rgba(255, 255, 255, 0.85);
+  outline-offset: -4px;
+}
+
+.adVideo {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  background: #000;
+}
+
+/* Legal block. Top-left, on its own scrim, so «Реклама» and the advertiser stay
+   legible over a bright creative for the entire roll — a light-grey caption over
+   white video would satisfy nobody, least of all the law. */
+.adLegal {
+  position: absolute;
+  top: calc(var(--safe-top) + 12px);
+  left: max(
+    calc(var(--shell-pad) + var(--safe-left)),
+    calc((100% - var(--shell-max)) / 2)
+  );
+  max-width: min(var(--measure), 60%);
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: rgba(10, 7, 7, 0.72);
+  backdrop-filter: blur(6px);
+}
+
+.adMark {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
+  font-size: var(--step--1);
+  line-height: 1.3;
+}
+
+.adLabel {
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.adDot {
+  opacity: 0.6;
+}
+
+.adAdvertiser {
+  font-weight: 600;
+}
+
+.adAge {
+  padding: 1px 7px;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: 999px;
+  font-size: var(--step--1);
+  font-weight: 700;
+}
+
+.adDisclaimer {
+  margin: 4px 0 0;
+  font-size: var(--step--1);
+  line-height: 1.35;
+  color: rgba(255, 255, 255, 0.78);
+}
+
+.adCountdown {
+  position: absolute;
+  top: calc(var(--safe-top) + 12px);
+  right: max(
+    calc(var(--shell-pad) + var(--safe-right)),
+    calc((100% - var(--shell-max)) / 2)
+  );
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: rgba(10, 7, 7, 0.72);
+  backdrop-filter: blur(6px);
+  font-size: var(--step--1);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Skip and its "not yet" state occupy the same corner, so the button does not
+   appear somewhere the eye has not already been waiting. */
+.adSkip,
+.adSkipWait {
+  position: absolute;
+  right: max(
+    calc(var(--shell-pad) + var(--safe-right)),
+    calc((100% - var(--shell-max)) / 2)
+  );
+  bottom: calc(var(--safe-bottom) + 24px);
+}
+
+.adSkip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: var(--tap);
+  padding: 11px 18px;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: 8px;
+  background: rgba(14, 16, 24, 0.72);
+  backdrop-filter: blur(8px);
+  color: #fff;
+  font-size: var(--step-0);
+  font-weight: 600;
+  cursor: pointer;
+  transition: background var(--dur-tap) var(--ease-out);
+}
+
+@media (hover: hover) {
+  .adSkip:hover {
+    background: rgba(28, 32, 44, 0.85);
+  }
+}
+
+.adSkip:focus-visible {
+  outline: none;
+  border-color: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.35);
+}
+
+.adSkipWait {
+  margin: 0;
+  padding: 9px 14px;
+  border-radius: 8px;
+  background: rgba(10, 7, 7, 0.6);
+  font-size: var(--step--1);
+  color: rgba(255, 255, 255, 0.72);
+  font-variant-numeric: tabular-nums;
+}
+
+/* The ad's own timeline. It answers "how much longer" without a spinning ring:
+   a straight line the length of the roll, and nothing to look at once read. */
+.adProgress {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.adProgressFill {
+  height: 100%;
+  background: #e62233;
+  transition: width 0.25s linear;
+}
+
+/* TV: read from three metres, and the Skip button is the only target a remote
+   has — it gets the large tap size and a focus ring that survives a bright
+   creative behind it. */
+html[data-device="tv"] .adMark {
+  font-size: var(--step-1);
+}
+html[data-device="tv"] .adDisclaimer,
+html[data-device="tv"] .adAge {
+  font-size: var(--step-0);
+}
+html[data-device="tv"] .adCountdown {
+  font-size: var(--step-1);
+  padding: 12px 18px;
+}
+html[data-device="tv"] .adSkip {
+  min-height: var(--tap-lg);
+  padding: 0 28px;
+  font-size: var(--step-1);
+}
+html[data-device="tv"] .adSkipWait {
+  font-size: var(--step-0);
+}
+html[data-device="tv"] .adSkip:focus-visible {
+  border-color: #fff;
+  box-shadow: 0 0 0 5px rgba(230, 34, 51, 0.7);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* The countdown is text and stays; the bar just stops sliding. Nothing here
+     was ever allowed to bounce, pulse or spin. */
+  .adProgressFill {
+    transition: none;
+  }
 }

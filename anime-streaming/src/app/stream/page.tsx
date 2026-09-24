@@ -27,6 +27,7 @@ import { fetchPlayerSource } from "@/data/playerData";
 import StreamNav from "@/components/stream/StreamNav";
 import StreamFooter from "@/components/stream/StreamFooter";
 import TitleModal from "@/components/stream/TitleModal";
+import { useDevice } from "@/components/system/DeviceProvider";
 import styles from "./stream.module.css";
 
 /* ───────────────────── Netflix-style card ───────────────────── */
@@ -43,6 +44,8 @@ function TitleCard({
       className={styles.card}
       role="button"
       tabIndex={0}
+      data-focusable
+      aria-label={movie.title}
       onClick={() => onOpen(movie)}
       onKeyDown={(e) => {
         if (e.key === "Enter" || e.key === " ") {
@@ -205,16 +208,17 @@ function HeroPreviewVideo({
     if (!muted && playing) video.play().catch(() => {});
   }, [muted, playing]);
 
-  // Play / pause the preview as the banner-only toggle flips.
+  // Play / pause the preview as the banner-only toggle flips. The fade-out is
+  // driven by the element's own "pause" event, so the state change comes from
+  // the media element rather than from the effect body.
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
-    if (playing) {
-      video.play().catch(() => {});
-    } else {
-      video.pause();
-      setRevealed(false);
-    }
+    const onPause = () => setRevealed(false);
+    video.addEventListener("pause", onPause);
+    if (playing) video.play().catch(() => {});
+    else video.pause();
+    return () => video.removeEventListener("pause", onPause);
   }, [playing]);
 
   if (!src) return null;
@@ -301,23 +305,40 @@ function StreamExperience() {
   const searchParams = useSearchParams();
   const urlView = searchParams.get("view");
   const urlQuery = searchParams.get("q") ?? "";
-  const [view, setView] = useState<"rows" | "catalog" | "mylist">(
-    urlView === "catalog" ? "catalog" : urlView === "mylist" ? "mylist" : "rows"
-  );
-  const { list: myListIds } = useMyList();
+  /**
+   * The URL is the source of truth for the view; a local override only applies
+   * while the query string has not moved since it was made. That way nav/search
+   * navigation (?view=catalog) wins without an effect copying it into state.
+   */
+  const urlDefault: "rows" | "catalog" | "mylist" =
+    urlView === "catalog" ? "catalog" : urlView === "mylist" ? "mylist" : "rows";
+  const [override, setOverride] = useState<{
+    urlView: string | null;
+    view: "rows" | "catalog" | "mylist";
+  } | null>(null);
+  const view = override && override.urlView === urlView ? override.view : urlDefault;
+  const setView = (next: "rows" | "catalog" | "mylist") =>
+    setOverride({ urlView, view: next });
 
-  // React to nav/search navigation (?view=catalog&q=...) without a full reload.
-  useEffect(() => {
-    if (urlView === "catalog") setView("catalog");
-    else if (urlView === "mylist") setView("mylist");
-    else if (urlView === "rows" || urlView === "genres") setView("rows");
-  }, [urlView]);
+  const { list: myListIds } = useMyList();
   const contentRef = useRef<HTMLDivElement>(null);
   const bgRef = useRef<HTMLDivElement>(null);
+  const heroPlayRef = useRef<HTMLAnchorElement>(null);
+  const { tv } = useDevice();
 
   // Only the first few titles rotate through the hero (keeps the pager short).
   const heroMovies = useMemo(() => movies.slice(0, 6), [movies]);
   const active = heroMovies[activeIndex] ?? heroMovies[0];
+
+  // On TV there is no cursor: something must already be focused when the page
+  // settles, and the only sensible landing spot is the hero's Play button.
+  // Once only — stealing focus back on every hero rotation would fight the user.
+  const tvFocusDone = useRef(false);
+  useEffect(() => {
+    if (!tv || tvFocusDone.current || !active) return;
+    tvFocusDone.current = true;
+    heroPlayRef.current?.focus();
+  }, [tv, active]);
 
   const goTo = useCallback(
     (i: number) => {
@@ -389,23 +410,25 @@ function StreamExperience() {
       <div className={styles.page}>
         <div className={styles.grain} />
         <StreamNav />
-        <div className={styles.heroSkeleton} aria-busy="true">
-          <div className={styles.skelHeroText}>
-            <span className={styles.skelLine} style={{ width: "42%", height: 54 }} />
-            <span className={styles.skelLine} style={{ width: "28%" }} />
-            <span className={styles.skelLine} style={{ width: "60%" }} />
-            <span className={styles.skelLine} style={{ width: "50%" }} />
-          </div>
-        </div>
-        <div className={styles.skelRows}>
-          {[0, 1, 2].map((r) => (
-            <div key={r} className={styles.skelRow}>
-              {Array.from({ length: 7 }).map((_, i) => (
-                <span key={i} className={styles.skelCard} />
-              ))}
+        <main id="main" className={styles.main}>
+          <div className={styles.heroSkeleton} aria-busy="true">
+            <div className={styles.skelHeroText}>
+              <span className={styles.skelLine} style={{ width: "42%", height: 54 }} />
+              <span className={styles.skelLine} style={{ width: "28%" }} />
+              <span className={styles.skelLine} style={{ width: "60%" }} />
+              <span className={styles.skelLine} style={{ width: "50%" }} />
             </div>
-          ))}
-        </div>
+          </div>
+          <div className={styles.skelRows}>
+            {[0, 1, 2].map((r) => (
+              <div key={r} className={styles.skelRow}>
+                {Array.from({ length: 7 }).map((_, i) => (
+                  <span key={i} className={styles.skelCard} />
+                ))}
+              </div>
+            ))}
+          </div>
+        </main>
       </div>
     );
   }
@@ -415,167 +438,174 @@ function StreamExperience() {
       <div className={styles.grain} />
       <StreamNav />
 
-      {/* ══════════ HERO ══════════ */}
-      <section className={styles.hero}>
-        <div ref={bgRef} className={styles.heroBg} key={active.id}>
-          <img src={active.heroImageUrl} alt="" className={styles.heroBgImg} />
-          <HeroPreviewVideo
-            src={preview?.movieId === active.id ? preview.src : null}
-            poster={active.heroImageUrl}
-            muted={muted}
-            playing={heroPlaying}
-          />
-          <div className={styles.heroGradient} />
-        </div>
+      <main id="main" className={styles.main}>
+        {/* ══════════ HERO ══════════ */}
+        <section className={styles.hero}>
+          <div ref={bgRef} className={styles.heroBg} key={active.id}>
+            <img src={active.heroImageUrl} alt="" className={styles.heroBgImg} />
+            <HeroPreviewVideo
+              src={preview?.movieId === active.id ? preview.src : null}
+              poster={active.heroImageUrl}
+              muted={muted}
+              playing={heroPlaying}
+            />
+            <div className={styles.heroGradient} />
+          </div>
 
-        <div ref={contentRef} className={styles.heroContent} key={`c-${active.id}`}>
-          <div className={styles.heroTags}>
-            {active.tags.map((tag) => (
-              <span key={tag} className={styles.heroTag}>
-                {tag}
-              </span>
-            ))}
-          </div>
-          {active.logoImageUrl ? (
-            <img src={active.logoImageUrl} alt={active.title} className={styles.heroLogo} />
-          ) : (
-            <h1 className={styles.heroTitle}>{active.title}</h1>
-          )}
-          <div className={styles.heroMetaRow}>
-            <span className={styles.matchScore}>{active.match}% Match</span>
-            <span className={styles.metaText}>{active.year}</span>
-            <span className={styles.metaBadge}>{active.rating}</span>
-            <span className={styles.metaText}>{active.duration}</span>
-            <span className={styles.metaBadge}>HD</span>
-          </div>
-          <p className={styles.heroDesc}>{active.description}</p>
-          <div className={styles.heroBtns}>
-            <Link href={`/anime/${active.id}`} className={styles.btnPlay}>
-              <Play size={20} fill="currentColor" />
-              Play
-            </Link>
-            <button
-              className={styles.btnInfo}
-              type="button"
-              onClick={() => openModal(active)}
-            >
-              <Info size={20} />
-              More Info
-            </button>
-          </div>
-        </div>
-
-        <div className={styles.heroFooter}>
-          <div className={styles.pager}>
-            <div className={styles.dots}>
-              {heroMovies.map((m, i) => (
-                <button
-                  key={m.id}
-                  type="button"
-                  aria-label={`Go to ${m.title}`}
-                  className={`${styles.dot} ${i === activeIndex ? styles.dotOn : ""}`}
-                  onClick={() => goTo(i)}
-                />
+          <div ref={contentRef} className={styles.heroContent} key={`c-${active.id}`}>
+            <div className={styles.heroTags}>
+              {active.tags.map((tag) => (
+                <span key={tag} className={styles.heroTag}>
+                  {tag}
+                </span>
               ))}
             </div>
-            <div className={styles.arrows}>
-              <button
-                className={styles.arrow}
-                type="button"
-                aria-label="Previous"
-                onClick={() => goTo(activeIndex - 1)}
+            {active.logoImageUrl ? (
+              <img src={active.logoImageUrl} alt={active.title} className={styles.heroLogo} />
+            ) : (
+              <h1 className={styles.heroTitle}>{active.title}</h1>
+            )}
+            <div className={styles.heroMetaRow}>
+              <span className={styles.matchScore}>{active.match}% Match</span>
+              <span className={styles.metaText}>{active.year}</span>
+              <span className={styles.metaBadge}>{active.rating}</span>
+              <span className={styles.metaText}>{active.duration}</span>
+              <span className={styles.metaBadge}>HD</span>
+            </div>
+            <p className={styles.heroDesc}>{active.description}</p>
+            <div className={styles.heroBtns}>
+              <Link
+                ref={heroPlayRef}
+                href={`/anime/${active.id}`}
+                className={styles.btnPlay}
               >
-                <ChevronLeft size={20} />
-              </button>
+                <Play size={20} fill="currentColor" />
+                Play
+              </Link>
               <button
-                className={styles.arrow}
+                className={styles.btnInfo}
                 type="button"
-                aria-label="Next"
-                onClick={() => goTo(activeIndex + 1)}
+                onClick={() => openModal(active)}
               >
-                <ChevronRight size={20} />
+                <Info size={20} />
+                More Info
               </button>
             </div>
           </div>
 
-          <div className={styles.audio}>
-            <button
-              className={styles.audioBtn}
-              type="button"
-              aria-label={heroPlaying ? "Pause preview" : "Play preview"}
-              title={heroPlaying ? "Show banner only" : "Play preview"}
-              onClick={() => setHeroPlaying((v) => !v)}
-            >
-              {heroPlaying ? <Pause size={18} /> : <Play size={18} fill="currentColor" />}
-            </button>
-            <div className={styles.audioText}>
-              <span className={styles.audioLabel}>Audio</span>
-              <span className={styles.audioVal}>Japanese / Subtitles</span>
+          <div className={styles.heroFooter}>
+            <div className={styles.pager}>
+              <div className={styles.dots}>
+                {heroMovies.map((m, i) => (
+                  <button
+                    key={m.id}
+                    type="button"
+                    aria-label={`Go to ${m.title}`}
+                    aria-current={i === activeIndex ? "true" : undefined}
+                    className={`${styles.dot} ${i === activeIndex ? styles.dotOn : ""}`}
+                    onClick={() => goTo(i)}
+                  />
+                ))}
+              </div>
+              <div className={styles.arrows}>
+                <button
+                  className={styles.arrow}
+                  type="button"
+                  aria-label="Previous"
+                  onClick={() => goTo(activeIndex - 1)}
+                >
+                  <ChevronLeft size={20} />
+                </button>
+                <button
+                  className={styles.arrow}
+                  type="button"
+                  aria-label="Next"
+                  onClick={() => goTo(activeIndex + 1)}
+                >
+                  <ChevronRight size={20} />
+                </button>
+              </div>
             </div>
+
+            <div className={styles.audio}>
+              <button
+                className={styles.audioBtn}
+                type="button"
+                aria-label={heroPlaying ? "Pause preview" : "Play preview"}
+                title={heroPlaying ? "Show banner only" : "Play preview"}
+                onClick={() => setHeroPlaying((v) => !v)}
+              >
+                {heroPlaying ? <Pause size={18} /> : <Play size={18} fill="currentColor" />}
+              </button>
+              <div className={styles.audioText}>
+                <span className={styles.audioLabel}>Audio</span>
+                <span className={styles.audioVal}>Japanese / Subtitles</span>
+              </div>
+              <button
+                className={styles.audioBtn}
+                type="button"
+                aria-label={muted ? "Unmute" : "Mute"}
+                onClick={() => setMuted((v) => !v)}
+              >
+                {muted ? <VolumeX size={18} /> : <Volume2 size={18} />}
+              </button>
+            </div>
+          </div>
+        </section>
+
+        {/* ══════════ VIEW SWITCH ══════════ */}
+        <div className={styles.viewBar} id="catalog">
+          <h2 className={styles.viewHeading}>Browse</h2>
+          <div className={styles.viewToggle} role="tablist" aria-label="View style">
             <button
-              className={styles.audioBtn}
               type="button"
-              aria-label={muted ? "Unmute" : "Mute"}
-              onClick={() => setMuted((v) => !v)}
+              role="tab"
+              aria-selected={view === "rows"}
+              className={`${styles.viewBtn} ${view === "rows" ? styles.viewBtnOn : ""}`}
+              onClick={() => setView("rows")}
             >
-              {muted ? <VolumeX size={18} /> : <Volume2 size={18} />}
+              <LayoutGrid size={16} /> Rows
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={view === "catalog"}
+              className={`${styles.viewBtn} ${view === "catalog" ? styles.viewBtnOn : ""}`}
+              onClick={() => setView("catalog")}
+            >
+              <List size={16} /> Catalog
             </button>
           </div>
         </div>
-      </section>
 
-      {/* ══════════ VIEW SWITCH ══════════ */}
-      <div className={styles.viewBar} id="catalog">
-        <h2 className={styles.viewHeading}>Browse</h2>
-        <div className={styles.viewToggle} role="tablist" aria-label="View style">
-          <button
-            type="button"
-            role="tab"
-            aria-selected={view === "rows"}
-            className={`${styles.viewBtn} ${view === "rows" ? styles.viewBtnOn : ""}`}
-            onClick={() => setView("rows")}
-          >
-            <LayoutGrid size={16} /> Rows
-          </button>
-          <button
-            type="button"
-            role="tab"
-            aria-selected={view === "catalog"}
-            className={`${styles.viewBtn} ${view === "catalog" ? styles.viewBtnOn : ""}`}
-            onClick={() => setView("catalog")}
-          >
-            <List size={16} /> Catalog
-          </button>
-        </div>
-      </div>
-
-      {/* ══════════ CONTENT ══════════ */}
-      {view === "rows" ? (
-        <div className={styles.rows}>
-          {rows.map((row) => (
-            <ContentRow
-              key={row.title}
-              title={row.title}
-              items={row.items}
-              onOpen={openModal}
-            />
-          ))}
-        </div>
-      ) : view === "mylist" ? (
-        (() => {
-          const listMovies = movies.filter((m) => myListIds.includes(m.id));
-          return listMovies.length > 0 ? (
-            <CatalogView movies={listMovies} onOpen={openModal} />
-          ) : (
-            <div className={styles.emptyList}>
-              <p>Your list is empty.</p>
-              <span>Tap the + on any title to save it here.</span>
-            </div>
-          );
-        })()
-      ) : (
-        <CatalogView movies={movies} onOpen={openModal} initialQuery={urlQuery} />
-      )}
+        {/* ══════════ CONTENT ══════════ */}
+        {view === "rows" ? (
+          <div className={styles.rows}>
+            {rows.map((row) => (
+              <ContentRow
+                key={row.title}
+                title={row.title}
+                items={row.items}
+                onOpen={openModal}
+              />
+            ))}
+          </div>
+        ) : view === "mylist" ? (
+          (() => {
+            const listMovies = movies.filter((m) => myListIds.includes(m.id));
+            return listMovies.length > 0 ? (
+              <CatalogView movies={listMovies} onOpen={openModal} />
+            ) : (
+              <div className={styles.emptyList}>
+                <p>Your list is empty.</p>
+                <span>Tap the + on any title to save it here.</span>
+              </div>
+            );
+          })()
+        ) : (
+          <CatalogView movies={movies} onOpen={openModal} initialQuery={urlQuery} />
+        )}
+      </main>
 
       {/* ══════════ FOOTER ══════════ */}
       <StreamFooter />

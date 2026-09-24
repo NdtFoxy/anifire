@@ -4,8 +4,7 @@ import type {
   PlayerQuality,
   SubtitleTrack,
 } from "@/components/player/types";
-import { API_BASE } from "@/lib/auth-client";
-import { cached, TTL } from "./cache";
+import { API_BASE, AuthError, authFetch } from "@/lib/auth-client";
 import type { Movie } from "./mockAnime";
 import type { AniReleaseFull } from "./animeApi";
 
@@ -140,33 +139,84 @@ export function buildAniLibertySource(
   };
 }
 
+/**
+ * Which viewer a resolved source belongs to.
+ *
+ * A source payload now carries a per-viewer ad decision, so one shared key would
+ * hand a subscriber the payload built for a guest and vice versa — exactly the
+ * bug an ads-free subscription is bought to avoid. The readable CSRF cookie is
+ * the only session marker this module can see synchronously; it is digested
+ * rather than kept verbatim so no key carries a live token, and its rotation
+ * (login, logout, token refresh) simply starts a fresh partition.
+ */
+function viewerBucket(): string {
+  if (typeof document === "undefined") return "anon";
+  const match = document.cookie.match(/(?:^|; )anifire_csrf=([^;]*)/);
+  if (!match) return "anon";
+  let hash = 5381;
+  for (let i = 0; i < match[1].length; i += 1) {
+    hash = (hash * 33 + match[1].charCodeAt(i)) | 0;
+  }
+  return (hash >>> 0).toString(36);
+}
+
+/**
+ * One resolved source per viewer+episode per page session.
+ *
+ * Deliberately memory-only, unlike the shared TTL cache this used to use: the
+ * payload is now per-viewer and carries a one-shot ad decision, and localStorage
+ * would both outlive the account it was fetched for and replay a decisionId the
+ * server has long since closed. Signed HLS URLs expire anyway, so persistence
+ * was always the weaker half of that bargain.
+ *
+ * Sharing the promise is the part that matters: the watch page resolves the
+ * source from an effect that re-runs as the catalogue row and the episode list
+ * arrive, and each re-run must reuse the first decision rather than mint another.
+ */
+const sessionSources = new Map<string, Promise<PlayerSource | null>>();
+
 export async function fetchPlayerSource(
   movie: Movie,
   episode: number,
   total: number,
   poster?: string | null
 ): Promise<PlayerSource> {
-  // Cache by anime+episode so re-watching or skipping back to a visited episode
-  // doesn't re-hit the backend / AniLiberty. Short TTL because HLS URLs can be
-  // signed and expire. Only real sources are cached; the local fallback isn't,
-  // so it keeps retrying the real source on the next visit.
-  const real = await cached(`source:${movie.id}:${episode}`, TTL.short, () =>
-    loadRealSource(movie, episode)
-  );
+  const key = `${viewerBucket()}:${movie.id}:${episode}`;
+  let pending = sessionSources.get(key);
+  if (!pending) {
+    pending = loadRealSource(movie, episode);
+    sessionSources.set(key, pending);
+  }
+  const real = await pending;
+  if (!real) {
+    // A failure is not remembered, so the next visit tries the real source again.
+    sessionSources.delete(key);
+    return buildPlayerSource(movie, episode, total, poster);
+  }
   // Prefer the per-episode preview (AniList) as the player poster when we have one.
-  if (real) return poster ? { ...real, poster } : real;
-  return buildPlayerSource(movie, episode, total, poster);
+  return poster ? { ...real, poster } : real;
 }
 
+/**
+ * Loads the real source. The bearer token is attached when a session exists so
+ * the server can recognise a subscriber and answer with no ad plan; the endpoint
+ * is public, so a guest — or anyone whose token has expired — still gets a fully
+ * playable source. Auth is never allowed to cost a viewer their episode.
+ */
 async function loadRealSource(
   movie: Movie,
   episode: number
 ): Promise<PlayerSource | null> {
+  const url = `${API_BASE}/api/v1/animes/${movie.id}/episodes/${episode}/source`;
   try {
-    const res = await fetch(
-      `${API_BASE}/api/v1/animes/${movie.id}/episodes/${episode}/source`,
-      { cache: "no-store" }
-    );
+    let res: Response;
+    try {
+      res = await authFetch(url, { cache: "no-store" });
+    } catch (err) {
+      // No session at all: the only expected failure, and it is not an error.
+      if (!(err instanceof AuthError)) throw err;
+      res = await fetch(url, { cache: "no-store" });
+    }
     if (!res.ok) throw new Error(`Video API ${res.status}`);
     const source = (await res.json()) as PlayerSource;
     if (!source.src || !hasRealVideo(source)) return null;

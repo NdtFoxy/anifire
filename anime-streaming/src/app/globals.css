@@ -155,7 +155,7 @@ body {
 }
 
 /* === Mobile Responsive === */
-@media (max-width: 768px) {
+@media (max-width: 599px) {
   .nav-links-desktop {
     display: none !important;
   }
@@ -174,7 +174,7 @@ body {
   }
 }
 
-@media (min-width: 769px) {
+@media (min-width: 600px) {
   .mobile-menu {
     display: none !important;
   }
