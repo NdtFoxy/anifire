@@ -114,10 +114,13 @@
   color: var(--text);
 }
 
+/* Top-right, level with the ID badge. At the bottom edge they sat exactly where
+   the identity row (pulled up over the banner by its negative margin) puts the
+   avatar on phones and "Случайный профиль" on desktop, and the two overlapped. */
 .bannerTools {
   position: absolute;
   right: calc(var(--shell-pad) + var(--safe-right));
-  bottom: 18px;
+  top: 78px;
   display: flex;
   gap: 8px;
 }

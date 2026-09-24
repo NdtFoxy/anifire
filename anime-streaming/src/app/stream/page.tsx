@@ -405,21 +405,39 @@ function StreamExperience() {
   useEffect(() => {
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     if (reduce) return;
+    const tweens: gsap.core.Tween[] = [];
     if (bgRef.current) {
-      gsap.fromTo(
-        bgRef.current,
-        { opacity: 0, scale: 1.08 },
-        { opacity: 1, scale: 1, duration: 1.1, ease: "power2.out" }
+      tweens.push(
+        gsap.fromTo(
+          bgRef.current,
+          { opacity: 0, scale: 1.08 },
+          { opacity: 1, scale: 1, duration: 1.1, ease: "power2.out", overwrite: "auto" }
+        )
       );
     }
     if (contentRef.current) {
-      gsap.fromTo(
-        contentRef.current.children,
-        { y: 22, opacity: 0 },
-        { y: 0, opacity: 1, stagger: 0.08, duration: 0.55, ease: "power2.out" }
+      tweens.push(
+        gsap.fromTo(
+          contentRef.current.children,
+          { y: 22, opacity: 0 },
+          {
+            y: 0,
+            opacity: 1,
+            stagger: 0.08,
+            duration: 0.55,
+            ease: "power2.out",
+            overwrite: "auto",
+            clearProps: "transform,opacity",
+          }
+        )
       );
     }
-  }, [activeIndex]);
+    // Paging quickly (or the catalogue arriving mid-animation) must finish the
+    // previous slide's tween rather than freeze it half-faded.
+    return () => tweens.forEach((t) => t.progress(1).kill());
+    // `active?.id`: the first slide also animates once the catalogue arrives
+    // (activeIndex stays 0, so the index alone never re-ran this).
+  }, [activeIndex, active?.id]);
 
   // Skeleton while the catalog loads — avoids the mock-title flash.
   if (!active) {
@@ -479,25 +497,21 @@ function StreamExperience() {
 
           <div ref={contentRef} className={styles.heroContent} key={`c-${active.id}`}>
             <div className={styles.heroTags}>
-              {active.tags.map((tag) => (
-                <span key={tag} className={styles.heroTag}>
-                  {tag}
-                </span>
-              ))}
+              {/* "Топ аниме" is a list, not a genre; five chips is a line, not a wall. */}
+              {active.tags
+                .filter((tag) => tag !== "Топ аниме")
+                .slice(0, 5)
+                .map((tag) => (
+                  <span key={tag} className={styles.heroTag}>
+                    {tag}
+                  </span>
+                ))}
             </div>
             {active.logoImageUrl ? (
-              // Unoptimized + height:auto: the logo keeps its natural aspect inside the
-              // CSS width/max-height box instead of the placeholder width/height ratio.
-              <RemoteImage
-                src={active.logoImageUrl}
-                alt={active.title}
-                className={styles.heroLogo}
-                width={560}
-                height={210}
-                style={{ height: "auto" }}
-                unoptimized
-                loading="eager"
-              />
+              // Plain <img> in a fixed-height box (see .heroLogo): reserves its
+              // height before loading, keeps the logo's own proportions after.
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={active.logoImageUrl} alt={active.title} className={styles.heroLogo} />
             ) : (
               <h1 className={styles.heroTitle}>{active.title}</h1>
             )}

@@ -78,16 +78,33 @@ export default function CatalogView({
     });
   }, [movies, query, types]);
 
-  // GSAP: stagger the cards in whenever the filtered set changes.
+  // GSAP: stagger the cards in whenever the filtered set changes. Only the first
+  // screenful animates, and the whole cascade is capped at 0.4s: a flat 0.05s per
+  // card left the 150th card of a full catalogue invisible for 7.5 seconds, and
+  // every keystroke in the search box restarted it.
   useEffect(() => {
     if (!listRef.current) return;
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     if (reduce) return;
-    gsap.fromTo(
-      listRef.current.children,
+    const cards = Array.from(listRef.current.children).slice(0, 24);
+    if (cards.length === 0) return;
+    const tween = gsap.fromTo(
+      cards,
       { y: 16, opacity: 0 },
-      { y: 0, opacity: 1, stagger: 0.05, duration: 0.45, ease: "power2.out" }
+      {
+        y: 0,
+        opacity: 1,
+        duration: 0.4,
+        ease: "power2.out",
+        stagger: { amount: 0.4 },
+        overwrite: "auto",
+        clearProps: "transform,opacity",
+      }
     );
+    // An interrupted cascade must not leave cards stuck half-transparent.
+    return () => {
+      tween.progress(1).kill();
+    };
   }, [filtered]);
 
   const activeFilters = genres.size + types.size + statuses.size;

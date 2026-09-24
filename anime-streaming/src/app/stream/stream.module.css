@@ -474,8 +474,11 @@ html[data-device="tv"] .mobileBtn {
 
 .heroLogo {
   display: block;
-  width: min(72vw, 560px);
-  max-height: clamp(96px, 18vw, 210px);
+  /* Height fixed, width from the image, capped: the box exists before the
+     logo loads, so the copy below it does not jump when it does. */
+  height: clamp(96px, 18vw, 210px);
+  width: auto;
+  max-width: min(72vw, 560px);
   object-fit: contain;
   object-position: left center;
   filter: drop-shadow(0 5px 28px rgba(0, 0, 0, 0.72));
@@ -484,8 +487,8 @@ html[data-device="tv"] .mobileBtn {
 /* Title art is the loudest thing in the frame, so it must keep its share of the
    panel: capped at 560px it shrank to a badge on a 4K set. */
 html[data-device="tv"] .heroLogo {
-  width: min(34vw, 1200px);
-  max-height: clamp(140px, 11vw, 420px);
+  max-width: min(34vw, 1200px);
+  height: clamp(140px, 11vw, 420px);
 }
 
 .heroMetaRow {
@@ -1537,6 +1540,25 @@ html[data-device="tv"] .footerBottom {
   flex: 1 1 auto;
   justify-content: center;
   min-height: var(--tap);
+}
+
+/* Phone: three chips keep the title in the first screen, and the pager is
+   the dots alone — the arrows did not fit next to them (the right one was cut
+   off) and a phone pages with the dots or a swipe anyway. */
+@media (max-width: 599px) {
+  .heroTag:nth-child(n + 4) {
+    display: none;
+  }
+
+  .arrows {
+    display: none;
+  }
+
+  .pager,
+  .dots {
+    min-width: 0;
+    flex-wrap: wrap;
+  }
 }
 
 @media (min-width: 600px) {

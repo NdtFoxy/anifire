@@ -54,9 +54,13 @@ function ProfileContent() {
   useEffect(() => {
     if (loading || !data || !mainRef.current) return;
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    // Tabs that fetch their own data are still skeletons here; animating nothing
+    // only logs GSAP warnings, and their content simply appears when it lands.
+    const targets = mainRef.current.querySelectorAll("[data-rise]");
+    if (targets.length === 0) return;
     const ctx = gsap.context(() => {
       gsap.fromTo(
-        "[data-rise]",
+        targets,
         { y: 18, opacity: 0 },
         { y: 0, opacity: 1, stagger: 0.06, duration: 0.45, ease: "power2.out" }
       );
