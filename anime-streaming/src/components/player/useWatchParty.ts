@@ -145,7 +145,7 @@ export function useWatchParty({
     const v = videoRef.current;
     if (!slot || !selfHref) return null;
     try {
-      const state = await createParty(slot.animeKey, slot.episode, v?.currentTime ?? 0);
+      const state = await createParty(slot.animeKey, slot.episode, v?.currentTime ?? 0, !!v && !v.paused && !v.ended);
       setMembers(state.members);
       setError(null);
       setActiveParty(state.code);

@@ -68,7 +68,7 @@ public class PartyService {
         store.onChange(this::relay);
     }
 
-    public State create(Long hostId, String animeKey, int episode, double position) {
+    public State create(Long hostId, String animeKey, int episode, double position, boolean playing) {
         if (store.roomsHostedBy(hostId) >= MAX_ROOMS_PER_HOST) {
             throw ApiException.tooManyRequests("Слишком много комнат. Закройте старые или подождите.");
         }
@@ -76,7 +76,7 @@ public class PartyService {
         members.put(hostId, displayName(hostId));
         for (int attempt = 0; attempt < 5; attempt++) {
             PartyStore.Room room = new PartyStore.Room(randomCode(), hostId, animeKey, Math.max(1, episode),
-                    false, Math.max(0, position), Instant.now(), null, members);
+                    playing, Math.max(0, position), Instant.now(), hostId, members);
             if (store.create(room)) return snapshot(room);
         }
         throw new IllegalStateException("Could not allocate a party code");

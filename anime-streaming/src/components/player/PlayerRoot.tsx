@@ -661,7 +661,7 @@ export default function PlayerRoot() {
               <div className={styles.ctrlCenter}>
                 <button
                   type="button"
-                  className={styles.transportBtn}
+                  className={`${styles.transportBtn} ${styles.prevBtn}`}
                   aria-label="Предыдущая серия"
                   disabled={!source.prevHref}
                   onClick={() => source.prevHref && router.push(source.prevHref)}
@@ -709,9 +709,11 @@ export default function PlayerRoot() {
                   />
                 </div>
 
-                <IconBtn label="Мини-плеер" onClick={goMini}>
-                  <PictureInPicture2 size={20} />
-                </IconBtn>
+                <span className={styles.miniBtnWrap}>
+                  <IconBtn label="Мини-плеер" onClick={goMini}>
+                    <PictureInPicture2 size={20} />
+                  </IconBtn>
+                </span>
 
                 {user ? (
                   <PartyControl

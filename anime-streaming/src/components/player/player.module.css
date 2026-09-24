@@ -7,7 +7,11 @@
   width: 100vw;
   height: 100dvh;
   background: #000;
+  /* `clip`, not `hidden`: a hidden box is still programmatically scrollable, so
+     focusing a control that sits past the edge (the settings sheet on a phone)
+     slid the whole frame sideways. A clipped box cannot scroll at all. */
   overflow: hidden;
+  overflow: clip;
   cursor: default;
   user-select: none;
   font-family: var(--font-sans), system-ui, sans-serif;
@@ -1339,12 +1343,39 @@ html[data-device="tv"] .miniPlay:focus {
   .upBadge {
     display: none;
   }
+  /* A 390px phone cannot fit the desktop bar (it overflowed by ~250px and the
+     settings sheet then dragged the frame sideways). Phones keep what they can
+     only do here — episodes, subtitles, play, next, watch party, settings,
+     fullscreen — and drop what the device already has: volume (hardware keys),
+     the previous episode (the episode list), and the floating mini window. */
   .controlsRow {
+    display: flex;
+    justify-content: space-between;
     margin-top: 2px;
     gap: 4px;
   }
+  .ctrlLeft,
+  .ctrlRight {
+    gap: 0;
+    min-width: 0;
+  }
   .ctrlCenter {
-    gap: 8px;
+    gap: 6px;
+  }
+  .volume,
+  .prevBtn,
+  .miniBtnWrap {
+    display: none;
+  }
+  .transportBtn {
+    width: var(--tap);
+    height: var(--tap);
+    border-radius: 10px;
+  }
+  .playBtn {
+    width: calc(var(--tap) + 6px);
+    height: calc(var(--tap) + 6px);
+    border-radius: 12px;
   }
   /* The settings menu becomes a bottom sheet: a popover hung off a 44px button
      is unusable on a phone, and a sheet can use the whole width. `.settingsWrap`
@@ -1363,6 +1394,9 @@ html[data-device="tv"] .miniPlay:focus {
     padding-bottom: var(--safe-bottom);
     border-radius: 18px 18px 0 0;
     border-bottom: none;
+    /* Above the control buttons that come after it in the bar (fullscreen
+       showed through the sheet's bottom-right corner). */
+    z-index: 20;
     animation: sheetIn 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
   }
   /* Sheet grab handle. Decoration only — the sheet closes by tapping the picture
@@ -1957,4 +1991,12 @@ html[data-device="tv"] .adSkip:focus-visible {
   .adProgressFill {
     transition: none;
   }
+}
+
+/* Hooks for the phone layout (SIZE STEPS); no styling of their own elsewhere. */
+.prevBtn {
+  flex: none;
+}
+.miniBtnWrap {
+  display: contents;
 }

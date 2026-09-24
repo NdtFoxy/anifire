@@ -21,7 +21,9 @@ public class PartyController {
     public record CreateRequest(
             @NotBlank @Size(max = 120) String animeKey,
             @Min(1) @Max(5000) int episode,
-            @Min(0) double position) {}
+            @Min(0) double position,
+            /** The host's own play state: opening a room must not pause the host. */
+            boolean playing) {}
 
     public record StateRequest(
             @NotNull Boolean playing,
@@ -37,7 +39,7 @@ public class PartyController {
 
     @PostMapping
     public PartyService.State create(@AuthenticationPrincipal Jwt jwt, @Valid @RequestBody CreateRequest body) {
-        return parties.create(userId(jwt), body.animeKey(), body.episode(), body.position());
+        return parties.create(userId(jwt), body.animeKey(), body.episode(), body.position(), body.playing());
     }
 
     @PostMapping("/{code}/join")

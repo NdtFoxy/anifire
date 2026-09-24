@@ -62,20 +62,23 @@ export function useMiniWindow({
       const startX = e.clientX;
       const startY = e.clientY;
       const base = { x: layout.x, y: layout.y, width: layout.width };
+      // The latest position lives in a local, not in the state updater: calling
+      // setMini (PlayerProvider's state) from inside a setDrag updater is a
+      // setState during render and React warned on every drag.
+      let last: typeof base | null = null;
       const move = (ev: PointerEvent) => {
-        setDrag({
+        last = {
           width: base.width,
           x: base.x + (ev.clientX - startX),
           y: base.y + (ev.clientY - startY),
-        });
+        };
+        setDrag(last);
       };
       const up = () => {
         window.removeEventListener("pointermove", move);
         window.removeEventListener("pointerup", up);
-        setDrag((d) => {
-          if (d) setMini({ x: clampX(d.x, d.width), y: clampY(d.y, d.width) });
-          return null;
-        });
+        if (last) setMini({ x: clampX(last.x, last.width), y: clampY(last.y, last.width) });
+        setDrag(null);
       };
       window.addEventListener("pointermove", move);
       window.addEventListener("pointerup", up);
@@ -91,17 +94,16 @@ export function useMiniWindow({
       const baseW = layout.width;
       const baseX = layout.x;
       const baseY = layout.y;
+      let lastWidth: number | null = null;
       const move = (ev: PointerEvent) => {
-        const width = Math.max(MINI_MIN, Math.min(MINI_MAX, baseW + (ev.clientX - startX)));
-        setDrag({ x: baseX, y: baseY, width });
+        lastWidth = Math.max(MINI_MIN, Math.min(MINI_MAX, baseW + (ev.clientX - startX)));
+        setDrag({ x: baseX, y: baseY, width: lastWidth });
       };
       const up = () => {
         window.removeEventListener("pointermove", move);
         window.removeEventListener("pointerup", up);
-        setDrag((d) => {
-          if (d) setMini({ width: d.width });
-          return null;
-        });
+        if (lastWidth !== null) setMini({ width: lastWidth });
+        setDrag(null);
       };
       window.addEventListener("pointermove", move);
       window.addEventListener("pointerup", up);

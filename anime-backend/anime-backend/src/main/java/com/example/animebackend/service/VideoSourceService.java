@@ -199,7 +199,7 @@ public class VideoSourceService {
                 base + "?ep=" + episodeNumber,
                 title,
                 subtitle,
-                "Episode " + episodeNumber,
+                "Серия " + episodeNumber,
                 episodeTitle,
                 src,
                 qualities,

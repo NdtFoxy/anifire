@@ -36,8 +36,8 @@ async function call(path: string, body?: unknown): Promise<PartyState> {
   return (await res.json()) as PartyState;
 }
 
-export const createParty = (animeKey: string, episode: number, position: number) =>
-  call("", { animeKey, episode, position });
+export const createParty = (animeKey: string, episode: number, position: number, playing: boolean) =>
+  call("", { animeKey, episode, position, playing });
 export const joinParty = (code: string) => call(`/${encodeURIComponent(code)}/join`);
 export const pushPartyState = (
   code: string,
