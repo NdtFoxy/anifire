@@ -5,7 +5,6 @@ import com.example.animebackend.auth.repository.AppUserRepository;
 import com.example.animebackend.auth.web.ApiException;
 import java.io.IOException;
 import java.security.SecureRandom;
-import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -24,14 +23,13 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
  * Watch parties: shared play/pause/seek state for one episode, fanned out to
  * every member over server-sent events.
  *
- * Rooms live in memory. That is a deliberate limit, not an oversight: a party
- * is ephemeral (nobody expects it to survive a deploy) and the production stack
- * runs a single API instance. Scaling out would move rooms and fan-out to Redis
- * pub/sub behind this same interface.
+ * Room state lives in a {@link PartyStore} (Redis in dev and production), so any
+ * API instance can serve any member; this class only holds the SSE connections
+ * opened against this instance and relays store announcements to them.
  *
- * The room holds the authoritative playback state as (position, playing, at):
- * clients extrapolate the current second from it, so a late joiner lands where
- * everyone else is instead of where the last event happened.
+ * The room keeps playback as (position, playing, at): clients extrapolate the
+ * current second from it, so a late joiner lands where everyone else is instead
+ * of where the last event happened.
  */
 @Service
 public class PartyService {
@@ -40,7 +38,6 @@ public class PartyService {
 
     static final int MAX_MEMBERS = 20;
     static final int MAX_ROOMS_PER_HOST = 3;
-    static final Duration IDLE_TTL = Duration.ofHours(6);
     private static final char[] ALPHABET = "abcdefghjkmnpqrstuvwxyz23456789".toCharArray();
     private static final SecureRandom RANDOM = new SecureRandom();
 
@@ -59,169 +56,135 @@ public class PartyService {
             Long by,
             Instant serverTime) {}
 
-    private static final class Room {
-        final String code;
-        final Long hostId;
-        String animeKey;
-        int episode;
-        boolean playing;
-        double position;
-        Instant at = Instant.now();
-        Long by;
-        Instant touched = Instant.now();
-        final Map<Long, String> members = new LinkedHashMap<>();
-        final List<Subscriber> subscribers = new CopyOnWriteArrayList<>();
-
-        Room(String code, Long hostId, String animeKey, int episode) {
-            this.code = code;
-            this.hostId = hostId;
-            this.animeKey = animeKey;
-            this.episode = episode;
-        }
-    }
-
     private record Subscriber(Long userId, SseEmitter emitter) {}
 
-    private final Map<String, Room> rooms = new ConcurrentHashMap<>();
+    private final PartyStore store;
     private final AppUserRepository users;
+    private final Map<String, List<Subscriber>> local = new ConcurrentHashMap<>();
 
-    public PartyService(AppUserRepository users) {
+    public PartyService(PartyStore store, AppUserRepository users) {
+        this.store = store;
         this.users = users;
+        store.onChange(this::relay);
     }
 
     public State create(Long hostId, String animeKey, int episode, double position) {
-        long owned = rooms.values().stream().filter(r -> r.hostId.equals(hostId)).count();
-        if (owned >= MAX_ROOMS_PER_HOST) {
+        if (store.roomsHostedBy(hostId) >= MAX_ROOMS_PER_HOST) {
             throw ApiException.tooManyRequests("Слишком много комнат. Закройте старые или подождите.");
         }
-        String code;
-        do {
-            code = randomCode();
-        } while (rooms.containsKey(code));
-        Room room = new Room(code, hostId, animeKey, Math.max(1, episode));
-        room.position = Math.max(0, position);
-        room.members.put(hostId, displayName(hostId));
-        rooms.put(code, room);
-        synchronized (room) {
-            return snapshot(room);
+        LinkedHashMap<Long, String> members = new LinkedHashMap<>();
+        members.put(hostId, displayName(hostId));
+        for (int attempt = 0; attempt < 5; attempt++) {
+            PartyStore.Room room = new PartyStore.Room(randomCode(), hostId, animeKey, Math.max(1, episode),
+                    false, Math.max(0, position), Instant.now(), null, members);
+            if (store.create(room)) return snapshot(room);
         }
+        throw new IllegalStateException("Could not allocate a party code");
     }
 
     public State join(String code, Long userId) {
-        Room room = room(code);
-        synchronized (room) {
-            if (!room.members.containsKey(userId) && room.members.size() >= MAX_MEMBERS) {
-                throw ApiException.badRequest("party_full", "В комнате уже " + MAX_MEMBERS + " человек.");
-            }
-            room.members.putIfAbsent(userId, displayName(userId));
-            room.touched = Instant.now();
-            State state = snapshot(room);
-            broadcast(room, state);
-            return state;
+        PartyStore.Room before = room(code);
+        if (!before.members().containsKey(userId) && before.members().size() >= MAX_MEMBERS) {
+            throw ApiException.badRequest("party_full", "В комнате уже " + MAX_MEMBERS + " человек.");
         }
+        PartyStore.Room room = store.addMember(code, userId, displayName(userId), MAX_MEMBERS)
+                .orElseThrow(PartyService::notFound);
+        if (!room.members().containsKey(userId)) {
+            throw ApiException.badRequest("party_full", "В комнате уже " + MAX_MEMBERS + " человек.");
+        }
+        store.publish(room);
+        return snapshot(room);
     }
 
     public State update(String code, Long userId, boolean playing, double position, int episode, String animeKey) {
-        Room room = room(code);
-        synchronized (room) {
-            requireMember(room, userId);
-            room.playing = playing;
-            room.position = Math.max(0, position);
-            room.episode = Math.max(1, episode);
-            if (animeKey != null && !animeKey.isBlank()) room.animeKey = animeKey;
-            room.at = Instant.now();
-            room.by = userId;
-            room.touched = room.at;
-            State state = snapshot(room);
-            broadcast(room, state);
-            return state;
-        }
+        requireMember(room(code), userId);
+        PartyStore.Room room = store.updatePlayback(code, playing, Math.max(0, position), Math.max(1, episode),
+                        animeKey == null || animeKey.isBlank() ? null : animeKey, userId)
+                .orElseThrow(PartyService::notFound);
+        store.publish(room);
+        return snapshot(room);
     }
 
     public void leave(String code, Long userId) {
-        Room room = rooms.get(code);
-        if (room == null) return;
-        synchronized (room) {
-            room.members.remove(userId);
-            room.subscribers.removeIf(s -> s.userId().equals(userId));
-            if (room.members.isEmpty()) {
-                rooms.remove(code);
-                return;
-            }
-            broadcast(room, snapshot(room));
-        }
+        List<Subscriber> subs = local.get(code);
+        if (subs != null) subs.removeIf(s -> s.userId().equals(userId));
+        store.removeMember(code, userId).ifPresent(store::publish);
     }
 
     public SseEmitter subscribe(String code, Long userId) {
-        Room room = room(code);
-        // No server-side timeout: the client reconnects, and the reaper below
-        // closes emitters of rooms that went idle.
+        PartyStore.Room room = room(code);
+        requireMember(room, userId);
+        // No server-side timeout: the client reconnects, and the heartbeat below
+        // closes streams of rooms that expired.
         SseEmitter emitter = new SseEmitter(0L);
         Subscriber sub = new Subscriber(userId, emitter);
-        synchronized (room) {
-            requireMember(room, userId);
-            room.subscribers.add(sub);
-            send(room, sub, snapshot(room));
-        }
-        Runnable drop = () -> room.subscribers.remove(sub);
+        List<Subscriber> subs = local.computeIfAbsent(code, k -> new CopyOnWriteArrayList<>());
+        subs.add(sub);
+        send(code, sub, snapshot(room));
+        Runnable drop = () -> subs.remove(sub);
         emitter.onCompletion(drop);
         emitter.onTimeout(drop);
         emitter.onError(e -> drop.run());
         return emitter;
     }
 
-    /** Keeps proxies from closing quiet streams and drops rooms nobody touched for hours. */
+    /** A change announced by any instance: push it to the streams held here. */
+    private void relay(PartyStore.Room room) {
+        List<Subscriber> subs = local.get(room.code());
+        if (subs == null || subs.isEmpty()) return;
+        State state = snapshot(room);
+        for (Subscriber s : subs) send(room.code(), s, state);
+    }
+
+    /** Keeps proxies from closing quiet streams and ends streams of rooms that expired. */
     @Scheduled(fixedDelay = 25_000)
-    void heartbeatAndReap() {
-        Instant cutoff = Instant.now().minus(IDLE_TTL);
-        rooms.values().removeIf(room -> {
-            if (room.touched.isBefore(cutoff)) {
-                room.subscribers.forEach(s -> s.emitter().complete());
-                return true;
+    void heartbeat() {
+        for (Map.Entry<String, List<Subscriber>> e : local.entrySet()) {
+            if (e.getValue().isEmpty() || store.get(e.getKey()).isEmpty()) {
+                e.getValue().forEach(s -> s.emitter().complete());
+                local.remove(e.getKey());
+                continue;
             }
-            for (Subscriber s : room.subscribers) {
+            for (Subscriber s : e.getValue()) {
                 try {
                     s.emitter().send(SseEmitter.event().comment("ping"));
-                } catch (IOException | IllegalStateException e) {
-                    room.subscribers.remove(s);
+                } catch (IOException | IllegalStateException ex) {
+                    e.getValue().remove(s);
                 }
             }
-            return false;
-        });
+        }
     }
 
-    private void broadcast(Room room, State state) {
-        for (Subscriber s : room.subscribers) send(room, s, state);
-    }
-
-    private void send(Room room, Subscriber s, State state) {
+    private void send(String code, Subscriber s, State state) {
         try {
             s.emitter().send(SseEmitter.event().name("state").data(state));
         } catch (IOException | IllegalStateException e) {
-            room.subscribers.remove(s);
-            log.debug("Dropped party subscriber {} in {}: {}", s.userId(), room.code, e.toString());
+            List<Subscriber> subs = local.get(code);
+            if (subs != null) subs.remove(s);
+            log.debug("Dropped party subscriber {} in {}: {}", s.userId(), code, e.toString());
         }
     }
 
-    private Room room(String code) {
-        Room room = code == null ? null : rooms.get(code);
-        if (room == null) {
-            throw new ApiException(HttpStatus.NOT_FOUND, "party_not_found", "Комната не найдена или уже закрыта.");
-        }
-        return room;
+    private PartyStore.Room room(String code) {
+        return (code == null ? java.util.Optional.<PartyStore.Room>empty() : store.get(code))
+                .orElseThrow(PartyService::notFound);
     }
 
-    private static void requireMember(Room room, Long userId) {
-        if (!room.members.containsKey(userId)) {
+    private static ApiException notFound() {
+        return new ApiException(HttpStatus.NOT_FOUND, "party_not_found", "Комната не найдена или уже закрыта.");
+    }
+
+    private static void requireMember(PartyStore.Room room, Long userId) {
+        if (!room.members().containsKey(userId)) {
             throw ApiException.forbidden("not_a_member", "Сначала присоединитесь к комнате.");
         }
     }
 
-    private State snapshot(Room room) {
+    private static State snapshot(PartyStore.Room room) {
         List<Member> members = new ArrayList<>();
-        room.members.forEach((id, name) -> members.add(new Member(id, name)));
-        return new State(room.code, room.animeKey, room.episode, room.hostId, List.copyOf(members),
-                room.playing, room.position, room.at, room.by, Instant.now());
+        room.members().forEach((id, name) -> members.add(new Member(id, name)));
+        return new State(room.code(), room.animeKey(), room.episode(), room.hostId(), List.copyOf(members),
+                room.playing(), room.position(), room.at(), room.by(), Instant.now());
     }
 
     private String displayName(Long userId) {

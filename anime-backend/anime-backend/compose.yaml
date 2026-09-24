@@ -24,5 +24,11 @@ services:
       - '1025:1025'
       - '8025:8025'
 
+  # Watch-party rooms and their pub/sub fan-out.
+  redis:
+    image: 'redis:7.4-alpine'
+    ports:
+      - '6379:6379'
+
 volumes:
   anifire_pgdata:
