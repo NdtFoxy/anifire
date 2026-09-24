@@ -19,6 +19,8 @@ import {
   VolumeX,
 } from "lucide-react";
 import CatalogView from "@/components/stream/CatalogView";
+import ContinueRow from "@/components/stream/ContinueRow";
+import RecommendedRow from "@/components/stream/RecommendedRow";
 import RequireAuth from "@/components/auth/RequireAuth";
 import RemoteImage from "@/components/system/RemoteImage";
 import { useMyList } from "@/lib/mylist";
@@ -615,6 +617,12 @@ function StreamExperience() {
         {/* ══════════ CONTENT ══════════ */}
         {view === "rows" ? (
           <div className={styles.rows}>
+            <ContinueRow movies={movies} />
+            <RecommendedRow
+              render={(title, items) => (
+                <ContentRow title={title} items={items} onOpen={openModal} />
+              )}
+            />
             {rows.map((row) => (
               <ContentRow
                 key={row.title}
