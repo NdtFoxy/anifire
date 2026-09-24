@@ -18,8 +18,15 @@ requirements, anime titles work as the product module.
   password reset, login lockout, breach check, OIDC social sign-in
   (Google/Microsoft/Apple), `ADMIN` / `USER` roles.
 - Profile: avatars/banners (served from `/uploads/**`), bookmarks, friends,
-  ratings, watch progress and watch events.
-- Player: HLS playback, subtitles, resume, ad overlay.
+  ratings, watch progress and watch events; friends activity feed.
+- Notifications: hourly check of bookmarked titles for new episodes → in-app
+  inbox (bell in the nav) and an email digest (opt-out in the bell panel).
+- Watch parties: shared play/pause/seek/episode over server-sent events; invite
+  by link (`/watch/<id>?ep=N&party=<code>`). Rooms are in memory, so the API runs
+  as a single instance.
+- Mail: SMTP (Russian HTML + text templates). In dev every message lands in
+  Mailpit (started by compose): http://localhost:8025.
+- PWA: installable (manifest + icons), service worker with an offline page.
 - Billing: subscription plans, checkout intents, payment events; `dev` provider
   locally, YooKassa in production.
 - Ads: campaigns, creatives, decisions and event tracking with an admin UI.
@@ -109,3 +116,18 @@ refuses to boot and lists every missing value until these are set:
 | `ANIFIRE_CORS_ALLOWED_ORIGINS` | comma-separated frontend origins |
 | `ANIFIRE_APP_FRONTEND_URL` | base URL for email links |
 | `ANIFIRE_BILLING_SHOP_ID` / `_SECRET_KEY` / `_RETURN_URL` | YooKassa |
+| `SPRING_MAIL_HOST` / `_PORT` / `_USERNAME` / `_PASSWORD`, `ANIFIRE_MAIL_FROM` | SMTP relay |
+
+### Docker deploy
+
+```bash
+cp .env.prod.example .env.prod   # fill it in
+docker compose -f compose.prod.yaml --env-file .env.prod up -d --build
+```
+
+One public origin behind Caddy (automatic HTTPS for `ANIFIRE_DOMAIN`):
+`/api/v1/*`, `/uploads/*`, `/.well-known/*` go to the API, everything else to
+Next.js. Only Caddy publishes ports; Postgres, the API and the `ling` sidecar are
+reachable only on the internal network. The API container is healthy when
+`/actuator/health/liveness` answers (not exposed publicly). Uploads, the
+database and the subtitle cache live in named volumes.
