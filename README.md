@@ -81,10 +81,31 @@ Frontend URLs:
 ## Checks
 
 ```bash
-cd anime-backend/anime-backend && ./gradlew test
+cd anime-backend/anime-backend && ./gradlew test             # H2, no Docker
+cd anime-backend/anime-backend && ./gradlew integrationTest  # Testcontainers Postgres, needs Docker
 cd anime-streaming && npm run lint
 cd anime-streaming && npm run build
+cd anime-streaming && npm run test:e2e   # Playwright; starts backend + frontend itself
 ```
 
-The same three checks run in CI (`.github/workflows/ci.yml`); backend tests use
-in-memory H2, so no database is required for them.
+All of them run in CI (`.github/workflows/ci.yml`). `test` uses in-memory H2;
+`integrationTest` applies the Flyway migrations to a real `postgres:16` and lets
+Hibernate validate the entities against them. `test:e2e` reuses a backend or
+frontend that is already running locally — stop yours first, because the test
+needs the backend started with `auto-verify-email=true`.
+
+## Production
+
+Run the backend with `SPRING_PROFILES_ACTIVE=prod`
+(`src/main/resources/application-prod.properties`). The startup safety check
+refuses to boot and lists every missing value until these are set:
+
+| Variable | Purpose |
+| --- | --- |
+| `SPRING_DATASOURCE_URL` / `_USERNAME` / `_PASSWORD` | Postgres connection |
+| `ANIFIRE_SECURITY_PEPPER` | base64 password pepper |
+| `ANIFIRE_JWT_ISSUER` | public issuer URL (not `*.local`) |
+| `ANIFIRE_JWT_JWK_SET` | base64 of the signing JWK JSON |
+| `ANIFIRE_CORS_ALLOWED_ORIGINS` | comma-separated frontend origins |
+| `ANIFIRE_APP_FRONTEND_URL` | base URL for email links |
+| `ANIFIRE_BILLING_SHOP_ID` / `_SECRET_KEY` / `_RETURN_URL` | YooKassa |
