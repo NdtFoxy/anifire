@@ -87,6 +87,13 @@ public class StartupSafetyCheck implements ApplicationListener<ApplicationReadyE
                 problems.add("anifire.billing.return-url is empty — set ANIFIRE_BILLING_RETURN_URL");
             }
         }
+        if ("s3".equals(env.getProperty("anifire.uploads.storage"))) {
+            for (String key : new String[] {"endpoint", "bucket", "access-key", "secret-key"}) {
+                if (env.getProperty("anifire.uploads.s3." + key, "").isBlank()) {
+                    problems.add("anifire.uploads.s3." + key + " is empty — uploads would fail; set ANIFIRE_UPLOADS_S3_*");
+                }
+            }
+        }
         String mailHost = env.getProperty("spring.mail.host", "");
         if (!env.getProperty("anifire.mail.enabled", Boolean.class, false)
                 || mailHost.isBlank() || "localhost".equals(mailHost) || "127.0.0.1".equals(mailHost)) {

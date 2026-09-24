@@ -1,6 +1,7 @@
 # Single public origin. The browser talks to one host, so the refresh cookie is
 # first-party and CORS only has to allow that host.
-#   /api/v1/*, /uploads/*, /.well-known/*  -> Spring Boot
+#   /api/v1/*, /.well-known/*  -> Spring Boot
+#   /uploads/*                 -> MinIO bucket `uploads` (path-style: /uploads/<key>)
 #   everything else (pages, Next API routes) -> Next.js
 {$ANIFIRE_DOMAIN} {
 	encode zstd gzip
@@ -11,9 +12,26 @@
 	request_header -X-Country-Code
 	request_header -X-Geo-Country
 
-	@backend path /api/v1/* /uploads/* /.well-known/*
+	@backend path /api/v1/* /.well-known/*
 	handle @backend {
 		reverse_proxy backend:8080
+	}
+
+	# User uploads, read-only and anonymous: exactly one object per request. The
+	# key pattern and the dropped query string keep bucket listings (and any other
+	# S3 API call) out of reach even if the bucket policy were too broad.
+	@uploads {
+		path_regexp ^/uploads/[A-Za-z0-9][A-Za-z0-9._-]*$
+		method GET HEAD
+	}
+	handle @uploads {
+		rewrite * {path}
+		reverse_proxy minio:9000 {
+			header_up Host minio:9000
+		}
+	}
+	handle /uploads* {
+		respond 404
 	}
 
 	# Health stays inside the network; orchestrators probe the container directly.

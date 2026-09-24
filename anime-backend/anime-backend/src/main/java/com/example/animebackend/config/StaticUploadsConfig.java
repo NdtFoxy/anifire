@@ -6,6 +6,7 @@ import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.concurrent.TimeUnit;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.CacheControl;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
@@ -15,9 +16,11 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
  * Serves uploaded profile images from the configured upload directory at {@code /uploads/**}.
  *
  * <p>Filenames are server-generated and immutable, so a long cache is safe: replacing an avatar
- * produces a new name rather than new bytes behind the old one.
+ * produces a new name rather than new bytes behind the old one. With S3 storage the reverse
+ * proxy serves {@code /uploads/**} from the bucket and this handler is not registered.
  */
 @Configuration
+@ConditionalOnProperty(name = "anifire.uploads.storage", havingValue = "local", matchIfMissing = true)
 public class StaticUploadsConfig implements WebMvcConfigurer {
 
     private final UploadProperties props;

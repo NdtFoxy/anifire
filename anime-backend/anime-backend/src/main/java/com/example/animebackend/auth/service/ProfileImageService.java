@@ -5,13 +5,12 @@ import com.example.animebackend.auth.dto.ProfileDto;
 import com.example.animebackend.auth.entity.AppUser;
 import com.example.animebackend.auth.repository.AppUserRepository;
 import com.example.animebackend.auth.web.ApiException;
+import com.example.animebackend.storage.MediaStorage;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.nio.file.AtomicMoveNotSupportedException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
 import java.util.Arrays;
 import java.util.Locale;
 import java.util.Set;
@@ -38,18 +37,17 @@ public class ProfileImageService {
     private static final Set<String> ALLOWED_TYPES =
             Set.of("image/png", "image/jpeg", "image/webp", "image/gif");
 
-    /** Public path prefix the stored URLs use (see StaticUploadsConfig). */
-    private static final String URL_PREFIX = "/uploads/";
-
     private final AppUserRepository users;
     private final ProfileService profiles;
     private final UploadProperties props;
+    private final MediaStorage storage;
 
     public ProfileImageService(
-            AppUserRepository users, ProfileService profiles, UploadProperties props) {
+            AppUserRepository users, ProfileService profiles, UploadProperties props, MediaStorage storage) {
         this.users = users;
         this.profiles = profiles;
         this.props = props;
+        this.storage = storage;
     }
 
     /** Replaces the user's {@code avatar} or {@code banner} image and deletes the previous file. */
@@ -71,11 +69,10 @@ public class ProfileImageService {
         }
 
         AppUser user = load(userId);
-        Path root = props.root();
         Path temp = null;
         try {
-            Files.createDirectories(root);
-            temp = Files.createTempFile(root, ".upload-", ".part");
+            // Validated in the system temp dir; only a sniffed, renamed file reaches storage.
+            temp = Files.createTempFile("anifire-upload-", ".part");
             long written = copy(file, temp, max);
             if (written == 0) {
                 throw ApiException.badRequest("invalid_image", "Загруженный файл пуст.");
@@ -87,14 +84,14 @@ public class ProfileImageService {
             }
 
             String filename = userId + "-" + field + "-" + UUID.randomUUID() + "." + sniffed.ext;
-            move(temp, root.resolve(filename));
+            storage.put(filename, temp, sniffed.mime);
             temp = null;
 
             String previous = AVATAR.equals(field) ? user.getAvatarUrl() : user.getBannerUrl();
             if (AVATAR.equals(field)) {
-                user.setAvatarUrl(URL_PREFIX + filename);
+                user.setAvatarUrl(MediaStorage.url(filename));
             } else {
-                user.setBannerUrl(URL_PREFIX + filename);
+                user.setBannerUrl(MediaStorage.url(filename));
             }
             users.save(user);
             deleteStored(previous);
@@ -176,26 +173,10 @@ public class ProfileImageService {
         return total;
     }
 
-    private static void move(Path from, Path to) throws IOException {
-        try {
-            Files.move(from, to, StandardCopyOption.ATOMIC_MOVE);
-        } catch (AtomicMoveNotSupportedException e) {
-            // Temp and target share a directory, so this only happens on exotic filesystems.
-            Files.move(from, to, StandardCopyOption.REPLACE_EXISTING);
-        }
-    }
-
-    /** Removes a previously stored file, ignoring remote URLs and anything outside the root. */
+    /** Removes a previously stored upload; remote URLs and foreign paths are ignored. */
     private void deleteStored(String storedUrl) {
-        if (storedUrl == null || !storedUrl.startsWith(URL_PREFIX)) {
-            return;
-        }
-        Path root = props.root();
-        Path target = root.resolve(storedUrl.substring(URL_PREFIX.length())).normalize();
-        if (!target.startsWith(root) || target.equals(root)) {
-            return;
-        }
-        deleteQuietly(target);
+        String key = MediaStorage.keyOf(storedUrl);
+        if (key != null) storage.delete(key);
     }
 
     private static void deleteQuietly(Path path) {
