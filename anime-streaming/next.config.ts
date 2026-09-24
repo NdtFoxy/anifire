@@ -14,6 +14,16 @@ const nextConfig: NextConfig = {
       pathname: "/**",
     })),
   },
+  // The worker script must be revalidated on every load, or a deploy would keep
+  // serving the previous worker (and its caching rules) for up to a day.
+  async headers() {
+    return [
+      {
+        source: "/sw.js",
+        headers: [{ key: "Cache-Control", value: "no-cache, no-store, must-revalidate" }],
+      },
+    ];
+  },
 };
 
 export default nextConfig;

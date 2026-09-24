@@ -11,6 +11,7 @@ import { PlayerProvider } from "@/components/player/PlayerProvider";
 import PlayerRoot from "@/components/player/PlayerRoot";
 import { DeviceProvider } from "@/components/system/DeviceProvider";
 import SpatialNav from "@/components/system/SpatialNav";
+import ServiceWorker from "@/components/system/ServiceWorker";
 
 const display = Montserrat({
   variable: "--font-display",
@@ -28,6 +29,15 @@ export const metadata: Metadata = {
   title: "Anifire — Аниме стриминг",
   description:
     "Смотри лучшие аниме сериалы онлайн. Новинки каждый день, огромная библиотека жанров и персональные рекомендации.",
+  applicationName: "Anifire",
+  appleWebApp: { capable: true, title: "Anifire", statusBarStyle: "black-translucent" },
+  icons: {
+    icon: [
+      { url: "/favicon.ico" },
+      { url: "/icons/icon.svg", type: "image/svg+xml" },
+    ],
+    apple: "/icons/apple-touch-icon.png",
+  },
 };
 
 /**
@@ -57,6 +67,7 @@ export default function RootLayout({
           <AuthProvider>
             <PlayerProvider>
               <SpatialNav />
+              <ServiceWorker />
               {children}
               <PlayerRoot />
             </PlayerProvider>
