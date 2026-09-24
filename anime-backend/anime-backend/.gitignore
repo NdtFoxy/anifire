@@ -38,3 +38,6 @@ out/
 
 ### Anifire auth signing keys (never commit) ###
 auth-keys/
+
+### Uploaded profile images (runtime data, never commit) ###
+uploads/

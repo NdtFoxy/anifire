@@ -1,0 +1,9 @@
+ling/.venv/
+ling/__pycache__/
+ling/data/
+
+# Local tooling output (regenerable, machine-specific)
+graphify-out/
+.claude/settings.local.json
+.mcp-memory.json
+.DS_Store
