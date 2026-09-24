@@ -46,3 +46,8 @@ next-env.d.ts
 
 # Local LLM-translated subtitle cache
 .cache/
+
+# Playwright
+/test-results/
+/playwright-report/
+/playwright/.cache/

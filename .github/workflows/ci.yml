@@ -39,3 +39,48 @@ jobs:
       - run: npm ci
       - run: npm run lint
       - run: npm run build
+
+  e2e:
+    runs-on: ubuntu-latest
+    needs: [backend, frontend]
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: anifire_database
+          POSTGRES_USER: myuser
+          POSTGRES_PASSWORD: secret
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U myuser -d anifire_database"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      # The postgres service replaces the local docker-compose integration.
+      SPRING_DOCKER_COMPOSE_ENABLED: "false"
+    defaults:
+      run:
+        working-directory: anime-streaming
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          java-version: "21"
+          distribution: temurin
+      - uses: gradle/actions/setup-gradle@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: anime-streaming/package-lock.json
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run build
+      # Playwright starts the backend (bootRun) and `next start` itself.
+      - run: npm run test:e2e
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: |
+            anime-streaming/playwright-report
+            anime-streaming/test-results
