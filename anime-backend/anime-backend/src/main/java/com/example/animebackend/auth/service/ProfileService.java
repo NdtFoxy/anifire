@@ -1,14 +1,21 @@
 package com.example.animebackend.auth.service;
 
+import com.example.animebackend.auth.dto.MyCommentDto;
 import com.example.animebackend.auth.dto.ProfileDto;
 import com.example.animebackend.auth.dto.ProfileUpdateRequest;
+import com.example.animebackend.auth.dto.WatchActivityDto;
 import com.example.animebackend.auth.entity.AppUser;
 import com.example.animebackend.auth.repository.AppUserRepository;
 import com.example.animebackend.auth.web.ApiException;
+import com.example.animebackend.billing.service.EntitlementService;
+import com.example.animebackend.repository.CommentRepository;
+import com.example.animebackend.repository.WatchEventRepository;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -16,15 +23,28 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class ProfileService {
 
-    private final AppUserRepository users;
+    /** Upper bound for the activity/comments feeds, so a client can't ask for everything. */
+    private static final int MAX_FEED_LIMIT = 50;
 
-    public ProfileService(AppUserRepository users) {
+    private final AppUserRepository users;
+    private final EntitlementService entitlements;
+    private final WatchEventRepository watchEvents;
+    private final CommentRepository comments;
+
+    public ProfileService(
+            AppUserRepository users,
+            EntitlementService entitlements,
+            WatchEventRepository watchEvents,
+            CommentRepository comments) {
         this.users = users;
+        this.entitlements = entitlements;
+        this.watchEvents = watchEvents;
+        this.comments = comments;
     }
 
     @Transactional(readOnly = true)
     public ProfileDto get(Long userId) {
-        return ProfileDto.from(load(userId));
+        return ProfileDto.from(load(userId), entitlements.forUser(userId));
     }
 
     @Transactional
@@ -36,7 +56,7 @@ public class ProfileService {
         if (req.birthday() != null) u.setBirthday(req.birthday());
         if (req.avatarUrl() != null) u.setAvatarUrl(req.avatarUrl());
         if (req.bannerUrl() != null) u.setBannerUrl(req.bannerUrl());
-        return ProfileDto.from(users.save(u));
+        return ProfileDto.from(users.save(u), entitlements.forUser(userId));
     }
 
     /** Fill the profile with plausible random demo data and persist it. */
@@ -62,7 +82,29 @@ public class ProfileService {
         u.setFriends(r.nextInt(0, 800));
         u.setPosts(r.nextInt(0, 400));
         u.setCommentsCount(r.nextInt(0, 2000));
-        return ProfileDto.from(users.save(u));
+        return ProfileDto.from(users.save(u), entitlements.forUser(userId));
+    }
+
+    /** Newest-first episodes the user actually watched, straight from the watch events. */
+    @Transactional(readOnly = true)
+    public List<WatchActivityDto> activity(Long userId, int limit) {
+        return watchEvents.findByUserIdOrderByWatchedAtDesc(userId, page(limit)).stream()
+                .map(WatchActivityDto::from)
+                .toList();
+    }
+
+    /** Newest-first comments the user wrote, with the anime they belong to. */
+    @Transactional(readOnly = true)
+    public List<MyCommentDto> comments(Long userId, int limit) {
+        return comments
+                .findByCreatorUserIdAndIsDeletedFalseOrderByCreationDateDesc(userId, page(limit))
+                .stream()
+                .map(MyCommentDto::from)
+                .toList();
+    }
+
+    private static Pageable page(int limit) {
+        return PageRequest.of(0, Math.clamp(limit, 1, MAX_FEED_LIMIT));
     }
 
     private AppUser load(Long userId) {

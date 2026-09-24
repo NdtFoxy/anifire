@@ -2,6 +2,7 @@ package com.example.animebackend.auth.security;
 
 import com.example.animebackend.auth.config.JwtProperties;
 import com.example.animebackend.auth.entity.AppUser;
+import com.example.animebackend.billing.service.Entitlement;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
@@ -26,7 +27,12 @@ public class JwtService {
         this.props = props;
     }
 
-    public AccessToken issue(AppUser user) {
+    /**
+     * Mints an access token stamped with the caller's current entitlement. The claim is
+     * only as fresh as the 15-minute TTL, so anything that must react immediately to a
+     * purchase (ad decisioning) re-reads the entitlement server-side instead.
+     */
+    public AccessToken issue(AppUser user, Entitlement entitlement) {
         Instant now = Instant.now();
         Instant exp = now.plus(props.accessTtl());
 
@@ -40,6 +46,7 @@ public class JwtService {
                 .claim("email", user.getEmail())
                 .claim("roles", List.of(user.getRole().name()))
                 .claim("emailVerified", user.isEmailVerified())
+                .claim("adsFree", entitlement.adsFree())
                 .claim("typ", "access")
                 .build();
 

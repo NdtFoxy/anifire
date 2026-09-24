@@ -9,13 +9,18 @@ import com.example.animebackend.auth.dto.SocialLoginRequest;
 import com.example.animebackend.auth.dto.UserDto;
 import com.example.animebackend.auth.entity.AppUser;
 import com.example.animebackend.auth.entity.Role;
+import com.example.animebackend.auth.entity.SocialIdentity;
 import com.example.animebackend.auth.entity.TokenType;
 import com.example.animebackend.auth.repository.AppUserRepository;
+import com.example.animebackend.auth.repository.SocialIdentityRepository;
 import com.example.animebackend.auth.security.Argon2PepperPasswordEncoder;
 import com.example.animebackend.auth.security.JwtService;
+import com.example.animebackend.auth.security.OidcTokenVerifier;
 import com.example.animebackend.auth.security.RateLimiterService;
 import com.example.animebackend.auth.security.Tokens;
 import com.example.animebackend.auth.web.ApiException;
+import com.example.animebackend.billing.service.Entitlement;
+import com.example.animebackend.billing.service.EntitlementService;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Locale;
@@ -45,6 +50,10 @@ public class AuthService {
     private final PwnedPasswordService pwned;
     private final RateLimiterService rateLimiter;
     private final SecurityProperties security;
+    private final EntitlementService entitlements;
+    private final SocialIdentityRepository socialIdentities;
+    private final OidcTokenVerifier oidc;
+    private final LoginAttemptService loginAttempts;
 
     /** Pre-computed hash so login timing is identical whether or not the user exists. */
     private final String dummyHash;
@@ -58,7 +67,11 @@ public class AuthService {
             EmailService emailService,
             PwnedPasswordService pwned,
             RateLimiterService rateLimiter,
-            SecurityProperties security) {
+            SecurityProperties security,
+            EntitlementService entitlements,
+            SocialIdentityRepository socialIdentities,
+            OidcTokenVerifier oidc,
+            LoginAttemptService loginAttempts) {
         this.userRepo = userRepo;
         this.encoder = encoder;
         this.jwtService = jwtService;
@@ -68,13 +81,17 @@ public class AuthService {
         this.pwned = pwned;
         this.rateLimiter = rateLimiter;
         this.security = security;
+        this.entitlements = entitlements;
+        this.socialIdentities = socialIdentities;
+        this.oidc = oidc;
+        this.loginAttempts = loginAttempts;
         this.dummyHash = encoder.encode("timing-equalizer-not-a-real-password");
     }
 
     // ───────────────────────── Registration ─────────────────────────
 
     @Transactional
-    public void register(RegisterRequest req, String ip) {
+    public void register(RegisterRequest req, String ip, String country) {
         if (!rateLimiter.allow("register:ip:" + ip, 5, Duration.ofHours(1))) {
             throw ApiException.tooManyRequests("Too many sign-up attempts. Try again later.");
         }
@@ -92,6 +109,8 @@ public class AuthService {
 
         boolean autoVerify = security.autoVerifyEmail();
         AppUser user = AppUser.builder()
+                .signupCountry(country)
+                .passwordChangedAt(Instant.now())
                 .email(email)
                 .passwordHash(encoder.encode(req.password()))
                 .displayName(displayName(req.displayName(), email))
@@ -135,7 +154,9 @@ public class AuthService {
 
         if (!ok) {
             if (user != null) {
-                registerFailure(user);
+                // Committed in its own transaction: this method throws next, and the
+                // rollback would otherwise erase the attempt we just counted.
+                loginAttempts.registerFailure(user.getId());
             }
             throw ApiException.unauthorized("invalid_credentials", "Invalid email or password.");
         }
@@ -156,35 +177,93 @@ public class AuthService {
         return issueTokens(user, ip, userAgent);
     }
 
+    /**
+     * Signs a user in with a provider-issued ID token.
+     *
+     * <p>The token is fully verified first ({@link OidcTokenVerifier}); everything
+     * below trusts only the provider subject that verification returned.
+     *
+     * <p>Linking rules, which is where OAuth logins usually go wrong:
+     * <ul>
+     *   <li>A known {@code (provider, subject)} pair signs into the account it is
+     *       already linked to. The email in the token is irrelevant here, so a
+     *       provider-side address change cannot hijack a different account.</li>
+     *   <li>An unknown subject whose email matches an existing local account only
+     *       links when that account's email is verified. Otherwise anyone able to
+     *       create a provider account for an address could seize a local account
+     *       that never proved ownership of it.</li>
+     *   <li>Otherwise a fresh account is created, already email-verified, with a
+     *       random unusable password hash so the password login path can never be
+     *       entered for it without a reset.</li>
+     * </ul>
+     * New accounts are never granted ADMIN — the old demo path handed the role to
+     * whoever signed in first.
+     */
     @Transactional
     public AuthResult socialLogin(SocialLoginRequest req, String ip, String userAgent) {
         String provider = normalizeProvider(req.provider());
-        String email = provider + ".demo@anifire.local";
-        AppUser user = userRepo.findByEmailAndIsDeletedFalse(email).orElseGet(() -> {
-            AppUser created = AppUser.builder()
-                    .email(email)
-                    .passwordHash(encoder.encode("social-login-" + provider + "-" + Tokens.random()))
-                    .displayName(providerLabel(provider) + " User")
-                    .role(userRepo.countByIsDeletedFalse() == 0 ? Role.ADMIN : Role.USER)
-                    .emailVerified(true)
-                    .build();
-            return userRepo.save(created);
-        });
+        if (!rateLimiter.allow("social:ip:" + ip, 20, Duration.ofMinutes(5))) {
+            throw ApiException.tooManyRequests("Too many attempts. Try again shortly.");
+        }
+
+        OidcTokenVerifier.Identity identity =
+                oidc.verify(provider, req.idToken(), req.nonce());
+
+        SocialIdentity link =
+                socialIdentities.findByProviderAndSubject(provider, identity.subject()).orElse(null);
+
+        AppUser user;
+        if (link != null) {
+            user = userRepo.findById(link.getUserId())
+                    .filter(u -> !u.isDeleted())
+                    .orElseThrow(() -> ApiException.unauthorized(
+                            "account_unavailable", "That account is no longer available."));
+        } else {
+            AppUser existing = userRepo.findByEmailAndIsDeletedFalse(identity.email()).orElse(null);
+            if (existing != null && !existing.isEmailVerified()) {
+                throw ApiException.badRequest(
+                        "verify_email_first",
+                        "An unverified account already uses this email. Verify it, then link "
+                                + provider + " from your profile.");
+            }
+            user = existing != null ? existing : createSocialUser(identity);
+            socialIdentities.save(SocialIdentity.builder()
+                    .userId(user.getId())
+                    .provider(provider)
+                    .subject(identity.subject())
+                    .emailAtLink(identity.email())
+                    .lastLoginAt(Instant.now())
+                    .build());
+            log.info("Linked {} identity to user id={}", provider, user.getId());
+        }
+
+        if (user.getLockedUntil() != null && user.getLockedUntil().isAfter(Instant.now())) {
+            throw ApiException.locked("Account temporarily locked. Try again later.");
+        }
+
+        if (link != null) {
+            link.setLastLoginAt(Instant.now());
+            socialIdentities.save(link);
+        }
+        user.setFailedAttempts(0);
         user.setLastLoginAt(Instant.now());
         userRepo.save(user);
         return issueTokens(user, ip, userAgent);
     }
 
-    private void registerFailure(AppUser user) {
-        int attempts = user.getFailedAttempts() + 1;
-        user.setFailedAttempts(attempts);
-        if (attempts >= security.maxFailedAttempts()) {
-            user.setLockedUntil(Instant.now().plus(security.lockDuration()));
-            user.setFailedAttempts(0);
-            log.warn("Account locked after {} failed logins: id={}", attempts, user.getId());
-        }
-        userRepo.save(user);
+    private AppUser createSocialUser(OidcTokenVerifier.Identity identity) {
+        String label = identity.name() != null && !identity.name().isBlank()
+                ? identity.name().trim()
+                : providerLabel(identity.provider()) + " user";
+        return userRepo.save(AppUser.builder()
+                .email(identity.email())
+                .passwordHash(encoder.encode(Tokens.random()))
+                .displayName(label.length() > 60 ? label.substring(0, 60) : label)
+                .role(Role.USER)
+                .emailVerified(true)
+                .build());
     }
+
 
     private boolean runDummy(String password) {
         encoder.matches(password, dummyHash);
@@ -200,8 +279,9 @@ public class AuthService {
                 .filter(u -> !u.isDeleted())
                 .orElseThrow(() -> ApiException.unauthorized("invalid_refresh",
                         "Session expired. Please sign in again."));
-        JwtService.AccessToken access = jwtService.issue(user);
-        return new AuthResult(access, rot.newRawToken(), UserDto.from(user));
+        Entitlement entitlement = entitlements.forUser(user.getId());
+        JwtService.AccessToken access = jwtService.issue(user, entitlement);
+        return new AuthResult(access, rot.newRawToken(), UserDto.from(user, entitlement));
     }
 
     public void logout(String rawRefresh) {
@@ -257,6 +337,7 @@ public class AuthService {
         AppUser user = userRepo.findById(userId)
                 .orElseThrow(() -> ApiException.badRequest("invalid_token", "This link is invalid or has expired."));
         user.setPasswordHash(encoder.encode(req.password()));
+        user.setPasswordChangedAt(Instant.now());
         user.setFailedAttempts(0);
         user.setLockedUntil(null);
         userRepo.save(user);
@@ -270,16 +351,17 @@ public class AuthService {
     public UserDto getUser(Long id) {
         return userRepo.findById(id)
                 .filter(u -> !u.isDeleted())
-                .map(UserDto::from)
+                .map(u -> UserDto.from(u, entitlements.forUser(u.getId())))
                 .orElseThrow(() -> ApiException.unauthorized("unauthorized", "Not authenticated."));
     }
 
     // ───────────────────────── Helpers ─────────────────────────
 
     private AuthResult issueTokens(AppUser user, String ip, String userAgent) {
-        JwtService.AccessToken access = jwtService.issue(user);
+        Entitlement entitlement = entitlements.forUser(user.getId());
+        JwtService.AccessToken access = jwtService.issue(user, entitlement);
         String refresh = refreshTokens.startSession(user.getId(), ip, userAgent);
-        return new AuthResult(access, refresh, UserDto.from(user));
+        return new AuthResult(access, refresh, UserDto.from(user, entitlement));
     }
 
     private static String normalize(String email) {

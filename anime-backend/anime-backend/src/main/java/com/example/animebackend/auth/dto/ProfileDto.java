@@ -1,10 +1,15 @@
 package com.example.animebackend.auth.dto;
 
 import com.example.animebackend.auth.entity.AppUser;
+import com.example.animebackend.billing.service.Entitlement;
 import java.time.Instant;
 import java.time.LocalDate;
 
-/** Full profile view for the signed-in user's profile page. */
+/**
+ * Full profile view for the signed-in user's profile page. {@code adsFree}/{@code plan}/
+ * {@code premiumUntil} mirror the server-resolved {@link Entitlement} so the page can
+ * render the subscription state — they are never trusted for ad decisions.
+ */
 public record ProfileDto(
         Long id,
         String email,
@@ -24,9 +29,12 @@ public record ProfileDto(
         int posts,
         int commentsCount,
         Instant createdAt,
-        Instant lastLoginAt) {
+        Instant lastLoginAt,
+        boolean adsFree,
+        String plan,
+        Instant premiumUntil) {
 
-    public static ProfileDto from(AppUser u) {
+    public static ProfileDto from(AppUser u, Entitlement entitlement) {
         return new ProfileDto(
                 u.getId(),
                 u.getEmail(),
@@ -46,6 +54,9 @@ public record ProfileDto(
                 u.getPosts(),
                 u.getCommentsCount(),
                 u.getCreatedAt(),
-                u.getLastLoginAt());
+                u.getLastLoginAt(),
+                entitlement.adsFree(),
+                entitlement.plan() == null ? null : entitlement.plan().name(),
+                entitlement.premiumUntil());
     }
 }

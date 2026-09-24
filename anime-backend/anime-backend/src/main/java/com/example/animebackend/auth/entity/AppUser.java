@@ -88,6 +88,13 @@ public class AppUser {
     @Builder.Default
     private int commentsCount = 0;
 
+    /** When the current password was set — sign-up time until the first change. */
+    private Instant passwordChangedAt;
+
+    /** ISO country the account was created from, when a trusted proxy reported one. */
+    @Column(length = 2)
+    private String signupCountry;
+
     @Column(nullable = false, updatable = false)
     @Builder.Default
     private Instant createdAt = Instant.now();

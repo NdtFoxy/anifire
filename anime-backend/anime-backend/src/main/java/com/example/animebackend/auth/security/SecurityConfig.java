@@ -53,8 +53,28 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers("/api/v1/auth/me", "/api/v1/auth/me/**").authenticated()
                         .requestMatchers("/api/v1/auth/**").permitAll()
+                        // Personal data: progress, bookmarks, friends. Stated explicitly so a
+                        // future permitAll on a broader pattern cannot quietly expose it.
+                        .requestMatchers("/api/v1/me/**").authenticated()
+                        // Billing. The provider callback is the single unauthenticated
+                        // write in the API — it carries no credentials by nature, and
+                        // nothing it claims is trusted (BillingService re-reads the
+                        // payment from the provider). Prices are public; buying,
+                        // cancelling and reading your own subscription are not.
+                        .requestMatchers("/api/v1/billing/webhook/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/billing/plans").permitAll()
+                        .requestMatchers("/api/v1/billing/**").authenticated()
+                        // AI features cost GPU time, so they are never anonymous. The
+                        // Next.js routes call these with the caller's own token.
+                        .requestMatchers("/api/v1/ai/**").authenticated()
+                        // Ad beacons come from viewers without an account — that is who
+                        // ads are for. The decision id in the body was minted by us, so
+                        // an open POST here cannot invent an impression for a campaign
+                        // the caller was never served.
+                        .requestMatchers(HttpMethod.POST, "/api/v1/ads/events").permitAll()
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                         .requestMatchers("/.well-known/jwks.json").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/uploads/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/animes/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/categories/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/comments/**").permitAll()
@@ -93,7 +113,10 @@ public class SecurityConfig {
         CorsConfiguration cfg = new CorsConfiguration();
         cfg.setAllowedOrigins(corsProps.allowedOrigins());
         cfg.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
-        cfg.setAllowedHeaders(List.of("Authorization", "Content-Type", "X-CSRF-Token"));
+        // X-Geo-Simulate carries an admin's region preview; without it here the browser
+        // drops the header at preflight and the preview silently does nothing.
+        cfg.setAllowedHeaders(
+                List.of("Authorization", "Content-Type", "X-CSRF-Token", "X-Geo-Simulate"));
         cfg.setAllowCredentials(true);
         cfg.setMaxAge(3600L);
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();

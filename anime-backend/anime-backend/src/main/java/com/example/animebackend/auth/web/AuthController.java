@@ -11,12 +11,18 @@ import com.example.animebackend.auth.dto.SocialLoginRequest;
 import com.example.animebackend.auth.dto.TokenRequest;
 import com.example.animebackend.auth.dto.UserDto;
 import com.example.animebackend.auth.security.CookieService;
+import com.example.animebackend.geo.service.GeoAccessService;
+import com.example.animebackend.auth.security.OidcTokenVerifier;
+import com.example.animebackend.auth.security.SocialNonceService;
 import com.example.animebackend.auth.security.Tokens;
 import com.example.animebackend.auth.service.AuthService;
 import com.example.animebackend.auth.service.AuthService.AuthResult;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -37,16 +43,28 @@ public class AuthController {
 
     private final AuthService authService;
     private final CookieService cookieService;
+    private final OidcTokenVerifier oidc;
+    private final SocialNonceService nonces;
+    private final GeoAccessService geo;
 
-    public AuthController(AuthService authService, CookieService cookieService) {
+    public AuthController(
+            AuthService authService,
+            CookieService cookieService,
+            OidcTokenVerifier oidc,
+            SocialNonceService nonces,
+            GeoAccessService geo) {
         this.authService = authService;
         this.cookieService = cookieService;
+        this.oidc = oidc;
+        this.nonces = nonces;
+        this.geo = geo;
     }
 
     @PostMapping("/register")
     public ResponseEntity<MessageResponse> register(
             @Valid @RequestBody RegisterRequest body, HttpServletRequest request) {
-        authService.register(body, clientIp(request));
+        // Country comes from the trusted proxy header, never from the payload.
+        authService.register(body, clientIp(request), geo.resolveCountry(request));
         return ResponseEntity.status(HttpStatus.ACCEPTED)
                 .body(new MessageResponse("Check your inbox to verify your account."));
     }
@@ -63,6 +81,30 @@ public class AuthController {
             @Valid @RequestBody SocialLoginRequest body, HttpServletRequest request) {
         AuthResult result = authService.socialLogin(body, clientIp(request), userAgent(request));
         return authedResponse(result);
+    }
+
+    /**
+     * Which providers this deployment can actually verify. The client renders only
+     * these, so a missing client id shows up as an unavailable button instead of a
+     * dead end (or worse, a path that trusts the client).
+     */
+    @GetMapping("/social/providers")
+    public Map<String, Boolean> socialProviders() {
+        Map<String, Boolean> out = new LinkedHashMap<>();
+        for (String provider : List.of("google", "microsoft", "apple")) {
+            out.put(provider, oidc.available(provider));
+        }
+        return out;
+    }
+
+    /**
+     * Issues the single-use nonce the client must pass to the provider. The signed
+     * ID token has to echo it back, which is what makes a captured or
+     * foreign-audience token useless here.
+     */
+    @PostMapping("/social/nonce")
+    public Map<String, String> socialNonce() {
+        return Map.of("nonce", nonces.issue());
     }
 
     @PostMapping("/refresh")

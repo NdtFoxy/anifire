@@ -9,6 +9,14 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
+import com.example.animebackend.ops.ErrorLog;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.ConstraintViolationException;
+import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 /**
  * Renders consistent, non-leaky error bodies. Stack traces never reach the client;
@@ -16,6 +24,12 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
  */
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+    private final ErrorLog errorLog;
+
+    public GlobalExceptionHandler(ErrorLog errorLog) {
+        this.errorLog = errorLog;
+    }
 
     @ExceptionHandler(ApiException.class)
     public ResponseEntity<Map<String, Object>> handleApi(ApiException ex) {
@@ -33,11 +47,58 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(resp);
     }
 
+    /**
+     * The multipart parser aborts oversized uploads before the handler runs; report it with
+     * the same code the image service uses so clients only need one branch.
+     */
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    public ResponseEntity<Map<String, Object>> handleUploadTooLarge(
+            MaxUploadSizeExceededException ex) {
+        return body(HttpStatus.BAD_REQUEST, "image_too_large", "That file is too large.");
+    }
+
+    /**
+     * A missing file (e.g. an avatar that was replaced or removed) is a 404, not a server
+     * error — otherwise the catch-all below turns every stale image URL into a 500 and a
+     * stack trace in the logs.
+     */
+    @ExceptionHandler(NoResourceFoundException.class)
+    public ResponseEntity<Map<String, Object>> handleMissingResource(NoResourceFoundException ex) {
+        return body(HttpStatus.NOT_FOUND, "not_found", "Not found.");
+    }
+
+    /**
+     * A path variable or query parameter that cannot be parsed (e.g. {@code /friends/abc})
+     * is the caller's mistake, not ours — 400, and no stack trace in the log for what is
+     * just a malformed URL.
+     */
+    @ExceptionHandler({
+        MethodArgumentTypeMismatchException.class,
+        MissingServletRequestParameterException.class,
+        HttpMessageNotReadableException.class,
+        // @Validated on a path variable throws this one; without the mapping a
+        // malformed country code would surface as a 500.
+        ConstraintViolationException.class
+    })
+    public ResponseEntity<Map<String, Object>> handleMalformedInput(Exception ex) {
+        return body(HttpStatus.BAD_REQUEST, "bad_request", "Invalid request.");
+    }
+
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<Map<String, Object>> handleUnexpected(Exception ex) {
-        // Log server-side; never expose internals to the caller.
+    public ResponseEntity<Map<String, Object>> handleUnexpected(
+            Exception ex, HttpServletRequest request) {
+        // Log server-side; never expose internals to the caller. The same failure is
+        // also pushed to the in-memory error feed so the console can show operators
+        // that something broke without them tailing a log file.
         org.slf4j.LoggerFactory.getLogger(GlobalExceptionHandler.class)
                 .error("Unhandled exception", ex);
+        errorLog.record(new ErrorLog.Entry(
+                java.time.Instant.now(),
+                request.getMethod(),
+                request.getRequestURI(),
+                ex.getClass().getSimpleName(),
+                ex.getMessage() == null ? "" : ex.getMessage().substring(0, Math.min(200, ex.getMessage().length())),
+                null));
         return body(HttpStatus.INTERNAL_SERVER_ERROR, "internal_error", "Something went wrong.");
     }
 
