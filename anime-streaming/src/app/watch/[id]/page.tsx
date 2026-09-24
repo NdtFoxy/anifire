@@ -141,7 +141,7 @@ function Watch() {
       if (hasRealVideo(source)) {
         setTrailerUrl(null);
         setStatus("player");
-        open(source);
+        open({ ...source, startAt });
         recordWatchEvent({
           animeKey: String(movie.id),
           animeTitle: source.title,
@@ -173,7 +173,7 @@ function Watch() {
     return () => {
       cancelled = true;
     };
-  }, [movie, episode, episodes, open, close, isAniAlias]);
+  }, [movie, episode, episodes, open, close, isAniAlias, startAt]);
 
   // Real playback is handled by the app-wide overlay (PlayerRoot in the layout);
   // for that case this route just owns the URL behind a black backdrop.

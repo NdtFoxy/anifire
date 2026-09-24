@@ -130,6 +130,14 @@ function HeroPreviewVideo({
   // Only reveal the video once it's actually playing past the seek — otherwise
   // the half-loaded/seeking frame layers over the backdrop ("two pictures").
   const [revealed, setRevealed] = useState(false);
+  // The src effect must not re-run (and reload the stream) when `playing`
+  // flips, but its deferred play() must see the current value, not the one
+  // captured when src changed — otherwise a banner-only toggle made before
+  // metadata loads is ignored and the preview starts anyway.
+  const playingRef = useRef(playing);
+  useEffect(() => {
+    playingRef.current = playing;
+  }, [playing]);
 
   useEffect(() => {
     const video = videoRef.current;
@@ -141,7 +149,7 @@ function HeroPreviewVideo({
     const onPlaying = () => !cancelled && setRevealed(true);
     video.addEventListener("playing", onPlaying);
     const play = () => {
-      if (!cancelled && playing) video.play().catch(() => {});
+      if (!cancelled && playingRef.current) video.play().catch(() => {});
     };
     const startAtPreview = () => {
       // Start ~1.5 min in (past intros/title cards) for a more "into it" preview.
