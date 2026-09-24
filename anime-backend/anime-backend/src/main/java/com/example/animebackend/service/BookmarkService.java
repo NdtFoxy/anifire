@@ -56,12 +56,12 @@ public class BookmarkService {
     public boolean add(Long userId, Long animeId) {
         if (bookmarks.existsByUserIdAndAnimeId(userId, animeId)) return false;
         if (bookmarks.countByUserId(userId) >= MAX_BOOKMARKS) {
-            throw ApiException.badRequest("list_full", "Your list is full — remove something first.");
+            throw ApiException.badRequest("list_full", "Список заполнен — сначала удалите что-нибудь.");
         }
         // Existence is checked here rather than trusted from the client, so the list
         // can never accumulate ids that were never in the catalogue.
         if (animes.findByIdAndIsDeletedFalse(animeId).isEmpty()) {
-            throw ApiException.badRequest("unknown_title", "That title does not exist.");
+            throw ApiException.badRequest("unknown_title", "Такого тайтла нет.");
         }
         bookmarks.save(Bookmark.builder().userId(userId).animeId(animeId).build());
         return true;

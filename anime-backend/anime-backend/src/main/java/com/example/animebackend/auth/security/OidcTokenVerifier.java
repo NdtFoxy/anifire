@@ -74,15 +74,15 @@ public class OidcTokenVerifier {
         OAuthProperties.Provider cfg = props.get(provider);
         if (cfg == null || !cfg.configured()) {
             throw ApiException.badRequest(
-                    "provider_unavailable", "That sign-in provider is not enabled.");
+                    "provider_unavailable", "Этот способ входа отключён.");
         }
         if (idToken == null || idToken.isBlank() || idToken.length() > MAX_TOKEN_CHARS) {
-            throw ApiException.unauthorized("invalid_token", "Sign-in failed. Try again.");
+            throw ApiException.unauthorized("invalid_token", "Не удалось войти. Попробуйте ещё раз.");
         }
         // Burn the nonce before touching the token: a replayed token must fail even
         // if it is otherwise perfectly valid.
         if (!nonces.consume(nonce)) {
-            throw ApiException.unauthorized("invalid_nonce", "Sign-in expired. Try again.");
+            throw ApiException.unauthorized("invalid_nonce", "Время входа истекло. Попробуйте ещё раз.");
         }
 
         JWTClaimsSet claims;
@@ -92,31 +92,31 @@ public class OidcTokenVerifier {
             // The reason is logged for operators but never returned: telling a caller
             // which check failed is a free oracle for forging the next attempt.
             log.warn("Rejected {} ID token: {}", provider, e.toString());
-            throw ApiException.unauthorized("invalid_token", "Sign-in failed. Try again.");
+            throw ApiException.unauthorized("invalid_token", "Не удалось войти. Попробуйте ещё раз.");
         }
 
         String tokenNonce = asString(claims.getClaim("nonce"));
         if (tokenNonce == null || !Tokens.constantTimeEquals(tokenNonce, nonce)) {
-            throw ApiException.unauthorized("invalid_nonce", "Sign-in expired. Try again.");
+            throw ApiException.unauthorized("invalid_nonce", "Время входа истекло. Попробуйте ещё раз.");
         }
 
         // A token addressed to several parties at once is not exclusively ours;
         // and an `iat` in the future means a clock lie, not a fresh login.
         List<String> audiences = claims.getAudience();
         if (audiences == null || audiences.size() != 1) {
-            throw ApiException.unauthorized("invalid_token", "Sign-in failed. Try again.");
+            throw ApiException.unauthorized("invalid_token", "Не удалось войти. Попробуйте ещё раз.");
         }
         Date issuedAt = claims.getIssueTime();
         if (issuedAt == null
                 || issuedAt.toInstant().isAfter(Instant.now().plusSeconds(SKEW_SECONDS))) {
-            throw ApiException.unauthorized("invalid_token", "Sign-in failed. Try again.");
+            throw ApiException.unauthorized("invalid_token", "Не удалось войти. Попробуйте ещё раз.");
         }
 
         // Google sets `azp` when the token was minted for a different party than
         // the audience; if present it must still be us.
         String azp = asString(claims.getClaim("azp"));
         if (azp != null && !azp.equals(cfg.clientId())) {
-            throw ApiException.unauthorized("invalid_token", "Sign-in failed. Try again.");
+            throw ApiException.unauthorized("invalid_token", "Не удалось войти. Попробуйте ещё раз.");
         }
 
         String subject = claims.getSubject();
@@ -126,11 +126,11 @@ public class OidcTokenVerifier {
                 verified instanceof Boolean b ? b : Boolean.parseBoolean(String.valueOf(verified));
 
         if (subject == null || subject.isBlank() || email == null || email.isBlank()) {
-            throw ApiException.unauthorized("invalid_token", "Sign-in failed. Try again.");
+            throw ApiException.unauthorized("invalid_token", "Не удалось войти. Попробуйте ещё раз.");
         }
         if (!emailVerified) {
             throw ApiException.badRequest(
-                    "email_unverified", "Verify your email with that provider first.");
+                    "email_unverified", "Сначала подтвердите почту у этого провайдера.");
         }
 
         return new Identity(provider, subject, email.trim().toLowerCase(), asString(claims.getClaim("name")));

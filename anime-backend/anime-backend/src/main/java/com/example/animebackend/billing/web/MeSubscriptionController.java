@@ -26,7 +26,7 @@ public class MeSubscriptionController {
 
     @GetMapping("/subscription")
     public BillingDtos.SubscriptionView mine(@AuthenticationPrincipal Jwt jwt) {
-        if (jwt == null) throw ApiException.unauthorized("unauthorized", "Not authenticated.");
+        if (jwt == null) throw ApiException.unauthorized("unauthorized", "Вы не вошли в аккаунт.");
         return billing.subscription(Long.valueOf(jwt.getSubject()));
     }
 }

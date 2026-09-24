@@ -1,5 +1,7 @@
 package com.example.animebackend.ai;
 
+import org.springframework.http.HttpStatus;
+import com.example.animebackend.auth.web.ApiException;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -72,7 +74,8 @@ class AiQuotaTest {
         int before = quota.status(userId).kinds().get("REVIEW");
 
         assertThatThrownBy(() -> quota.consume(userId, AiUsage.Kind.REVIEW, 1))
-                .hasMessageContaining("Daily AI limit");
+                .isInstanceOfSatisfying(ApiException.class,
+                        e -> assertThat(e.getStatus()).isEqualTo(HttpStatus.TOO_MANY_REQUESTS));
 
         assertThat(quota.status(userId).kinds().get("REVIEW")).isEqualTo(before);
     }
@@ -81,7 +84,8 @@ class AiQuotaTest {
     @Test
     void oversizedRequestIsRefusedWithoutPartialCharge() {
         assertThatThrownBy(() -> quota.consume(userId, AiUsage.Kind.REVIEW, 200))
-                .hasMessageContaining("Daily AI limit");
+                .isInstanceOfSatisfying(ApiException.class,
+                        e -> assertThat(e.getStatus()).isEqualTo(HttpStatus.TOO_MANY_REQUESTS));
 
         assertThat(quota.status(userId).kinds().get("REVIEW")).isZero();
     }

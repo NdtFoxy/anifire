@@ -36,7 +36,7 @@ public class AiQuotaController {
     }
 
     private static Long userId(Jwt jwt) {
-        if (jwt == null) throw ApiException.unauthorized("unauthorized", "Not authenticated.");
+        if (jwt == null) throw ApiException.unauthorized("unauthorized", "Вы не вошли в аккаунт.");
         return Long.valueOf(jwt.getSubject());
     }
 }

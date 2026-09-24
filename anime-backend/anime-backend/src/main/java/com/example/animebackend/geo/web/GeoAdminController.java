@@ -27,7 +27,7 @@ import org.springframework.web.bind.annotation.*;
 public class GeoAdminController {
 
     public record RuleRequest(
-            @Pattern(regexp = "^[A-Za-z]{2}$", message = "Use a two-letter ISO code") String country,
+            @Pattern(regexp = "^[A-Za-z]{2}$", message = "Двухбуквенный код ISO") String country,
             boolean blocked,
             @Size(max = 255) String note) {}
 

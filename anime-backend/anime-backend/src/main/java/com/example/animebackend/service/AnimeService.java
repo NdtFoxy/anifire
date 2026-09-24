@@ -120,7 +120,7 @@ public class AnimeService {
         // Categories are created on demand from each title's real genres/themes,
         // cached by lower-cased name so we never duplicate a category.
         Map<String, Category> categoryCache = new HashMap<>();
-        Category topAnime = getOrCreateCategory(categoryCache, "Top Anime");
+        Category topAnime = getOrCreateCategory(categoryCache, "Топ аниме");
 
         List<Anime> animesToSave = new ArrayList<>();
         for (int page = 1; page <= SEED_PAGES; page++) {
@@ -209,7 +209,7 @@ public class AnimeService {
 
     private Anime findActive(Long id) {
         return repository.findByIdAndIsDeletedFalse(id)
-                .orElseThrow(() -> ApiException.badRequest("anime_not_found", "Anime not found."));
+                .orElseThrow(() -> ApiException.badRequest("anime_not_found", "Тайтл не найден."));
     }
 
     private LinkedHashSet<Category> resolveCategories(Set<Long> categoryIds) {
@@ -219,7 +219,7 @@ public class AnimeService {
         }
         for (Long categoryId : categoryIds) {
             Category category = categoryRepository.findByIdAndIsDeletedFalse(categoryId)
-                    .orElseThrow(() -> ApiException.badRequest("category_not_found", "Category not found."));
+                    .orElseThrow(() -> ApiException.badRequest("category_not_found", "Категория не найдена."));
             categories.add(category);
         }
         return categories;

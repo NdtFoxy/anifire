@@ -39,7 +39,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class AuthController {
 
     private static final MessageResponse GENERIC =
-            new MessageResponse("If the details are valid, we've sent you an email.");
+            new MessageResponse("Если данные верны, мы отправили вам письмо.");
 
     private final AuthService authService;
     private final CookieService cookieService;
@@ -66,7 +66,7 @@ public class AuthController {
         // Country comes from the trusted proxy header, never from the payload.
         authService.register(body, clientIp(request), geo.resolveCountry(request));
         return ResponseEntity.status(HttpStatus.ACCEPTED)
-                .body(new MessageResponse("Check your inbox to verify your account."));
+                .body(new MessageResponse("Проверьте почту, чтобы подтвердить аккаунт."));
     }
 
     @PostMapping("/login")
@@ -112,7 +112,7 @@ public class AuthController {
         requireCsrf(request);
         String rawRefresh = cookie(request, CookieService.REFRESH_COOKIE);
         if (rawRefresh == null) {
-            throw ApiException.unauthorized("invalid_refresh", "Session expired. Please sign in again.");
+            throw ApiException.unauthorized("invalid_refresh", "Сессия истекла. Войдите снова.");
         }
         AuthResult result = authService.refresh(rawRefresh, clientIp(request), userAgent(request));
         return authedResponse(result);
@@ -125,7 +125,7 @@ public class AuthController {
         return ResponseEntity.ok()
                 .header(HttpHeaders.SET_COOKIE, cookieService.clearRefresh().toString())
                 .header(HttpHeaders.SET_COOKIE, cookieService.clearCsrf().toString())
-                .body(new MessageResponse("Signed out."));
+                .body(new MessageResponse("Вы вышли из аккаунта."));
     }
 
     @GetMapping("/me")
@@ -136,7 +136,7 @@ public class AuthController {
     @PostMapping("/verify-email")
     public MessageResponse verifyEmail(@Valid @RequestBody TokenRequest body) {
         authService.verifyEmail(body.token());
-        return new MessageResponse("Email verified. You can now sign in.");
+        return new MessageResponse("Почта подтверждена. Теперь можно войти.");
     }
 
     @PostMapping("/resend-verification")
@@ -156,7 +156,7 @@ public class AuthController {
     @PostMapping("/reset-password")
     public MessageResponse reset(@Valid @RequestBody ResetPasswordRequest body) {
         authService.resetPassword(body);
-        return new MessageResponse("Password updated. Please sign in.");
+        return new MessageResponse("Пароль обновлён. Войдите снова.");
     }
 
     // ───────────────────────── helpers ─────────────────────────
@@ -174,7 +174,7 @@ public class AuthController {
         String header = request.getHeader("X-CSRF-Token");
         String cookie = cookie(request, CookieService.CSRF_COOKIE);
         if (header == null || cookie == null || !Tokens.constantTimeEquals(header, cookie)) {
-            throw ApiException.forbidden("csrf_failed", "CSRF validation failed.");
+            throw ApiException.forbidden("csrf_failed", "Проверка CSRF не пройдена.");
         }
     }
 

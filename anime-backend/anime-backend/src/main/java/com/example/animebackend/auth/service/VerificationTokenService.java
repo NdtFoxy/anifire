@@ -54,6 +54,6 @@ public class VerificationTokenService {
     }
 
     private static ApiException invalid() {
-        return ApiException.badRequest("invalid_token", "This link is invalid or has expired.");
+        return ApiException.badRequest("invalid_token", "Ссылка недействительна или устарела.");
     }
 }

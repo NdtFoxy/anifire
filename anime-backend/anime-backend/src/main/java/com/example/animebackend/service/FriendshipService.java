@@ -57,7 +57,7 @@ public class FriendshipService {
     @Transactional
     public FriendDto request(Long requesterId, String rawEmail) {
         if (!rateLimiter.allow("friend-req:" + requesterId, 30, Duration.ofHours(1))) {
-            throw ApiException.tooManyRequests("Too many friend requests. Try again later.");
+            throw ApiException.tooManyRequests("Слишком много заявок в друзья. Попробуйте позже.");
         }
         String email = rawEmail == null ? "" : rawEmail.trim().toLowerCase();
         AppUser target = users.findByEmailAndIsDeletedFalse(email).orElse(null);
@@ -65,25 +65,25 @@ public class FriendshipService {
         // Deliberately identical failure for "no such user" and "cannot add".
         if (target == null || target.getId().equals(requesterId)) {
             throw ApiException.badRequest(
-                    "request_failed", "We could not send that request. Check the address.");
+                    "request_failed", "Не удалось отправить заявку. Проверьте адрес.");
         }
         if (friendships.countByRequesterIdAndStatus(requesterId, Status.PENDING) >= MAX_PENDING_OUTGOING) {
             throw ApiException.badRequest(
-                    "too_many_pending", "You have too many pending requests. Wait for answers first.");
+                    "too_many_pending", "Слишком много заявок без ответа. Дождитесь ответов.");
         }
 
         Friendship existing = friendships.findEdge(requesterId, target.getId()).orElse(null);
         if (existing != null) {
             switch (existing.getStatus()) {
-                case ACCEPTED -> throw ApiException.badRequest("already_friends", "You are already friends.");
+                case ACCEPTED -> throw ApiException.badRequest("already_friends", "Вы уже друзья.");
                 case BLOCKED -> throw ApiException.badRequest(
-                        "request_failed", "We could not send that request. Check the address.");
+                        "request_failed", "Не удалось отправить заявку. Проверьте адрес.");
                 case PENDING -> {
                     // The other side already asked: treat this as an accept.
                     if (existing.getAddresseeId().equals(requesterId)) {
                         return respond(requesterId, existing.getId(), true);
                     }
-                    throw ApiException.badRequest("already_requested", "That request is already pending.");
+                    throw ApiException.badRequest("already_requested", "Заявка уже отправлена.");
                 }
                 case DECLINED -> {
                     Instant when = existing.getRespondedAt() == null
@@ -91,7 +91,7 @@ public class FriendshipService {
                             : existing.getRespondedAt();
                     if (when.plus(DECLINE_COOLDOWN).isAfter(Instant.now())) {
                         throw ApiException.badRequest(
-                                "request_failed", "We could not send that request. Check the address.");
+                                "request_failed", "Не удалось отправить заявку. Проверьте адрес.");
                     }
                     existing.setRequesterId(requesterId);
                     existing.setAddresseeId(target.getId());
@@ -115,7 +115,7 @@ public class FriendshipService {
         Friendship edge = load(friendshipId);
         // Only the person who received the request may answer it.
         if (!edge.getAddresseeId().equals(userId) || edge.getStatus() != Status.PENDING) {
-            throw ApiException.forbidden("not_allowed", "That request is not yours to answer.");
+            throw ApiException.forbidden("not_allowed", "Эта заявка адресована не вам.");
         }
         edge.setStatus(accept ? Status.ACCEPTED : Status.DECLINED);
         edge.setRespondedAt(Instant.now());
@@ -126,10 +126,10 @@ public class FriendshipService {
     @Transactional
     public void remove(Long userId, Long otherUserId) {
         Friendship edge = friendships.findEdge(userId, otherUserId)
-                .orElseThrow(() -> ApiException.badRequest("not_found", "You are not connected."));
+                .orElseThrow(() -> ApiException.badRequest("not_found", "Вы не связаны."));
         if (edge.getStatus() == Status.BLOCKED && !edge.getRequesterId().equals(userId)) {
             // Only the blocker can lift a block.
-            throw ApiException.forbidden("not_allowed", "That connection cannot be changed.");
+            throw ApiException.forbidden("not_allowed", "Эту связь нельзя изменить.");
         }
         friendships.delete(edge);
     }
@@ -137,11 +137,11 @@ public class FriendshipService {
     @Transactional
     public void block(Long userId, Long otherUserId) {
         if (userId.equals(otherUserId)) {
-            throw ApiException.badRequest("not_allowed", "You cannot block yourself.");
+            throw ApiException.badRequest("not_allowed", "Нельзя заблокировать себя.");
         }
         users.findById(otherUserId)
                 .filter(u -> !u.isDeleted())
-                .orElseThrow(() -> ApiException.badRequest("not_found", "No such account."));
+                .orElseThrow(() -> ApiException.badRequest("not_found", "Такого аккаунта нет."));
         Friendship edge = friendships.findEdge(userId, otherUserId).orElse(null);
         if (edge == null) {
             edge = Friendship.builder()
@@ -202,7 +202,7 @@ public class FriendshipService {
         return new FriendDto(
                 edge.getId(),
                 other == null ? null : other.getId(),
-                other == null ? "Deleted account" : other.getDisplayName(),
+                other == null ? "Удалённый аккаунт" : other.getDisplayName(),
                 other == null ? null : other.getAvatarUrl(),
                 other == null ? 0 : other.getLevel(),
                 edge.getStatus().name(),
@@ -212,6 +212,6 @@ public class FriendshipService {
 
     private Friendship load(Long id) {
         return friendships.findById(id)
-                .orElseThrow(() -> ApiException.badRequest("not_found", "That request no longer exists."));
+                .orElseThrow(() -> ApiException.badRequest("not_found", "Этой заявки больше нет."));
     }
 }

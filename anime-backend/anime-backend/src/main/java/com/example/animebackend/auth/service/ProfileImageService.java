@@ -57,17 +57,17 @@ public class ProfileImageService {
     public ProfileDto store(Long userId, String kind, MultipartFile file) {
         String field = kind(kind);
         if (file == null || file.isEmpty()) {
-            throw ApiException.badRequest("invalid_image", "Pick an image file first.");
+            throw ApiException.badRequest("invalid_image", "Сначала выберите изображение.");
         }
         long max = props.maxBytes();
         if (file.getSize() > max) {
             throw ApiException.badRequest(
-                    "image_too_large", "Images must be " + megabytes(max) + " MB or smaller.");
+                    "image_too_large", "Размер изображения — не больше " + megabytes(max) + " МБ.");
         }
         String declared = normalizeType(file.getContentType());
         if (!ALLOWED_TYPES.contains(declared)) {
             throw ApiException.badRequest(
-                    "invalid_image", "Only PNG, JPEG, WebP or GIF images are accepted.");
+                    "invalid_image", "Принимаются только PNG, JPEG, WebP или GIF.");
         }
 
         AppUser user = load(userId);
@@ -78,12 +78,12 @@ public class ProfileImageService {
             temp = Files.createTempFile(root, ".upload-", ".part");
             long written = copy(file, temp, max);
             if (written == 0) {
-                throw ApiException.badRequest("invalid_image", "The uploaded file is empty.");
+                throw ApiException.badRequest("invalid_image", "Загруженный файл пуст.");
             }
             ImageType sniffed = sniff(temp);
             if (sniffed == null || !sniffed.mime.equals(declared)) {
                 throw ApiException.badRequest(
-                        "invalid_image", "That file is not a valid PNG, JPEG, WebP or GIF image.");
+                        "invalid_image", "Файл не является корректным PNG, JPEG, WebP или GIF.");
             }
 
             String filename = userId + "-" + field + "-" + UUID.randomUUID() + "." + sniffed.ext;
@@ -133,7 +133,7 @@ public class ProfileImageService {
                 .orElseThrow(
                         () ->
                                 ApiException.unauthorized(
-                                        "user_not_found", "Account no longer exists."));
+                                        "user_not_found", "Аккаунт больше не существует."));
     }
 
     private static String kind(String kind) {
@@ -168,7 +168,7 @@ public class ProfileImageService {
                 if (total > max) {
                     throw ApiException.badRequest(
                             "image_too_large",
-                            "Images must be " + megabytes(max) + " MB or smaller.");
+                            "Размер изображения — не больше " + megabytes(max) + " МБ.");
                 }
                 out.write(buffer, 0, read);
             }

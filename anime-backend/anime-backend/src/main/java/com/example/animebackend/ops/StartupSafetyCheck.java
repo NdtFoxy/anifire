@@ -87,6 +87,15 @@ public class StartupSafetyCheck implements ApplicationListener<ApplicationReadyE
                 problems.add("anifire.billing.return-url is empty — set ANIFIRE_BILLING_RETURN_URL");
             }
         }
+        String mailHost = env.getProperty("spring.mail.host", "");
+        if (!env.getProperty("anifire.mail.enabled", Boolean.class, false)
+                || mailHost.isBlank() || "localhost".equals(mailHost) || "127.0.0.1".equals(mailHost)) {
+            problems.add("mail is disabled or points at a local catcher — nobody could verify an email or reset a "
+                    + "password; set SPRING_MAIL_HOST (and _USERNAME/_PASSWORD)");
+        }
+        if (env.getProperty("anifire.mail.from", "").isBlank()) {
+            problems.add("anifire.mail.from is empty — set ANIFIRE_MAIL_FROM");
+        }
 
         if (problems.isEmpty()) return;
 

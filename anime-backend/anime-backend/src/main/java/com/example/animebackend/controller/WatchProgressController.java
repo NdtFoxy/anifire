@@ -38,7 +38,7 @@ public class WatchProgressController {
         // A heartbeat every ~10s needs ~6/min; 120 leaves room for several tabs and
         // still caps a runaway client.
         if (!rateLimiter.allow("progress:" + userId, 120, Duration.ofMinutes(1))) {
-            throw ApiException.tooManyRequests("Slow down.");
+            throw ApiException.tooManyRequests("Не так быстро.");
         }
         return progress.save(userId, body);
     }

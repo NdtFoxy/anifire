@@ -111,7 +111,7 @@ public class GeoBlockFilter extends OncePerRequestFilter {
         response.getWriter().write(
                 """
                 {"status":451,"error":"geo_blocked","country":"%s","simulated":%s,\
-                "message":"Anifire is not available in your region."}"""
+                "message":"Anifire недоступен в вашем регионе."}"""
                         .formatted(country == null ? "" : country, simulated));
     }
 }

@@ -7,3 +7,4 @@ graphify-out/
 .claude/settings.local.json
 .mcp-memory.json
 .DS_Store
+.env.prod

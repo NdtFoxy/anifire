@@ -33,7 +33,7 @@ public class SocialNonceService {
         evictExpired();
         if (issued.size() >= MAX_ENTRIES) {
             // Refuse rather than let a flood push out legitimate nonces.
-            throw ApiException.tooManyRequests("Try again in a moment.");
+            throw ApiException.tooManyRequests("Попробуйте через минуту.");
         }
         String nonce = Tokens.random();
         issued.put(Tokens.sha256Hex(nonce), Instant.now().plus(TTL));

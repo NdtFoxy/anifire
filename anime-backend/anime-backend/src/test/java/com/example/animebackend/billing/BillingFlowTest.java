@@ -1,5 +1,6 @@
 package com.example.animebackend.billing;
 
+import com.example.animebackend.auth.web.ApiException;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -165,7 +166,8 @@ class BillingFlowTest {
         billing.handleCallback("dev", "evt-1", checkout.paymentId(), "payment.succeeded", "{}");
 
         assertThat(subscriptions.findLive(userId).orElseThrow().getCurrentPeriodEnd()).isNull();
-        assertThatThrownBy(() -> billing.cancel(userId)).hasMessageContaining("lifetime");
+        assertThatThrownBy(() -> billing.cancel(userId)).isInstanceOfSatisfying(ApiException.class,
+                e -> assertThat(e.getCode()).isEqualTo("lifetime_not_cancelable"));
         assertThat(entitlements.forUser(userId).adsFree()).isTrue();
     }
 
@@ -195,7 +197,8 @@ class BillingFlowTest {
         billing.handleCallback("dev", "evt-1", checkout.paymentId(), "payment.succeeded", "{}");
 
         assertThatThrownBy(() -> billing.checkout(userId, SubscriptionPlan.YEARLY, null))
-                .hasMessageContaining("already");
+                .isInstanceOfSatisfying(ApiException.class,
+                        e -> assertThat(e.getCode()).isEqualTo("already_subscribed"));
     }
 
     /** An off-origin return target is replaced, never followed. */

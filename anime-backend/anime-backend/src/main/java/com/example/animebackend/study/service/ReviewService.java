@@ -89,7 +89,7 @@ public class ReviewService {
     public ReviewDtos.ReviewResult review(Long userId, ReviewDtos.ReviewRequest request) {
         String lang = lang(request.lang());
         UserWord word = words.findByUserIdAndLangAndLemma(userId, lang, request.lemma())
-                .orElseThrow(() -> ApiException.badRequest("unknown_word", "That word is not in your list."));
+                .orElseThrow(() -> ApiException.badRequest("unknown_word", "Этого слова нет в вашем списке."));
 
         int grade = request.grade();
         boolean correct = grade > FAIL_GRADE - 1 && grade > 0;
@@ -194,7 +194,7 @@ public class ReviewService {
 
     private static String lang(String value) {
         String lang = value == null ? "" : value.trim().toLowerCase(Locale.ROOT);
-        if (lang.length() < 2) throw ApiException.badRequest("bad_language", "Unknown language.");
+        if (lang.length() < 2) throw ApiException.badRequest("bad_language", "Неизвестный язык.");
         return lang.substring(0, 2);
     }
 }

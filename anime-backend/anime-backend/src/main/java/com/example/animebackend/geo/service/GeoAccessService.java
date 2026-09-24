@@ -135,7 +135,7 @@ public class GeoAccessService {
         String code = normalize(rawCode);
         if (code == null) {
             throw com.example.animebackend.auth.web.ApiException.badRequest(
-                    "bad_country", "Use a two-letter ISO country code.");
+                    "bad_country", "Укажите двухбуквенный код страны ISO.");
         }
         GeoRule rule = rules.findById(code).orElseGet(() -> GeoRule.builder().countryCode(code).build());
         rule.setBlocked(block);

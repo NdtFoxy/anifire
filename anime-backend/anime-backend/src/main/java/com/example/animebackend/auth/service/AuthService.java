@@ -21,6 +21,7 @@ import com.example.animebackend.auth.security.Tokens;
 import com.example.animebackend.auth.web.ApiException;
 import com.example.animebackend.billing.service.Entitlement;
 import com.example.animebackend.billing.service.EntitlementService;
+import com.example.animebackend.mail.EmailService;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Locale;
@@ -93,11 +94,11 @@ public class AuthService {
     @Transactional
     public void register(RegisterRequest req, String ip, String country) {
         if (!rateLimiter.allow("register:ip:" + ip, 5, Duration.ofHours(1))) {
-            throw ApiException.tooManyRequests("Too many sign-up attempts. Try again later.");
+            throw ApiException.tooManyRequests("Слишком много регистраций. Попробуйте позже.");
         }
         if (security.breachCheckEnabled() && pwned.isBreached(req.password())) {
             throw ApiException.badRequest("weak_password",
-                    "This password has appeared in a known data breach. Please choose another.");
+                    "Этот пароль встречался в утечках данных. Выберите другой.");
         }
         String email = normalize(req.email());
 
@@ -120,7 +121,7 @@ public class AuthService {
         userRepo.save(user);
 
         // In dev (auto-verify) we skip the email round-trip entirely; otherwise
-        // issue a verification token and "send" it (logged by EmailService).
+        // issue a verification token and email it (sent after this transaction commits).
         if (!autoVerify) {
             String token = verificationTokens.issue(user.getId(), TokenType.EMAIL_VERIFY);
             emailService.sendVerification(email, token);
@@ -133,18 +134,18 @@ public class AuthService {
     @Transactional
     public AuthResult login(LoginRequest req, String ip, String userAgent) {
         if (!rateLimiter.allow("login:ip:" + ip, 60, Duration.ofMinutes(1))) {
-            throw ApiException.tooManyRequests("Too many attempts. Try again shortly.");
+            throw ApiException.tooManyRequests("Слишком много попыток. Попробуйте чуть позже.");
         }
         String email = normalize(req.email());
         if (!rateLimiter.allow("login:acct:" + email, 20, Duration.ofMinutes(5))) {
-            throw ApiException.tooManyRequests("Too many attempts. Try again shortly.");
+            throw ApiException.tooManyRequests("Слишком много попыток. Попробуйте чуть позже.");
         }
 
         AppUser user = userRepo.findByEmailAndIsDeletedFalse(email).orElse(null);
 
         if (user != null && user.getLockedUntil() != null
                 && user.getLockedUntil().isAfter(Instant.now())) {
-            throw ApiException.locked("Account temporarily locked. Try again later.");
+            throw ApiException.locked("Аккаунт временно заблокирован. Попробуйте позже.");
         }
 
         // Always run a hash comparison to equalize timing (anti-enumeration).
@@ -158,15 +159,14 @@ public class AuthService {
                 // rollback would otherwise erase the attempt we just counted.
                 loginAttempts.registerFailure(user.getId());
             }
-            throw ApiException.unauthorized("invalid_credentials", "Invalid email or password.");
+            throw ApiException.unauthorized("invalid_credentials", "Неверная почта или пароль.");
         }
 
-        // Require a verified email unless dev auto-verify is on. The verification
-        // link is printed in the backend terminal by EmailService.
+        // Require a verified email unless dev auto-verify is on.
         if (!security.autoVerifyEmail() && !user.isEmailVerified()) {
             throw ApiException.forbidden(
                     "email_not_verified",
-                    "Please confirm your email first — the verification link is in the server log.");
+                    "Сначала подтвердите почту — мы отправили вам ссылку.");
         }
 
         user.setFailedAttempts(0);
@@ -203,7 +203,7 @@ public class AuthService {
     public AuthResult socialLogin(SocialLoginRequest req, String ip, String userAgent) {
         String provider = normalizeProvider(req.provider());
         if (!rateLimiter.allow("social:ip:" + ip, 20, Duration.ofMinutes(5))) {
-            throw ApiException.tooManyRequests("Too many attempts. Try again shortly.");
+            throw ApiException.tooManyRequests("Слишком много попыток. Попробуйте чуть позже.");
         }
 
         OidcTokenVerifier.Identity identity =
@@ -217,14 +217,14 @@ public class AuthService {
             user = userRepo.findById(link.getUserId())
                     .filter(u -> !u.isDeleted())
                     .orElseThrow(() -> ApiException.unauthorized(
-                            "account_unavailable", "That account is no longer available."));
+                            "account_unavailable", "Этот аккаунт больше недоступен."));
         } else {
             AppUser existing = userRepo.findByEmailAndIsDeletedFalse(identity.email()).orElse(null);
             if (existing != null && !existing.isEmailVerified()) {
                 throw ApiException.badRequest(
                         "verify_email_first",
-                        "An unverified account already uses this email. Verify it, then link "
-                                + provider + " from your profile.");
+                        "Эта почта уже занята неподтверждённым аккаунтом. Подтвердите её, затем привяжите "
+                                + provider + " в профиле.");
             }
             user = existing != null ? existing : createSocialUser(identity);
             socialIdentities.save(SocialIdentity.builder()
@@ -238,7 +238,7 @@ public class AuthService {
         }
 
         if (user.getLockedUntil() != null && user.getLockedUntil().isAfter(Instant.now())) {
-            throw ApiException.locked("Account temporarily locked. Try again later.");
+            throw ApiException.locked("Аккаунт временно заблокирован. Попробуйте позже.");
         }
 
         if (link != null) {
@@ -278,7 +278,7 @@ public class AuthService {
         AppUser user = userRepo.findById(rot.userId())
                 .filter(u -> !u.isDeleted())
                 .orElseThrow(() -> ApiException.unauthorized("invalid_refresh",
-                        "Session expired. Please sign in again."));
+                        "Сессия истекла. Войдите снова."));
         Entitlement entitlement = entitlements.forUser(user.getId());
         JwtService.AccessToken access = jwtService.issue(user, entitlement);
         return new AuthResult(access, rot.newRawToken(), UserDto.from(user, entitlement));
@@ -296,7 +296,7 @@ public class AuthService {
     public void verifyEmail(String token) {
         Long userId = verificationTokens.consume(token, TokenType.EMAIL_VERIFY);
         AppUser user = userRepo.findById(userId)
-                .orElseThrow(() -> ApiException.badRequest("invalid_token", "This link is invalid or has expired."));
+                .orElseThrow(() -> ApiException.badRequest("invalid_token", "Ссылка недействительна или устарела."));
         user.setEmailVerified(true);
         userRepo.save(user);
     }
@@ -304,7 +304,7 @@ public class AuthService {
     @Transactional
     public void resendVerification(String email, String ip) {
         if (!rateLimiter.allow("resend:ip:" + ip, 5, Duration.ofHours(1))) {
-            throw ApiException.tooManyRequests("Too many requests. Try again later.");
+            throw ApiException.tooManyRequests("Слишком много запросов. Попробуйте позже.");
         }
         userRepo.findByEmailAndIsDeletedFalse(normalize(email)).ifPresent(u -> {
             if (!u.isEmailVerified()) {
@@ -319,7 +319,7 @@ public class AuthService {
     @Transactional
     public void forgotPassword(String email, String ip) {
         if (!rateLimiter.allow("forgot:ip:" + ip, 5, Duration.ofHours(1))) {
-            throw ApiException.tooManyRequests("Too many requests. Try again later.");
+            throw ApiException.tooManyRequests("Слишком много запросов. Попробуйте позже.");
         }
         userRepo.findByEmailAndIsDeletedFalse(normalize(email)).ifPresent(u -> {
             String token = verificationTokens.issue(u.getId(), TokenType.PASSWORD_RESET);
@@ -331,11 +331,11 @@ public class AuthService {
     public void resetPassword(ResetPasswordRequest req) {
         if (security.breachCheckEnabled() && pwned.isBreached(req.password())) {
             throw ApiException.badRequest("weak_password",
-                    "This password has appeared in a known data breach. Please choose another.");
+                    "Этот пароль встречался в утечках данных. Выберите другой.");
         }
         Long userId = verificationTokens.consume(req.token(), TokenType.PASSWORD_RESET);
         AppUser user = userRepo.findById(userId)
-                .orElseThrow(() -> ApiException.badRequest("invalid_token", "This link is invalid or has expired."));
+                .orElseThrow(() -> ApiException.badRequest("invalid_token", "Ссылка недействительна или устарела."));
         user.setPasswordHash(encoder.encode(req.password()));
         user.setPasswordChangedAt(Instant.now());
         user.setFailedAttempts(0);
@@ -352,7 +352,7 @@ public class AuthService {
         return userRepo.findById(id)
                 .filter(u -> !u.isDeleted())
                 .map(u -> UserDto.from(u, entitlements.forUser(u.getId())))
-                .orElseThrow(() -> ApiException.unauthorized("unauthorized", "Not authenticated."));
+                .orElseThrow(() -> ApiException.unauthorized("unauthorized", "Вы не вошли в аккаунт."));
     }
 
     // ───────────────────────── Helpers ─────────────────────────
@@ -372,7 +372,7 @@ public class AuthService {
         String value = provider == null ? "" : provider.trim().toLowerCase(Locale.ROOT);
         return switch (value) {
             case "google", "microsoft", "apple" -> value;
-            default -> throw ApiException.badRequest("unsupported_provider", "Unsupported social provider.");
+            default -> throw ApiException.badRequest("unsupported_provider", "Этот способ входа не поддерживается.");
         };
     }
 

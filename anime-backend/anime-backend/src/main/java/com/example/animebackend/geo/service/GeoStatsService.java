@@ -50,7 +50,7 @@ public class GeoStatsService {
     }
 
     private String titleOf(Long animeId) {
-        return animes.findById(animeId).map(a -> a.getTitle()).orElse("Removed title");
+        return animes.findById(animeId).map(a -> a.getTitle()).orElse("Удалённый тайтл");
     }
 
     @Transactional(readOnly = true)

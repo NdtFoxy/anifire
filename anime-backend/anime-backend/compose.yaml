@@ -16,5 +16,13 @@ services:
     volumes:
       - 'anifire_pgdata:/var/lib/postgresql/data'
 
+  # Catches every email the backend sends in development. Inbox UI:
+  # http://localhost:8025 (verification links, password resets, episode digests).
+  mailpit:
+    image: 'axllent/mailpit:v1.27'
+    ports:
+      - '1025:1025'
+      - '8025:8025'
+
 volumes:
   anifire_pgdata:

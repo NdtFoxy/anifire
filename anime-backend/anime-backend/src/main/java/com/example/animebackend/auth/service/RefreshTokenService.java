@@ -50,7 +50,7 @@ public class RefreshTokenService {
             log.warn("Refresh token REUSE detected — userId={} family={}. Family revoked.",
                     current.getUserId(), current.getFamilyId());
             throw ApiException.unauthorized("token_reuse_detected",
-                    "Your session was invalidated for security. Please sign in again.");
+                    "Сессия сброшена в целях безопасности. Войдите снова.");
         }
         if (current.getExpiresAt().isBefore(Instant.now())) {
             current.setRevoked(true);
@@ -110,6 +110,6 @@ public class RefreshTokenService {
     }
 
     private static ApiException expired() {
-        return ApiException.unauthorized("invalid_refresh", "Session expired. Please sign in again.");
+        return ApiException.unauthorized("invalid_refresh", "Сессия истекла. Войдите снова.");
     }
 }

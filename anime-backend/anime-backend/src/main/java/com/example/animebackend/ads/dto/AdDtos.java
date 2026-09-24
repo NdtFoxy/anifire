@@ -56,7 +56,7 @@ public final class AdDtos {
     public record CampaignRequest(
             @NotBlank @Size(max = 160) String name,
             @NotBlank @Size(max = 200) String advertiser,
-            @Pattern(regexp = "^[0-9]{10}([0-9]{2})?$", message = "INN must be 10 or 12 digits")
+            @Pattern(regexp = "^[0-9]{10}([0-9]{2})?$", message = "ИНН — 10 или 12 цифр")
             String advertiserInn,
             @NotNull AdCampaign.Status status,
             Instant startsAt,

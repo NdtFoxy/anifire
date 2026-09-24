@@ -41,9 +41,9 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         AuthenticationEntryPoint entryPoint =
-                (req, res, ex) -> writeError(res, 401, "unauthorized", "Authentication required.");
+                (req, res, ex) -> writeError(res, 401, "unauthorized", "Нужно войти в аккаунт.");
         AccessDeniedHandler deniedHandler =
-                (req, res, ex) -> writeError(res, 403, "forbidden", "You don't have access to this resource.");
+                (req, res, ex) -> writeError(res, 403, "forbidden", "Нет доступа.");
 
         http
                 .cors(Customizer.withDefaults())
@@ -74,6 +74,9 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/v1/ads/events").permitAll()
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                         .requestMatchers("/.well-known/jwks.json").permitAll()
+                        // Liveness/readiness for the container orchestrator; only health
+                        // is exposed (management.endpoints.web.exposure.include).
+                        .requestMatchers(HttpMethod.GET, "/actuator/health", "/actuator/health/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/uploads/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/animes/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/categories/**").permitAll()

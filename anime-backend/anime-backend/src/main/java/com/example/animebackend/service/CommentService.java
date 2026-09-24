@@ -73,7 +73,7 @@ public class CommentService {
     @Transactional
     public CommentResponse create(Long animeId, CommentRequest request, Long userId) {
         Anime anime = animeRepository.findByIdAndIsDeletedFalse(animeId)
-                .orElseThrow(() -> ApiException.badRequest("anime_not_found", "Anime not found."));
+                .orElseThrow(() -> ApiException.badRequest("anime_not_found", "Тайтл не найден."));
         AppUser author = userRepository.findById(userId).orElse(null);
         String name = author != null && author.getDisplayName() != null
                 ? author.getDisplayName()
@@ -109,7 +109,7 @@ public class CommentService {
 
     private Comment findActive(Long id) {
         return commentRepository.findByIdAndIsDeletedFalse(id)
-                .orElseThrow(() -> ApiException.badRequest("comment_not_found", "Comment not found."));
+                .orElseThrow(() -> ApiException.badRequest("comment_not_found", "Комментарий не найден."));
     }
 
     private static void requireOwnerOrAdmin(Comment comment, Long userId, Role role) {
@@ -119,6 +119,6 @@ public class CommentService {
         if (comment.getCreatorUserId() != null && comment.getCreatorUserId().equals(userId)) {
             return;
         }
-        throw ApiException.forbidden("comment_forbidden", "You can edit only your own comments.");
+        throw ApiException.forbidden("comment_forbidden", "Можно редактировать только свои комментарии.");
     }
 }

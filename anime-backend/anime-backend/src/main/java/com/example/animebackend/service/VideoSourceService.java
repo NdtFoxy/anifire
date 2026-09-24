@@ -36,7 +36,7 @@ public class VideoSourceService {
     @Transactional(readOnly = true)
     public PlayerSourceResponse source(Long animeId, int episodeNumber) {
         Anime anime = animeRepository.findByIdAndIsDeletedFalse(animeId)
-                .orElseThrow(() -> ApiException.badRequest("anime_not_found", "Anime not found."));
+                .orElseThrow(() -> ApiException.badRequest("anime_not_found", "Тайтл не найден."));
         int episode = Math.max(1, episodeNumber);
         return anilibertySource(anime, episode);
     }
@@ -157,8 +157,8 @@ public class VideoSourceService {
                 demoQualities(),
                 "Demo playback",
                 List.of(
-                        new PlayerSourceResponse.ChapterResponse(8, 48, "intro", "Intro"),
-                        new PlayerSourceResponse.ChapterResponse(540, 580, "outro", "Outro")),
+                        new PlayerSourceResponse.ChapterResponse(8, 48, "intro", "Опенинг"),
+                        new PlayerSourceResponse.ChapterResponse(540, 580, "outro", "Эндинг")),
                 "Demo fallback");
     }
 

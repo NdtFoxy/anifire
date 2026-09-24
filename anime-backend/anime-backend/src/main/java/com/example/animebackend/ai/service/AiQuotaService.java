@@ -56,8 +56,8 @@ public class AiQuotaService {
             // Return before any write: the whole point is that a refusal costs the
             // caller nothing and leaves the ledger honest.
             throw ApiException.tooManyRequests(
-                    "Daily AI limit reached (" + slot.getUnits() + "/" + limit + " " + kind.name().toLowerCase()
-                            + "). It resets at midnight UTC.");
+                    "Дневной лимит ИИ исчерпан (" + slot.getUnits() + "/" + limit + " " + kind.name().toLowerCase()
+                            + "). Сбросится в полночь UTC.");
         }
 
         slot.setUnits(wanted);

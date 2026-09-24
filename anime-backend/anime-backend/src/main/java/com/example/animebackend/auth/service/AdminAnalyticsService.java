@@ -87,10 +87,10 @@ public class AdminAnalyticsService {
                 anime.isEmpty() ? 0 : Math.round((double) comments / anime.size()));
 
         List<AdminAnalyticsResponse.ActivityMetric> activity = List.of(
-                new AdminAnalyticsResponse.ActivityMetric("Anime", anime.size()),
-                new AdminAnalyticsResponse.ActivityMetric("Categories", categories.size()),
-                new AdminAnalyticsResponse.ActivityMetric("Comments", comments),
-                new AdminAnalyticsResponse.ActivityMetric("Users", users.size()));
+                new AdminAnalyticsResponse.ActivityMetric("Аниме", anime.size()),
+                new AdminAnalyticsResponse.ActivityMetric("Категории", categories.size()),
+                new AdminAnalyticsResponse.ActivityMetric("Комментарии", comments),
+                new AdminAnalyticsResponse.ActivityMetric("Пользователи", users.size()));
 
         // ───────── Watch / view statistics (real playback events) ─────────
         Instant now = Instant.now();

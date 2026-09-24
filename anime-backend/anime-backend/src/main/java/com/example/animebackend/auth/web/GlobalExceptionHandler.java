@@ -38,7 +38,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<Map<String, Object>> handleValidation(MethodArgumentNotValidException ex) {
-        Map<String, Object> resp = base(HttpStatus.BAD_REQUEST, "validation_error", "Invalid request.");
+        Map<String, Object> resp = base(HttpStatus.BAD_REQUEST, "validation_error", "Некорректный запрос.");
         Map<String, String> fields = new LinkedHashMap<>();
         for (FieldError fe : ex.getBindingResult().getFieldErrors()) {
             fields.putIfAbsent(fe.getField(), fe.getDefaultMessage());
@@ -54,7 +54,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(MaxUploadSizeExceededException.class)
     public ResponseEntity<Map<String, Object>> handleUploadTooLarge(
             MaxUploadSizeExceededException ex) {
-        return body(HttpStatus.BAD_REQUEST, "image_too_large", "That file is too large.");
+        return body(HttpStatus.BAD_REQUEST, "image_too_large", "Файл слишком большой.");
     }
 
     /**
@@ -64,7 +64,7 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler(NoResourceFoundException.class)
     public ResponseEntity<Map<String, Object>> handleMissingResource(NoResourceFoundException ex) {
-        return body(HttpStatus.NOT_FOUND, "not_found", "Not found.");
+        return body(HttpStatus.NOT_FOUND, "not_found", "Не найдено.");
     }
 
     /**
@@ -81,7 +81,7 @@ public class GlobalExceptionHandler {
         ConstraintViolationException.class
     })
     public ResponseEntity<Map<String, Object>> handleMalformedInput(Exception ex) {
-        return body(HttpStatus.BAD_REQUEST, "bad_request", "Invalid request.");
+        return body(HttpStatus.BAD_REQUEST, "bad_request", "Некорректный запрос.");
     }
 
     @ExceptionHandler(Exception.class)
@@ -99,7 +99,7 @@ public class GlobalExceptionHandler {
                 ex.getClass().getSimpleName(),
                 ex.getMessage() == null ? "" : ex.getMessage().substring(0, Math.min(200, ex.getMessage().length())),
                 null));
-        return body(HttpStatus.INTERNAL_SERVER_ERROR, "internal_error", "Something went wrong.");
+        return body(HttpStatus.INTERNAL_SERVER_ERROR, "internal_error", "Что-то пошло не так.");
     }
 
     private ResponseEntity<Map<String, Object>> body(HttpStatus status, String code, String message) {

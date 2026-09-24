@@ -114,7 +114,7 @@ public class ProfileService {
                 .orElseThrow(
                         () ->
                                 ApiException.unauthorized(
-                                        "user_not_found", "Account no longer exists."));
+                                        "user_not_found", "Аккаунт больше не существует."));
     }
 
     private static String pick(List<String> xs, ThreadLocalRandom r) {
@@ -127,16 +127,16 @@ public class ProfileService {
                     "Rei", "Kaito", "Nova", "Aiko", "Ryu", "Mei", "Hibiki");
     private static final List<String> CITIES =
             List.of(
-                    "Tokyo, JP", "Osaka, JP", "Kyoto, JP", "Warsaw, PL", "Berlin, DE",
-                    "Seoul, KR", "Taipei, TW", "Kyiv, UA", "Lisbon, PT", "Toronto, CA");
+                    "Токио, JP", "Осака, JP", "Киото, JP", "Варшава, PL", "Берлин, DE",
+                    "Сеул, KR", "Тайбэй, TW", "Киев, UA", "Лиссабон, PT", "Торонто, CA");
     private static final List<String> BIOS =
             List.of(
-                    "Slice-of-life enjoyer. Always one episode away from sleeping on time.",
-                    "Shonen at heart, seinen in practice. Will defend filler arcs.",
-                    "Collector of OSTs and emotional damage.",
-                    "Sub > dub, but I won't start a war over it. (I will.)",
-                    "Rewatching the classics while the backlog grows infinitely.",
-                    "Here for the fights, staying for the feels.");
+                    "Люблю повседневность. Всегда в одной серии от того, чтобы лечь вовремя.",
+                    "В душе сёнэн, на деле сэйнэн. Защищаю филлерные арки.",
+                    "Коллекционирую саундтреки и душевные травмы.",
+                    "Субтитры > озвучка, но спорить не буду. (Буду.)",
+                    "Пересматриваю классику, пока бэклог растёт бесконечно.",
+                    "Пришёл ради драк, остался ради чувств.");
     private static final String[] HEROES = {
         "/hero-1.png", "/hero-2.png", "/hero-3.png"
     };

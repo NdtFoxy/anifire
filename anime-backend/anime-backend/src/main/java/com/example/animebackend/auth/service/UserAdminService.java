@@ -83,7 +83,7 @@ public class UserAdminService {
     @Transactional
     public UserDto update(Long id, AdminUserUpdateRequest request) {
         AppUser user = userRepository.findById(id)
-                .orElseThrow(() -> ApiException.badRequest("user_not_found", "User not found."));
+                .orElseThrow(() -> ApiException.badRequest("user_not_found", "Пользователь не найден."));
 
         if (request.displayName() != null) {
             user.setDisplayName(request.displayName().trim());
@@ -160,7 +160,7 @@ public class UserAdminService {
     @Transactional(readOnly = true)
     public AdminUserDetail detail(Long id) {
         AppUser user = userRepository.findById(id)
-                .orElseThrow(() -> ApiException.badRequest("user_not_found", "User not found."));
+                .orElseThrow(() -> ApiException.badRequest("user_not_found", "Пользователь не найден."));
         Instant now = Instant.now();
         Entitlement plan = entitlements.forUser(id);
 

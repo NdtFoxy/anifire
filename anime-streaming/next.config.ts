@@ -2,7 +2,8 @@ import type { NextConfig } from "next";
 import { OPTIMIZED_IMAGE_HOSTS } from "./src/lib/imageHosts";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  // Self-contained server bundle for the Docker image (see Dockerfile).
+  output: "standalone",
   reactCompiler: true,
   devIndicators: false,
   images: {

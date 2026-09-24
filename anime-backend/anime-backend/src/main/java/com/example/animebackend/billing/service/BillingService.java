@@ -78,22 +78,22 @@ public class BillingService {
         return List.of(
                 new BillingDtos.PlanView(
                         SubscriptionPlan.MONTHLY,
-                        "Monthly",
+                        "Месяц",
                         props.monthlyPriceMinor() / 100,
-                        "per month",
-                        List.of("No ads, ever", "Every title in the catalogue", "Cancel anytime")),
+                        "в месяц",
+                        List.of("Без рекламы", "Весь каталог", "Отмена в любой момент")),
                 new BillingDtos.PlanView(
                         SubscriptionPlan.YEARLY,
-                        "Yearly",
+                        "Год",
                         props.yearlyPriceMinor() / 100,
-                        "per year",
-                        List.of("No ads, ever", "Two months cheaper than monthly", "Cancel anytime")),
+                        "в год",
+                        List.of("Без рекламы", "На два месяца дешевле помесячной", "Отмена в любой момент")),
                 new BillingDtos.PlanView(
                         SubscriptionPlan.LIFETIME,
-                        "Lifetime",
+                        "Навсегда",
                         props.lifetimePriceMinor() / 100,
-                        "once",
-                        List.of("No ads, for good", "One payment, no renewals", "Transfers with your account")));
+                        "один раз",
+                        List.of("Без рекламы навсегда", "Один платёж, без продлений", "Остаётся с вашим аккаунтом")));
     }
 
     /* ─────────────────────────── checkout ─────────────────────────── */
@@ -101,13 +101,13 @@ public class BillingService {
     @Transactional
     public BillingDtos.CheckoutResponse checkout(Long userId, SubscriptionPlan plan, String requestedReturnUrl) {
         if (entitlements.forUser(userId).adsFree()) {
-            throw ApiException.badRequest("already_subscribed", "This account is already ads-free.");
+            throw ApiException.badRequest("already_subscribed", "У этого аккаунта уже нет рекламы.");
         }
         subscriptions.findLive(userId).ifPresent(live -> {
             // The partial unique index would reject a second live row anyway; failing
             // here turns a 500 into an answer the UI can show.
             if (live.getStatus() == SubscriptionStatus.PENDING) {
-                throw ApiException.badRequest("payment_pending", "A payment for this account is still being processed.");
+                throw ApiException.badRequest("payment_pending", "Платёж по этому аккаунту ещё обрабатывается.");
             }
         });
 
@@ -127,7 +127,7 @@ public class BillingService {
         } catch (RuntimeException e) {
             intent.setStatus(PaymentIntent.Status.FAILED);
             log.warn("Checkout failed for user {} plan {}: {}", userId, plan, e.toString());
-            throw ApiException.badRequest("payment_unavailable", "Payment is temporarily unavailable. Try again shortly.");
+            throw ApiException.badRequest("payment_unavailable", "Оплата временно недоступна. Попробуйте чуть позже.");
         }
 
         intent.setProviderPaymentId(created.providerPaymentId());
@@ -275,9 +275,9 @@ public class BillingService {
     @Transactional
     public void cancel(Long userId) {
         Subscription live = subscriptions.findLive(userId)
-                .orElseThrow(() -> ApiException.badRequest("no_subscription", "There is no subscription to cancel."));
+                .orElseThrow(() -> ApiException.badRequest("no_subscription", "Нет подписки для отмены."));
         if (live.getPlan() == SubscriptionPlan.LIFETIME) {
-            throw ApiException.badRequest("lifetime_not_cancelable", "A lifetime purchase has nothing to cancel.");
+            throw ApiException.badRequest("lifetime_not_cancelable", "Пожизненную подписку нечего отменять.");
         }
         live.setCancelAtPeriodEnd(true);
         if (live.getCurrentPeriodEnd() == null || !live.getCurrentPeriodEnd().isAfter(Instant.now())) {

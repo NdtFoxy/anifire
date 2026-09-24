@@ -29,7 +29,7 @@ public class CategoryService {
     public CategoryResponse create(CategoryRequest request) {
         String name = normalize(request.name());
         repository.findByNameIgnoreCaseAndIsDeletedFalse(name).ifPresent(existing -> {
-            throw ApiException.badRequest("category_exists", "Category already exists.");
+            throw ApiException.badRequest("category_exists", "Такая категория уже есть.");
         });
         return CategoryResponse.from(repository.save(Category.builder().name(name).build()));
     }
@@ -50,7 +50,7 @@ public class CategoryService {
 
     private Category findActive(Long id) {
         return repository.findByIdAndIsDeletedFalse(id)
-                .orElseThrow(() -> ApiException.badRequest("category_not_found", "Category not found."));
+                .orElseThrow(() -> ApiException.badRequest("category_not_found", "Категория не найдена."));
     }
 
     private static String normalize(String name) {

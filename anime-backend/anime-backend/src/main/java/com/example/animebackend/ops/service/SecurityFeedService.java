@@ -72,9 +72,9 @@ public class SecurityFeedService {
             out.add(new SecuritySignal(
                     "medium",
                     "rating_burst",
-                    "Rating burst",
+                    "Всплеск оценок",
                     label(userId),
-                    count + " ratings submitted in the last 24 hours — well above normal use.",
+                    "Оценок за последние 24 часа: " + count + " — намного больше обычного.",
                     userId,
                     count,
                     now));
@@ -86,10 +86,10 @@ public class SecurityFeedService {
             out.add(new SecuritySignal(
                     "high",
                     "uniform_ratings",
-                    "Identical scores",
+                    "Одинаковые оценки",
                     label(userId),
-                    "Every one of " + count + " ratings is exactly " + score
-                            + " — the signature of vote stuffing rather than opinion.",
+                    "Все " + count + " оценок равны " + score
+                            + " — похоже на накрутку, а не на мнение.",
                     userId,
                     count,
                     now));
@@ -107,9 +107,9 @@ public class SecurityFeedService {
             out.add(new SecuritySignal(
                     "medium",
                     "comment_flood",
-                    "Comment flood",
+                    "Поток комментариев",
                     label(userId),
-                    count + " comments posted within an hour.",
+                    "Комментариев за час: " + count + ".",
                     userId,
                     count,
                     now));
@@ -121,9 +121,9 @@ public class SecurityFeedService {
             out.add(new SecuritySignal(
                     authors > 1 ? "high" : "medium",
                     "duplicate_comments",
-                    authors > 1 ? "Coordinated copy-paste" : "Repeated comment",
-                    authors > 1 ? authors + " accounts" : "one account",
-                    "“" + shorten(text) + "” posted " + count + " times.",
+                    authors > 1 ? "Согласованная копипаста" : "Повторяющийся комментарий",
+                    authors > 1 ? "аккаунтов: " + authors : "один аккаунт",
+                    "«" + shorten(text) + "» — опубликовано " + count + " раз.",
                     null,
                     count,
                     now));
@@ -134,9 +134,9 @@ public class SecurityFeedService {
             out.add(new SecuritySignal(
                     "high",
                     "account_locked",
-                    "Account locked out",
+                    "Аккаунт заблокирован",
                     user.getEmail(),
-                    "Locked until " + user.getLockedUntil() + " after repeated failed sign-ins.",
+                    "Заблокирован до " + user.getLockedUntil() + " после серии неудачных входов.",
                     user.getId(),
                     1,
                     user.getLockedUntil()));
@@ -146,9 +146,9 @@ public class SecurityFeedService {
             out.add(new SecuritySignal(
                     "medium",
                     "failed_logins",
-                    "Password guessing",
+                    "Подбор пароля",
                     user.getEmail(),
-                    user.getFailedAttempts() + " failed sign-ins without a successful one.",
+                    "Неудачных входов подряд: " + user.getFailedAttempts() + ".",
                     user.getId(),
                     user.getFailedAttempts(),
                     now));
@@ -159,9 +159,9 @@ public class SecurityFeedService {
             out.add(new SecuritySignal(
                     "medium",
                     "many_sessions",
-                    "Unusual number of sessions",
+                    "Необычно много сессий",
                     label(userId),
-                    count + " live sessions at once — shared credentials or a stolen token.",
+                    "Активных сессий одновременно: " + count + " — общий пароль или украденный токен.",
                     userId,
                     count,
                     now));
@@ -173,9 +173,9 @@ public class SecurityFeedService {
             out.add(new SecuritySignal(
                     "low",
                     "geo_refusals",
-                    "Traffic from a blocked region",
+                    "Трафик из заблокированного региона",
                     entry.getKey(),
-                    entry.getValue() + " requests refused since the last restart.",
+                    "Отклонено запросов с последнего перезапуска: " + entry.getValue() + ".",
                     null,
                     entry.getValue(),
                     now));
@@ -190,7 +190,7 @@ public class SecurityFeedService {
     }
 
     private String label(Long userId) {
-        return users.findById(userId).map(AppUser::getEmail).orElse("account #" + userId);
+        return users.findById(userId).map(AppUser::getEmail).orElse("аккаунт #" + userId);
     }
 
     private static String shorten(String text) {

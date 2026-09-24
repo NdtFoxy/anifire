@@ -58,7 +58,7 @@ public class BillingController {
         // Creating payments is cheap for us and expensive for the provider; a loop
         // here would also fill the dashboard with abandoned payments.
         if (!rateLimiter.allow("checkout:user:" + userId, 10, Duration.ofHours(1))) {
-            throw ApiException.tooManyRequests("Too many checkout attempts. Try again later.");
+            throw ApiException.tooManyRequests("Слишком много попыток оплаты. Попробуйте позже.");
         }
         return billing.checkout(userId, body.plan(), body.returnUrl());
     }
@@ -141,7 +141,7 @@ public class BillingController {
     }
 
     private static Long userId(Jwt jwt) {
-        if (jwt == null) throw ApiException.unauthorized("unauthorized", "Not authenticated.");
+        if (jwt == null) throw ApiException.unauthorized("unauthorized", "Вы не вошли в аккаунт.");
         return Long.valueOf(jwt.getSubject());
     }
 }

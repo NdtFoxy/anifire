@@ -30,7 +30,7 @@ public class RatingService {
     @Transactional
     public RatingDto rate(Long userId, Long animeId, RatingRequest req, String country) {
         Anime anime = animes.findByIdAndIsDeletedFalse(animeId)
-                .orElseThrow(() -> ApiException.badRequest("unknown_title", "That title does not exist."));
+                .orElseThrow(() -> ApiException.badRequest("unknown_title", "Такого тайтла нет."));
         AnimeRating row = ratings.findByUserIdAndAnimeId(userId, animeId)
                 .orElseGet(() -> AnimeRating.builder().userId(userId).animeId(animeId).build());
         row.setScore((short) req.score());
@@ -59,7 +59,7 @@ public class RatingService {
     private static RatingDto toDto(AnimeRating row, Anime anime) {
         return new RatingDto(
                 row.getAnimeId(),
-                anime == null ? "Removed title" : anime.getTitle(),
+                anime == null ? "Удалённый тайтл" : anime.getTitle(),
                 anime == null ? null : anime.getImageUrl(),
                 row.getScore(),
                 row.getReview(),

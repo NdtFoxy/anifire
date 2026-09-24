@@ -13,7 +13,7 @@ public interface WatchProgressRepository extends JpaRepository<WatchProgress, Lo
     Optional<WatchProgress> findByUserIdAndAnimeKeyAndEpisode(
             Long userId, String animeKey, int episode);
 
-    /** "Continue watching": unfinished slots, most recently touched first. */
+    /** "Продолжить просмотр": unfinished slots, most recently touched first. */
     List<WatchProgress> findByUserIdAndCompletedFalseOrderByUpdatedAtDesc(
             Long userId, Pageable pageable);
 

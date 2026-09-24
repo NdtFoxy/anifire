@@ -1,0 +1,34 @@
+# Single public origin. The browser talks to one host, so the refresh cookie is
+# first-party and CORS only has to allow that host.
+#   /api/v1/*, /uploads/*, /.well-known/*  -> Spring Boot
+#   everything else (pages, Next API routes) -> Next.js
+{$ANIFIRE_DOMAIN} {
+	encode zstd gzip
+
+	# Country headers are only trustworthy when a CDN that sets them sits in front
+	# (then drop the matching line). Otherwise a client could claim any country.
+	request_header -CF-IPCountry
+	request_header -X-Country-Code
+	request_header -X-Geo-Country
+
+	@backend path /api/v1/* /uploads/* /.well-known/*
+	handle @backend {
+		reverse_proxy backend:8080
+	}
+
+	# Health stays inside the network; orchestrators probe the container directly.
+	handle /actuator/* {
+		respond 404
+	}
+
+	handle {
+		reverse_proxy frontend:3000
+	}
+
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options nosniff
+		Referrer-Policy strict-origin-when-cross-origin
+		-Server
+	}
+}

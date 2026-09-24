@@ -9,7 +9,12 @@ import { NextResponse } from "next/server";
  * work against the caller's daily quota before doing anything expensive.
  */
 
-const BACKEND = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8080";
+// Server-to-server: inside the container network the public origin may not
+// resolve (or would hairpin through the proxy), so prefer the internal address.
+const BACKEND =
+  process.env.BACKEND_INTERNAL_URL ||
+  process.env.NEXT_PUBLIC_BACKEND_URL ||
+  "http://localhost:8080";
 
 export type QuotaKind = "REVIEW" | "TRANSLATE";
 

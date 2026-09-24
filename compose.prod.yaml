@@ -1,0 +1,111 @@
+# Production stack: docker compose -f compose.prod.yaml --env-file .env.prod up -d --build
+# Copy .env.prod.example to .env.prod and fill it in first. Only Caddy publishes
+# ports; the API, database and sidecar are reachable solely inside `internal`,
+# which is what makes X-Forwarded-For (set by Caddy) trustworthy for rate limits.
+name: anifire
+
+services:
+  caddy:
+    image: caddy:2.10-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    environment:
+      ANIFIRE_DOMAIN: ${ANIFIRE_DOMAIN}
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    networks:
+      internal:
+        # Fixed address: the backend accepts proxy headers only from here.
+        ipv4_address: 172.28.0.10
+    depends_on:
+      backend:
+        condition: service_healthy
+      frontend:
+        condition: service_healthy
+
+  backend:
+    build: ./anime-backend/anime-backend
+    restart: unless-stopped
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
+      ANIFIRE_SECURITY_PEPPER: ${ANIFIRE_SECURITY_PEPPER}
+      ANIFIRE_JWT_ISSUER: https://${ANIFIRE_DOMAIN}
+      ANIFIRE_JWT_JWK_SET: ${ANIFIRE_JWT_JWK_SET}
+      ANIFIRE_CORS_ALLOWED_ORIGINS: https://${ANIFIRE_DOMAIN}
+      ANIFIRE_APP_FRONTEND_URL: https://${ANIFIRE_DOMAIN}
+      ANIFIRE_GEO_TRUSTEDPROXIES: 172.28.0.10
+      ANIFIRE_LING_URL: http://ling:8090
+      SPRING_MAIL_HOST: ${SPRING_MAIL_HOST}
+      SPRING_MAIL_PORT: ${SPRING_MAIL_PORT:-587}
+      SPRING_MAIL_USERNAME: ${SPRING_MAIL_USERNAME}
+      SPRING_MAIL_PASSWORD: ${SPRING_MAIL_PASSWORD}
+      ANIFIRE_MAIL_FROM: ${ANIFIRE_MAIL_FROM}
+      ANIFIRE_BILLING_SHOP_ID: ${ANIFIRE_BILLING_SHOP_ID}
+      ANIFIRE_BILLING_SECRET_KEY: ${ANIFIRE_BILLING_SECRET_KEY}
+      ANIFIRE_BILLING_RETURN_URL: https://${ANIFIRE_DOMAIN}/profile?tab=subscription&billing=return
+      ANIFIRE_OAUTH_GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+    volumes:
+      - uploads:/app/uploads
+    networks: [internal]
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: ./anime-streaming
+      args:
+        NEXT_PUBLIC_BACKEND_URL: https://${ANIFIRE_DOMAIN}
+        NEXT_PUBLIC_API_URL: https://${ANIFIRE_DOMAIN}/api/v1/animes
+        NEXT_PUBLIC_GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+    restart: unless-stopped
+    environment:
+      BACKEND_INTERNAL_URL: http://backend:8080
+      TMDB_API_KEY: ${TMDB_API_KEY:-}
+      JIMAKU_API_KEY: ${JIMAKU_API_KEY:-}
+      OLLAMA_HOST: ${OLLAMA_HOST:-}
+    volumes:
+      - subtitle_cache:/app/.cache
+    networks: [internal]
+
+  ling:
+    build: ./ling
+    restart: unless-stopped
+    networks: [internal]
+
+  postgres:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks: [internal]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+networks:
+  internal:
+    ipam:
+      config:
+        - subnet: 172.28.0.0/24
+
+volumes:
+  pgdata:
+  uploads:
+  subtitle_cache:
+  caddy_data:
+  caddy_config:

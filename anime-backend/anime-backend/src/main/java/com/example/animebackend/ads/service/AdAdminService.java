@@ -60,7 +60,7 @@ public class AdAdminService {
     public AdDtos.CampaignView updateCampaign(Long id, AdDtos.CampaignRequest request) {
         validate(request);
         AdCampaign campaign = campaigns.findById(id)
-                .orElseThrow(() -> ApiException.badRequest("campaign_not_found", "No such campaign."));
+                .orElseThrow(() -> ApiException.badRequest("campaign_not_found", "Такой кампании нет."));
         campaign.setName(request.name().trim());
         campaign.setAdvertiser(request.advertiser().trim());
         campaign.setAdvertiserInn(request.advertiserInn());
@@ -80,7 +80,7 @@ public class AdAdminService {
     @Transactional
     public void archiveCampaign(Long id) {
         AdCampaign campaign = campaigns.findById(id)
-                .orElseThrow(() -> ApiException.badRequest("campaign_not_found", "No such campaign."));
+                .orElseThrow(() -> ApiException.badRequest("campaign_not_found", "Такой кампании нет."));
         campaign.setStatus(AdCampaign.Status.ARCHIVED);
     }
 
@@ -94,7 +94,7 @@ public class AdAdminService {
     @Transactional
     public AdDtos.CreativeView createCreative(Long campaignId, AdDtos.CreativeRequest request) {
         campaigns.findById(campaignId)
-                .orElseThrow(() -> ApiException.badRequest("campaign_not_found", "No such campaign."));
+                .orElseThrow(() -> ApiException.badRequest("campaign_not_found", "Такой кампании нет."));
         validate(request);
         return view(creatives.save(AdCreative.builder()
                 .campaignId(campaignId)
@@ -112,7 +112,7 @@ public class AdAdminService {
     @Transactional
     public AdDtos.CreativeView updateCreative(Long id, AdDtos.CreativeRequest request) {
         AdCreative creative = creatives.findById(id)
-                .orElseThrow(() -> ApiException.badRequest("creative_not_found", "No such creative."));
+                .orElseThrow(() -> ApiException.badRequest("creative_not_found", "Такого креатива нет."));
         validate(request);
         creative.setSrc(request.src().trim());
         creative.setDurationSec(request.durationSec());
@@ -201,7 +201,7 @@ public class AdAdminService {
             case "24h" -> Duration.ofHours(24);
             case "30d" -> Duration.ofDays(30);
             case "7d" -> Duration.ofDays(7);
-            default -> throw ApiException.badRequest("bad_period", "Period must be 24h, 7d or 30d.");
+            default -> throw ApiException.badRequest("bad_period", "Период: 24h, 7d или 30d.");
         };
     }
 
@@ -216,14 +216,14 @@ public class AdAdminService {
     private static void validate(AdDtos.CampaignRequest request) {
         if (request.startsAt() != null && request.endsAt() != null
                 && !request.endsAt().isAfter(request.startsAt())) {
-            throw ApiException.badRequest("bad_flight_window", "The end of the flight must be after its start.");
+            throw ApiException.badRequest("bad_flight_window", "Конец показа должен быть позже начала.");
         }
     }
 
     private static void validate(AdDtos.CreativeRequest request) {
         if (request.skipAfterSec() != null && request.skipAfterSec() > request.durationSec()) {
             throw ApiException.badRequest(
-                    "bad_skip_offset", "A skip offset past the creative's duration would never let anyone skip.");
+                    "bad_skip_offset", "Кнопка «Пропустить» позже конца ролика никогда не появится.");
         }
         requireHttpUrl(request.src(), "src");
         if (request.clickUrl() != null && !request.clickUrl().isBlank()) {

@@ -73,7 +73,7 @@ public class StudyService {
         if (pack == null) {
             List<String> lines = request.lines() == null ? List.of() : request.lines();
             if (lines.isEmpty()) {
-                throw ApiException.badRequest("no_lines", "Send the subtitle lines to analyse.");
+                throw ApiException.badRequest("no_lines", "Передайте строки субтитров для анализа.");
             }
             pack = analyse(request.animeKey(), request.episode(), lang, lines);
         }
@@ -90,7 +90,7 @@ public class StudyService {
         List<LinguisticsClient.Token> tokens = linguistics.analyze(lang, lines);
         if (tokens.isEmpty()) {
             throw ApiException.badRequest(
-                    "analysis_unavailable", "Word analysis is not available for this language right now.");
+                    "analysis_unavailable", "Разбор слов для этого языка сейчас недоступен.");
         }
 
         // Collapse tokens to one row per lemma, keeping the first sighting as the
@@ -225,7 +225,7 @@ public class StudyService {
         try {
             role = UserLanguage.Role.valueOf(request.role().toUpperCase(Locale.ROOT));
         } catch (IllegalArgumentException e) {
-            throw ApiException.badRequest("bad_role", "Role must be LEARNING or NATIVE.");
+            throw ApiException.badRequest("bad_role", "Роль: LEARNING или NATIVE.");
         }
         UserLanguage row = languages.findByUserIdAndLang(userId, lang)
                 .orElseGet(() -> UserLanguage.builder().userId(userId).lang(lang).role(role).build());
@@ -248,7 +248,7 @@ public class StudyService {
         try {
             status = UserWord.Status.valueOf(request.status().toUpperCase(Locale.ROOT));
         } catch (IllegalArgumentException e) {
-            throw ApiException.badRequest("bad_status", "Unknown word status.");
+            throw ApiException.badRequest("bad_status", "Неизвестный статус слова.");
         }
         UserWord row = userWords.findByUserIdAndLangAndLemma(userId, lang, lemma)
                 .orElseGet(() -> UserWord.builder()
@@ -314,7 +314,7 @@ public class StudyService {
 
     private static String normalizeLang(String lang) {
         String value = lang == null ? "" : lang.trim().toLowerCase(Locale.ROOT);
-        if (value.length() < 2) throw ApiException.badRequest("bad_language", "Unknown language.");
+        if (value.length() < 2) throw ApiException.badRequest("bad_language", "Неизвестный язык.");
         return value.substring(0, 2);
     }
 
