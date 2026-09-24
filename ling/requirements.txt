@@ -1,0 +1,12 @@
+# Linguistics sidecar (app.py). Install into ./.venv:
+#   python3 -m venv .venv && ./.venv/bin/pip install -r requirements.txt
+fastapi
+uvicorn[standard]
+# Japanese morphology: real tokenisation, not whitespace splitting.
+fugashi
+unidic-lite
+# Russian / Ukrainian: heavy inflection needs a lemmatiser, not a stemmer.
+pymorphy3
+pymorphy3-dicts-ru
+# Difficulty levels (Zipf frequency) over subtitle-register corpora.
+wordfreq[mecab]
