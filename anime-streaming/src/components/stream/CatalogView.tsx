@@ -14,6 +14,7 @@ import {
 import type { Movie } from "@/data/mockAnime";
 import { useDevice } from "@/components/system/DeviceProvider";
 import { useMyList } from "@/lib/mylist";
+import RemoteImage from "@/components/system/RemoteImage";
 import styles from "@/app/stream/stream.module.css";
 
 const GENRES = [
@@ -232,7 +233,12 @@ export default function CatalogView({
                 }}
               >
                 <div className={styles.catPoster}>
-                  <img src={m.imageUrl} alt="" loading="lazy" />
+                  <RemoteImage
+                    src={m.imageUrl}
+                    alt=""
+                    fill
+                    sizes="(max-width: 600px) 50vw, (max-width: 1280px) 25vw, 400px"
+                  />
                   <div className={styles.catActions}>
                     <button
                       className={`${styles.catIconBtn} ${

@@ -11,6 +11,7 @@ import { fetchMovies } from "@/data/animeApi";
 import type { Movie } from "@/data/mockAnime";
 import { useReveal } from "@/lib/useReveal";
 import Lottie from "@/components/system/Lottie";
+import RemoteImage from "@/components/system/RemoteImage";
 import styles from "./mylist.module.css";
 
 function MyListContent() {
@@ -84,7 +85,12 @@ function MyListContent() {
             {items.map((m) => (
               <div key={m.id} className={styles.card} data-reveal-child>
                 <Link href={`/anime/${m.id}`} className={styles.poster}>
-                  <img src={m.imageUrl} alt={m.title} />
+                  <RemoteImage
+                    src={m.imageUrl}
+                    alt={m.title}
+                    fill
+                    sizes="(max-width: 600px) 50vw, (max-width: 1280px) 25vw, 400px"
+                  />
                   <span className={styles.playOverlay}>
                     <Play size={22} fill="currentColor" />
                   </span>

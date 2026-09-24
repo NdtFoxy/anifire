@@ -20,6 +20,7 @@ import { useReveal } from "@/lib/useReveal";
 import { fetchRows, fetchMovies } from "@/data/animeApi";
 import type { Movie, Row } from "@/data/mockAnime";
 import { useAuth } from "@/components/auth/AuthProvider";
+import RemoteImage from "@/components/system/RemoteImage";
 import styles from "./home.module.css";
 
 /**
@@ -169,7 +170,15 @@ export default function HomePage() {
               data-active={i === heroIndex}
               aria-hidden={i !== heroIndex}
             >
-              <img src={movie.heroImageUrl} alt="" className={styles.heroImg} />
+              <RemoteImage
+                src={movie.heroImageUrl}
+                alt=""
+                fill
+                sizes="100vw"
+                loading="eager"
+                preload={i === 0}
+                className={styles.heroImg}
+              />
             </div>
           ))}
           <div className={styles.heroScrim} />
@@ -248,7 +257,7 @@ export default function HomePage() {
                 {i + 1}
               </span>
               <button type="button" className={styles.rankArt} onClick={() => play(movie)}>
-                <img src={movie.imageUrl} alt={movie.title} loading="lazy" />
+                <RemoteImage src={movie.imageUrl} alt={movie.title} fill sizes="138px" />
                 <span className={styles.rankPlay}>
                   <Play size={18} fill="currentColor" />
                 </span>
@@ -290,7 +299,7 @@ export default function HomePage() {
                     onClick={() => play(movie)}
                     aria-label={`Play ${movie.title}`}
                   >
-                    <img src={movie.imageUrl} alt={movie.title} loading="lazy" />
+                    <RemoteImage src={movie.imageUrl} alt={movie.title} fill sizes="208px" />
                     <span className={styles.cardHover}>
                       <span className={styles.cardPlay}>
                         <Play size={16} fill="currentColor" />

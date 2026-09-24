@@ -6,6 +6,7 @@ import { Bookmark, Play, Star, Trash2 } from "lucide-react";
 import { fetchMovies } from "@/data/animeApi";
 import type { Movie } from "@/data/mockAnime";
 import { useMyList } from "@/lib/mylist";
+import RemoteImage from "@/components/system/RemoteImage";
 import styles from "@/app/profile/profile.module.css";
 import { CardSkeleton, EmptyState, ErrorState } from "./states";
 import { useResource } from "./useResource";
@@ -54,8 +55,13 @@ export default function BookmarksTab() {
         {items.map((m) => (
           <li key={m.id} className={styles.poster}>
             <Link href={`/anime/${m.id}`} className={styles.posterLink}>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={m.imageUrl} alt="" className={styles.posterImg} />
+              <RemoteImage
+                src={m.imageUrl}
+                alt=""
+                fill
+                sizes="(max-width: 600px) 50vw, 240px"
+                className={styles.posterImg}
+              />
               <span className={styles.posterOverlay}>
                 <Play size={18} />
               </span>

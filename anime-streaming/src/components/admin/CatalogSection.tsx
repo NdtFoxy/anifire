@@ -3,6 +3,7 @@
 import { Loader2, Pencil, Plus, Search, Trash2, X } from "lucide-react";
 import type { AnimeFormInput, Category } from "@/data/animeApi";
 import type { Movie } from "@/data/mockAnime";
+import RemoteImage from "@/components/system/RemoteImage";
 import styles from "@/app/admin/admin.module.css";
 
 /** Catalogue CRUD: titles on the left, category management on the right. */
@@ -179,7 +180,7 @@ export default function CatalogSection({
         <ul className={styles.titleList}>
           {movies.map((movie) => (
             <li key={movie.id}>
-              <img src={movie.imageUrl} alt="" loading="lazy" />
+              <RemoteImage src={movie.imageUrl} alt="" width={44} height={62} />
               <div>
                 <b>{movie.title}</b>
                 <small>

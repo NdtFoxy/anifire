@@ -31,6 +31,7 @@ import type {
 import StreamNav from "@/components/stream/StreamNav";
 import StreamFooter from "@/components/stream/StreamFooter";
 import CommentsPanel from "@/components/anime/CommentsPanel";
+import RemoteImage from "@/components/system/RemoteImage";
 import RequireAuth from "@/components/auth/RequireAuth";
 import styles from "./anime.module.css";
 
@@ -258,7 +259,14 @@ function AnimeDetailContent() {
       <StreamNav />
 
       <div className={styles.backdrop} aria-hidden="true">
-        <img src={heroImage} alt="" className={styles.backdropImg} />
+        <RemoteImage
+          src={heroImage}
+          alt=""
+          fill
+          sizes="100vw"
+          loading="eager"
+          className={styles.backdropImg}
+        />
         <div className={styles.backdropScrim} />
       </div>
 
@@ -267,7 +275,14 @@ function AnimeDetailContent() {
         <main id="main">
           <div className={styles.headerRow}>
             <div className={styles.poster}>
-              <img src={posterImage} alt={title} className={styles.posterImg} />
+              <RemoteImage
+                src={posterImage}
+                alt={title}
+                fill
+                sizes="300px"
+                preload
+                className={styles.posterImg}
+              />
               <span className={styles.posterBadge}>
                 <Flame size={20} fill="currentColor" />
               </span>
@@ -276,7 +291,17 @@ function AnimeDetailContent() {
             <div>
               {logoImage ? (
                 <h1 className={styles.title} aria-label={title}>
-                  <img src={logoImage} alt={title} className={styles.titleLogo} />
+                  {/* Unoptimized: the logo renders at its natural size (width/height
+                      auto in CSS), which srcset density descriptors would change. */}
+                  <RemoteImage
+                    src={logoImage}
+                    alt={title}
+                    width={440}
+                    height={160}
+                    unoptimized
+                    loading="eager"
+                    className={styles.titleLogo}
+                  />
                 </h1>
               ) : (
                 <h1 className={styles.title}>{title}</h1>
@@ -388,9 +413,11 @@ function AnimeDetailContent() {
                 className={styles.epCard}
               >
                 <div className={styles.epThumb}>
-                  <img
+                  <RemoteImage
                     src={ep.thumbnail || posterImage}
                     alt=""
+                    fill
+                    sizes="(max-width: 600px) 100vw, 480px"
                     className={styles.epThumbImg}
                   />
                   <span className={styles.epPlay}>
@@ -416,7 +443,7 @@ function AnimeDetailContent() {
               ? latest.map((r) => (
                   <Link key={r.id} href={r.href} className={styles.newEp}>
                     <div className={styles.newEpThumb}>
-                      <img src={r.poster} alt={r.title} />
+                      <RemoteImage src={r.poster} alt={r.title} width={96} height={66} />
                     </div>
                     <div className={styles.newEpBody}>
                       <span className={styles.newEpTitle}>{r.title}</span>
@@ -434,7 +461,7 @@ function AnimeDetailContent() {
               : newEpisodes.map((m, i) => (
                   <Link key={m.id} href={`/anime/${m.id}`} className={styles.newEp}>
                     <div className={styles.newEpThumb}>
-                      <img src={m.imageUrl} alt={m.title} />
+                      <RemoteImage src={m.imageUrl} alt={m.title} width={96} height={66} />
                     </div>
                     <div className={styles.newEpBody}>
                       <span className={styles.newEpTitle}>{m.title}</span>
@@ -455,7 +482,7 @@ function AnimeDetailContent() {
             <div className={styles.recGrid}>
               {recommended.map((m) => (
                 <Link key={m.id} href={`/anime/${m.id}`} className={styles.recCard}>
-                  <img src={m.imageUrl} alt={m.title} />
+                  <RemoteImage src={m.imageUrl} alt={m.title} fill sizes="200px" />
                   <div className={styles.recScrim} />
                   <span className={styles.recTitle}>{m.title}</span>
                 </Link>

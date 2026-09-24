@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import type { Movie } from "@/data/mockAnime";
 import { useMyList } from "@/lib/mylist";
+import RemoteImage from "@/components/system/RemoteImage";
 import styles from "@/app/stream/stream.module.css";
 
 /**
@@ -175,7 +176,13 @@ function TitleModalBody({
 
         {/* Mini player */}
         <div className={styles.modalHero}>
-          <img src={movie.heroImageUrl} alt="" className={styles.modalHeroImg} />
+          <RemoteImage
+            src={movie.heroImageUrl}
+            alt=""
+            fill
+            sizes="(max-width: 1200px) 100vw, 1200px"
+            className={styles.modalHeroImg}
+          />
           <div className={styles.modalHeroScrim} />
 
           <button

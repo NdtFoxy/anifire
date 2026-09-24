@@ -19,6 +19,7 @@ import {
   uploadProfileImage,
   type Profile,
 } from "@/lib/auth-client";
+import RemoteImage from "@/components/system/RemoteImage";
 import styles from "@/app/profile/profile.module.css";
 import { fmt } from "./format";
 import { levelProgress, levelTitle } from "./progression";
@@ -135,8 +136,14 @@ export default function IdentityHeader({
   return (
     <>
       <div className={styles.banner}>
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={banner} alt="" className={styles.bannerImg} />
+        <RemoteImage
+          src={banner}
+          alt=""
+          fill
+          sizes="100vw"
+          loading="eager"
+          className={styles.bannerImg}
+        />
         <div className={styles.bannerScrim} />
         <span className={styles.idBadge}>ID {profile.id}</span>
 
@@ -182,8 +189,14 @@ export default function IdentityHeader({
       <header className={styles.identity}>
         <div className={styles.avatarWrap}>
           <span className={styles.avatarRing} aria-hidden />
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={avatar} alt={name} className={styles.avatar} />
+          <RemoteImage
+            src={avatar}
+            alt={name}
+            width={148}
+            height={148}
+            loading="eager"
+            className={styles.avatar}
+          />
           {busy === "avatar" ? (
             <span className={styles.avatarBusy} aria-live="polite">
               <Loader2 size={22} className={styles.spin} />

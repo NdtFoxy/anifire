@@ -12,6 +12,7 @@ import {
   type FriendOverview,
 } from "@/lib/library";
 import { mediaUrl } from "@/lib/auth-client";
+import RemoteImage from "@/components/system/RemoteImage";
 import { EmptyState, ErrorState, Skeleton } from "./states";
 import styles from "@/app/profile/profile.module.css";
 
@@ -80,9 +81,11 @@ export default function FriendsTab() {
 
   const row = (friend: Friend, actions: React.ReactNode) => (
     <li key={friend.friendshipId} className={styles.friendRow}>
-      <img
+      <RemoteImage
         src={mediaUrl(friend.avatarUrl) ?? "/hero-2.png"}
         alt=""
+        width={42}
+        height={42}
         className={styles.friendAvatar}
       />
       <div className={styles.friendBody}>

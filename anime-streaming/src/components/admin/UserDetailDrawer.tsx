@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { fetchUserDetail, type AdminUserDetail } from "@/lib/adminUsers";
 import { mediaUrl } from "@/lib/auth-client";
+import RemoteImage from "@/components/system/RemoteImage";
 import styles from "@/app/admin/admin.module.css";
 
 /**
@@ -106,9 +107,11 @@ export default function UserDetailDrawer({
         <header className={styles.drawerHead}>
           {data ? (
             <>
-              <img
+              <RemoteImage
                 src={mediaUrl(data.profile.avatarUrl) ?? "/hero-2.png"}
                 alt=""
+                width={46}
+                height={46}
                 className={styles.drawerAvatar}
               />
               <div>
@@ -262,7 +265,12 @@ export default function UserDetailDrawer({
                 <ul className={styles.ratingList}>
                   {data.ratings.map((rating) => (
                     <li key={rating.animeId}>
-                      <img src={rating.imageUrl ?? "/hero-2.png"} alt="" loading="lazy" />
+                      <RemoteImage
+                        src={rating.imageUrl ?? "/hero-2.png"}
+                        alt=""
+                        width={40}
+                        height={56}
+                      />
                       <div>
                         <b>{rating.title}</b>
                         {rating.review ? <small>{rating.review}</small> : null}

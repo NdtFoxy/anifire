@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import CatalogView from "@/components/stream/CatalogView";
 import RequireAuth from "@/components/auth/RequireAuth";
+import RemoteImage from "@/components/system/RemoteImage";
 import { useMyList } from "@/lib/mylist";
 import type { Movie, Row } from "@/data/mockAnime";
 import { fetchMovies, fetchRows } from "@/data/animeApi";
@@ -54,7 +55,13 @@ function TitleCard({
         }
       }}
     >
-      <img src={movie.imageUrl} alt={movie.title} className={styles.cardImg} />
+      <RemoteImage
+        src={movie.imageUrl}
+        alt={movie.title}
+        className={styles.cardImg}
+        fill
+        sizes="(max-width: 1100px) 192px, 220px"
+      />
       <span className={styles.cardYear}>{movie.year}</span>
 
       <div className={styles.cardInfo}>
@@ -450,7 +457,15 @@ function StreamExperience() {
         {/* ══════════ HERO ══════════ */}
         <section className={styles.hero}>
           <div ref={bgRef} className={styles.heroBg} key={active.id}>
-            <img src={active.heroImageUrl} alt="" className={styles.heroBgImg} />
+            <RemoteImage
+              src={active.heroImageUrl}
+              alt=""
+              className={styles.heroBgImg}
+              fill
+              sizes="100vw"
+              loading="eager"
+              preload
+            />
             <HeroPreviewVideo
               src={preview?.movieId === active.id ? preview.src : null}
               poster={active.heroImageUrl}
@@ -469,7 +484,18 @@ function StreamExperience() {
               ))}
             </div>
             {active.logoImageUrl ? (
-              <img src={active.logoImageUrl} alt={active.title} className={styles.heroLogo} />
+              // Unoptimized + height:auto: the logo keeps its natural aspect inside the
+              // CSS width/max-height box instead of the placeholder width/height ratio.
+              <RemoteImage
+                src={active.logoImageUrl}
+                alt={active.title}
+                className={styles.heroLogo}
+                width={560}
+                height={210}
+                style={{ height: "auto" }}
+                unoptimized
+                loading="eager"
+              />
             ) : (
               <h1 className={styles.heroTitle}>{active.title}</h1>
             )}
