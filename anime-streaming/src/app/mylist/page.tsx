@@ -48,12 +48,12 @@ function MyListContent() {
           <Bookmark size={26} fill="currentColor" />
         </div>
         <div>
-          <p className={styles.eyebrow}>Your collection</p>
-          <h1 className={styles.title}>My List</h1>
+          <p className={styles.eyebrow}>Ваша коллекция</p>
+          <h1 className={styles.title}>Моё</h1>
           <p className={styles.sub}>
             {list.length > 0
-              ? `${list.length} ${list.length === 1 ? "title" : "titles"} saved for later.`
-              : "Save titles to watch them later."}
+              ? `Сохранено на потом: ${list.length}`
+              : "Сохраняйте тайтлы, чтобы посмотреть их позже."}
           </p>
         </div>
       </header>
@@ -74,10 +74,10 @@ function MyListContent() {
               className={styles.emptyArt}
               fallback={<Bookmark size={40} />}
             />
-            <h2>Nothing here yet</h2>
-            <p>Tap the + on any title to add it to your list.</p>
+            <h2>Здесь пока пусто</h2>
+            <p>Нажмите + на любом тайтле, чтобы добавить его в список.</p>
             <Link href="/stream" className={styles.browseBtn} data-tap>
-              <Play size={16} fill="currentColor" /> Browse catalog
+              <Play size={16} fill="currentColor" /> Открыть каталог
             </Link>
           </div>
         ) : (
@@ -109,7 +109,7 @@ function MyListContent() {
                 <button
                   type="button"
                   className={styles.remove}
-                  aria-label="Remove from My List"
+                  aria-label="Удалить из «Моего»"
                   onClick={() => toggleList(m.id)}
                 >
                   <Trash2 size={15} />

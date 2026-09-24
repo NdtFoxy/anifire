@@ -135,13 +135,13 @@ async function write(url: string, method: string, body?: unknown): Promise<AdsOu
       method,
       ...(body === undefined ? {} : { body: JSON.stringify(body) }),
     });
-    if (!res.ok) return failure(res, "The server refused that change.");
+    if (!res.ok) return failure(res, "Сервер отклонил изменение.");
     return { ok: true };
   } catch {
     return {
       ok: false,
       code: "network",
-      message: "Network error. Check your connection and try again.",
+      message: "Ошибка сети. Проверьте подключение и попробуйте ещё раз.",
     };
   }
 }

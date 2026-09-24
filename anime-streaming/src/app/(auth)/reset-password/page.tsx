@@ -17,7 +17,7 @@ function ResetInner() {
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if (!token) {
-      setNotice("This reset link is invalid or missing.");
+      setNotice("Ссылка для сброса недействительна или отсутствует.");
       return;
     }
     const password = String(new FormData(e.currentTarget).get("password") ?? "");
@@ -31,7 +31,7 @@ function ResetInner() {
       setNotice(
         err instanceof AuthError
           ? (err.fields?.password ?? err.message)
-          : "Something went wrong. Try again."
+          : "Что-то пошло не так. Попробуйте ещё раз."
       );
     }
   }
@@ -42,12 +42,12 @@ function ResetInner() {
         <span className={styles.sentIcon}>
           <ShieldCheck size={28} />
         </span>
-        <h1 className={styles.head}>Password updated</h1>
+        <h1 className={styles.head}>Пароль обновлён</h1>
         <p className={styles.sub}>
-          Your password has been changed and all other sessions were signed out.
+          Пароль изменён, все остальные сеансы завершены.
         </p>
         <Link href="/login" className={styles.back}>
-          <ArrowLeft size={16} /> Back to sign in
+          <ArrowLeft size={16} /> Вернуться ко входу
         </Link>
       </div>
     );
@@ -62,8 +62,8 @@ function ResetInner() {
         <span className={styles.logoText}>Anifire</span>
       </Link>
 
-      <h1 className={styles.head}>Set a new password</h1>
-      <p className={styles.sub}>Choose a strong password you don&apos;t use elsewhere.</p>
+      <h1 className={styles.head}>Новый пароль</h1>
+      <p className={styles.sub}>Придумайте надёжный пароль, который вы не используете на других сайтах.</p>
 
       {notice ? (
         <div className={`${styles.notice} ${styles.noticeErr}`}>{notice}</div>
@@ -72,18 +72,18 @@ function ResetInner() {
       <form className={styles.form} onSubmit={handleSubmit}>
         <Field
           id="password"
-          label="New password"
+          label="Новый пароль"
           type="password"
           icon={<Lock size={17} />}
           autoComplete="new-password"
         />
         <button className={styles.submit} type="submit" disabled={busy}>
-          {busy ? <span className={styles.spinner} /> : "Update password"}
+          {busy ? <span className={styles.spinner} /> : "Обновить пароль"}
         </button>
       </form>
 
       <Link href="/login" className={styles.back}>
-        <ArrowLeft size={16} /> Back to sign in
+        <ArrowLeft size={16} /> Вернуться ко входу
       </Link>
     </div>
   );

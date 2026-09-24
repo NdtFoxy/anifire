@@ -35,7 +35,7 @@ export class AiGateError extends Error {
 }
 
 function unauthorized(): AiGateError {
-  return new AiGateError(401, "unauthorized", "Sign in to use the AI features.");
+  return new AiGateError(401, "unauthorized", "Войдите, чтобы пользоваться функциями ИИ.");
 }
 
 /**
@@ -59,7 +59,7 @@ export async function requireUser(req: Request): Promise<{ token: string }> {
   } catch {
     // The auth server is the only thing that can authorise this call, so a
     // transport failure must deny rather than fall open.
-    throw new AiGateError(503, "ai_unavailable", "Authentication is unavailable.");
+    throw new AiGateError(503, "ai_unavailable", "Сервис авторизации недоступен.");
   }
   if (!res.ok) throw unauthorized();
   return { token };
@@ -98,17 +98,17 @@ export async function consumeQuota(
       cache: "no-store",
     });
   } catch {
-    throw new AiGateError(503, "ai_unavailable", "AI quota service is unavailable.");
+    throw new AiGateError(503, "ai_unavailable", "Сервис лимитов ИИ недоступен.");
   }
   if (res.ok) return;
   if (res.status === 429) {
     throw new AiGateError(
       429,
       "ai_quota_exceeded",
-      (await quotaMessage(res)) ?? "Daily AI limit reached. Try again tomorrow."
+      (await quotaMessage(res)) ?? "Дневной лимит ИИ исчерпан. Попробуйте завтра."
     );
   }
-  throw new AiGateError(503, "ai_unavailable", "AI quota service is unavailable.");
+  throw new AiGateError(503, "ai_unavailable", "Сервис лимитов ИИ недоступен.");
 }
 
 /** Maps a gate failure to the response the browser gets. */
@@ -116,7 +116,7 @@ export function aiGateResponse(err: unknown): NextResponse {
   const gate =
     err instanceof AiGateError
       ? err
-      : new AiGateError(503, "ai_unavailable", "AI is unavailable.");
+      : new AiGateError(503, "ai_unavailable", "ИИ недоступен.");
   return NextResponse.json(
     { error: gate.code, message: gate.message },
     { status: gate.status }

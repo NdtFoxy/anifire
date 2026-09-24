@@ -18,21 +18,21 @@ import styles from "@/app/admin/admin.module.css";
 
 const PAGE_SIZE = 20;
 const SORTS = [
-  { key: "createdAt", label: "Newest" },
-  { key: "lastLoginAt", label: "Last seen" },
+  { key: "createdAt", label: "Сначала новые" },
+  { key: "lastLoginAt", label: "Последний визит" },
   { key: "email", label: "Email" },
-  { key: "level", label: "Level" },
+  { key: "level", label: "Уровень" },
 ] as const;
 
 const relative = (iso: string | null) => {
-  if (!iso) return "never";
+  if (!iso) return "никогда";
   const diff = Date.now() - new Date(iso).getTime();
   const days = Math.floor(diff / 86_400_000);
   if (days > 30) return new Date(iso).toLocaleDateString();
-  if (days >= 1) return `${days}d ago`;
+  if (days >= 1) return `${days} дн. назад`;
   const hours = Math.floor(diff / 3_600_000);
-  if (hours >= 1) return `${hours}h ago`;
-  return "just now";
+  if (hours >= 1) return `${hours} ч назад`;
+  return "только что";
 };
 
 /**
@@ -105,7 +105,7 @@ export default function UsersSection() {
           rows: cur?.rows ?? [],
           total: cur?.total ?? 0,
           totalPages: cur?.totalPages ?? 1,
-          error: err instanceof Error ? err.message : "Could not load users.",
+          error: err instanceof Error ? err.message : "Не удалось загрузить пользователей.",
         }));
       });
     return () => {
@@ -134,7 +134,7 @@ export default function UsersSection() {
           : cur,
       );
     } catch {
-      setResult((cur) => (cur ? { ...cur, error: "Could not change that role." } : cur));
+      setResult((cur) => (cur ? { ...cur, error: "Не удалось изменить роль." } : cur));
     } finally {
       setBusyId(null);
     }
@@ -148,11 +148,11 @@ export default function UsersSection() {
           <input
             value={filters.query ?? ""}
             onChange={(e) => patch({ query: e.target.value })}
-            placeholder="Name, email or id…"
-            aria-label="Search accounts"
+            placeholder="Имя, email или id…"
+            aria-label="Поиск аккаунтов"
           />
           {filters.query ? (
-            <button type="button" onClick={() => patch({ query: "" })} aria-label="Clear search">
+            <button type="button" onClick={() => patch({ query: "" })} aria-label="Очистить поиск">
               <X size={14} />
             </button>
           ) : null}
@@ -163,11 +163,11 @@ export default function UsersSection() {
           <input
             value={filters.comment ?? ""}
             onChange={(e) => patch({ comment: e.target.value })}
-            placeholder="Wrote a comment containing…"
-            aria-label="Search by comment text"
+            placeholder="Писал комментарий, содержащий…"
+            aria-label="Поиск по тексту комментария"
           />
           {filters.comment ? (
-            <button type="button" onClick={() => patch({ comment: "" })} aria-label="Clear comment search">
+            <button type="button" onClick={() => patch({ comment: "" })} aria-label="Очистить поиск по комментариям">
               <X size={14} />
             </button>
           ) : null}
@@ -177,11 +177,11 @@ export default function UsersSection() {
           className={styles.select}
           value={filters.role ?? ""}
           onChange={(e) => patch({ role: e.target.value as UserQuery["role"] })}
-          aria-label="Filter by role"
+          aria-label="Фильтр по роли"
         >
-          <option value="">Any role</option>
-          <option value="USER">Users</option>
-          <option value="ADMIN">Admins</option>
+          <option value="">Любая роль</option>
+          <option value="USER">Пользователи</option>
+          <option value="ADMIN">Администраторы</option>
         </select>
 
         <select
@@ -190,11 +190,11 @@ export default function UsersSection() {
           onChange={(e) =>
             patch({ verified: e.target.value === "" ? null : e.target.value === "true" })
           }
-          aria-label="Filter by verification"
+          aria-label="Фильтр по подтверждению"
         >
-          <option value="">Any status</option>
-          <option value="true">Verified</option>
-          <option value="false">Unverified</option>
+          <option value="">Любой статус</option>
+          <option value="true">Подтверждённые</option>
+          <option value="false">Неподтверждённые</option>
         </select>
 
         <select
@@ -204,7 +204,7 @@ export default function UsersSection() {
             const [sort, direction] = e.target.value.split(":");
             patch({ sort, direction: direction as "asc" | "desc" });
           }}
-          aria-label="Sort"
+          aria-label="Сортировка"
         >
           {SORTS.map((option) => (
             <option key={option.key} value={`${option.key}:desc`}>
@@ -225,7 +225,7 @@ export default function UsersSection() {
           onClick={() => patch({ includeDeleted: !filters.includeDeleted })}
         >
           <SlidersHorizontal size={15} />
-          {filters.includeDeleted ? "Including deleted" : "Active only"}
+          {filters.includeDeleted ? "Включая удалённые" : "Только активные"}
         </button>
       </div>
 
@@ -234,8 +234,8 @@ export default function UsersSection() {
       <section className={styles.card}>
         <div className={styles.listHead}>
           <h3>
-            {total.toLocaleString("en-US")} account{total === 1 ? "" : "s"}
-            {applied.comment ? ` matching “${applied.comment}” in comments` : ""}
+            Аккаунтов: {total.toLocaleString("ru-RU")}
+            {applied.comment ? ` с «${applied.comment}» в комментариях` : ""}
           </h3>
           {loading ? <Loader2 size={15} className={styles.spin} /> : null}
         </div>
@@ -244,11 +244,11 @@ export default function UsersSection() {
           <table className={styles.table}>
             <thead>
               <tr>
-                <th>User</th>
-                <th>Status</th>
-                <th>Activity</th>
-                <th>Last seen</th>
-                <th>Role</th>
+                <th>Пользователь</th>
+                <th>Статус</th>
+                <th>Активность</th>
+                <th>Последний визит</th>
+                <th>Роль</th>
               </tr>
             </thead>
             <tbody>
@@ -262,41 +262,41 @@ export default function UsersSection() {
                     if (e.key === "Enter") setOpenUser(row.id);
                   }}
                 >
-                  <td data-label="User">
+                  <td data-label="Пользователь">
                     <span className={styles.userName}>{row.displayName ?? "—"}</span>
                     <small>
                       {row.email} · #{row.id}
                       {row.signupCountry ? ` · ${row.signupCountry}` : ""}
                     </small>
                   </td>
-                  <td data-label="Status">
+                  <td data-label="Статус">
                     <div className={styles.tagRow}>
                       {row.emailVerified ? (
                         <span data-tone="ok">
-                          <ShieldCheck size={12} /> verified
+                          <ShieldCheck size={12} /> подтверждён
                         </span>
                       ) : (
-                        <span data-tone="warn">unverified</span>
+                        <span data-tone="warn">не подтверждён</span>
                       )}
-                      {row.locked ? <span data-tone="bad">locked</span> : null}
-                      {row.deleted ? <span data-tone="bad">deleted</span> : null}
-                      {row.adsFree ? <span data-tone="ok">{row.plan ?? "ads-free"}</span> : null}
+                      {row.locked ? <span data-tone="bad">заблокирован</span> : null}
+                      {row.deleted ? <span data-tone="bad">удалён</span> : null}
+                      {row.adsFree ? <span data-tone="ok">{row.plan ?? "без рекламы"}</span> : null}
                     </div>
                   </td>
-                  <td data-label="Activity">
+                  <td data-label="Активность">
                     <span className={styles.activityCell}>
-                      {row.views} views · {row.comments} comments
+                      Просмотры: {row.views} · Комментарии: {row.comments}
                     </span>
                   </td>
-                  <td data-label="Last seen">{relative(row.lastLoginAt)}</td>
-                  <td data-label="Role" onClick={(e) => e.stopPropagation()}>
+                  <td data-label="Последний визит">{relative(row.lastLoginAt)}</td>
+                  <td data-label="Роль" onClick={(e) => e.stopPropagation()}>
                     <div className={styles.roleCell}>
                       <select
                         className={styles.select}
                         value={row.role}
                         disabled={busyId === row.id}
                         onChange={(e) => changeRole(row.id, e.target.value as "USER" | "ADMIN")}
-                        aria-label={`Role of ${row.email}`}
+                        aria-label={`Роль ${row.email}`}
                       >
                         <option value="USER">USER</option>
                         <option value="ADMIN">ADMIN</option>
@@ -309,7 +309,7 @@ export default function UsersSection() {
               {rows.length === 0 && !loading ? (
                 <tr>
                   <td colSpan={5} className={styles.emptyCell}>
-                    Nothing matches these filters.
+                    По этим фильтрам ничего не найдено.
                   </td>
                 </tr>
               ) : null}
@@ -324,7 +324,7 @@ export default function UsersSection() {
             disabled={(applied.page ?? 0) === 0}
             onClick={() => setFilters((cur) => ({ ...cur, page: (cur.page ?? 0) - 1 }))}
           >
-            Previous
+            Назад
           </button>
           <span>
             {(applied.page ?? 0) + 1} / {totalPages}
@@ -335,7 +335,7 @@ export default function UsersSection() {
             disabled={(applied.page ?? 0) + 1 >= totalPages}
             onClick={() => setFilters((cur) => ({ ...cur, page: (cur.page ?? 0) + 1 }))}
           >
-            Next
+            Далее
           </button>
         </div>
       </section>

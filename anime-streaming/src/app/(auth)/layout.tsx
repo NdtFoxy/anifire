@@ -4,8 +4,8 @@ import { Flame, Sparkles } from "lucide-react";
 import styles from "./auth.module.css";
 
 export const metadata: Metadata = {
-  title: "Anifire — Account",
-  description: "Sign in or create your Anifire account.",
+  title: "Anifire — Аккаунт",
+  description: "Войдите или создайте аккаунт Anifire.",
 };
 
 export default function AuthLayout({
@@ -36,21 +36,21 @@ export default function AuthLayout({
 
         <div className={styles.brandBody}>
           <span className={styles.brandEyebrow}>
-            <Sparkles size={14} /> 12,000+ titles · ad-free
+            <Sparkles size={14} /> 12 000+ тайтлов · без рекламы
           </span>
           <h2 className={styles.brandHeadline}>
-            Where every story <em>ignites</em>.
+            Здесь каждая история <em>вспыхивает</em>.
           </h2>
           <p className={styles.brandSub}>
-            Stream the seasons&apos; biggest anime in crisp HD, build your list,
-            and pick up exactly where you left off — on any screen.
+            Смотрите главные аниме сезона в чётком HD, собирайте свой список
+            и продолжайте с того же места — на любом экране.
           </p>
         </div>
 
         <div className={styles.brandFooter}>
           <span>© 2026 Anifire</span>
-          <a href="#privacy">Privacy</a>
-          <a href="#terms">Terms</a>
+          <a href="#privacy">Конфиденциальность</a>
+          <a href="#terms">Условия</a>
         </div>
       </aside>
     </div>

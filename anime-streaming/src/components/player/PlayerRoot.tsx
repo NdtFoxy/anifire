@@ -439,7 +439,7 @@ export default function PlayerRoot() {
               <button
                 type="button"
                 className={styles.miniBtn}
-                aria-label="Maximize"
+                aria-label="Развернуть"
                 onClick={goFull}
               >
                 <Maximize2 size={15} />
@@ -447,7 +447,7 @@ export default function PlayerRoot() {
               <button
                 type="button"
                 className={styles.miniBtn}
-                aria-label="Close"
+                aria-label="Закрыть"
                 onClick={doClose}
               >
                 <X size={15} />
@@ -458,7 +458,7 @@ export default function PlayerRoot() {
           <button
             type="button"
             className={styles.miniPlay}
-            aria-label={playing ? "Pause" : "Play"}
+            aria-label={playing ? "Пауза" : "Смотреть"}
             onClick={togglePlay}
           >
             {playing ? <Pause size={20} fill="currentColor" /> : <Play size={20} fill="currentColor" />}
@@ -477,7 +477,7 @@ export default function PlayerRoot() {
             <button
               type="button"
               className={styles.miniBtn}
-              aria-label="Opacity"
+              aria-label="Прозрачность"
               onClick={() => setOpacityOpen((o) => !o)}
             >
               <Droplet size={14} />
@@ -490,7 +490,7 @@ export default function PlayerRoot() {
                 step={0.05}
                 value={resolvedMini.opacity}
                 className={styles.miniOpacity}
-                aria-label="Opacity"
+                aria-label="Прозрачность"
                 onChange={(e) => setMini({ opacity: Number(e.target.value) })}
               />
             )}
@@ -549,7 +549,7 @@ export default function PlayerRoot() {
             <button
               type="button"
               className={styles.backBtn}
-              aria-label="Back"
+              aria-label="Назад"
               onClick={() => {
                 doClose();
                 router.push(source.backHref);
@@ -564,8 +564,8 @@ export default function PlayerRoot() {
             <button
               type="button"
               className={styles.miniTrigger}
-              aria-label="Minimize to mini player"
-              title="Mini player (I)"
+              aria-label="Свернуть в мини-плеер"
+              title="Мини-плеер (I)"
               onClick={goMini}
             >
               <Minimize2 size={18} />
@@ -576,7 +576,7 @@ export default function PlayerRoot() {
             <button
               type="button"
               className={styles.bigPlay}
-              aria-label="Play"
+              aria-label="Смотреть"
               data-osd
               onClick={togglePlay}
             >
@@ -619,14 +619,14 @@ export default function PlayerRoot() {
 
             <div className={styles.controlsRow}>
               <div className={styles.ctrlLeft}>
-                <IconBtn label="Episodes" onClick={() => router.push(source.backHref)}>
+                <IconBtn label="Серии" onClick={() => router.push(source.backHref)}>
                   <ListVideo size={20} />
                 </IconBtn>
-                <IconBtn label="Subtitles" active={subsOn} onClick={toggleSubs}>
+                <IconBtn label="Субтитры" active={subsOn} onClick={toggleSubs}>
                   <Captions size={20} />
                 </IconBtn>
                 {settings.upscale !== "off" && (
-                  <span className={styles.upBadge} title="Upscale on">
+                  <span className={styles.upBadge} title="Апскейл включён">
                     <Sparkles size={14} />
                     {settings.upscale === "ai-4k"
                       ? "4K"
@@ -641,7 +641,7 @@ export default function PlayerRoot() {
                 <button
                   type="button"
                   className={styles.transportBtn}
-                  aria-label="Previous episode"
+                  aria-label="Предыдущая серия"
                   disabled={!source.prevHref}
                   onClick={() => source.prevHref && router.push(source.prevHref)}
                 >
@@ -651,7 +651,7 @@ export default function PlayerRoot() {
                   type="button"
                   ref={playBtnRef}
                   className={styles.playBtn}
-                  aria-label={playing ? "Pause" : "Play"}
+                  aria-label={playing ? "Пауза" : "Смотреть"}
                   onClick={togglePlay}
                 >
                   {playing ? (
@@ -663,7 +663,7 @@ export default function PlayerRoot() {
                 <button
                   type="button"
                   className={styles.transportBtn}
-                  aria-label="Next episode"
+                  aria-label="Следующая серия"
                   disabled={!source.nextHref}
                   onClick={() => source.nextHref && router.push(source.nextHref)}
                 >
@@ -673,7 +673,7 @@ export default function PlayerRoot() {
 
               <div className={styles.ctrlRight}>
                 <div className={styles.volume}>
-                  <IconBtn label={muted ? "Unmute" : "Mute"} onClick={toggleMute}>
+                  <IconBtn label={muted ? "Включить звук" : "Выключить звук"} onClick={toggleMute}>
                     <VolumeIcon size={20} />
                   </IconBtn>
                   <input
@@ -683,18 +683,18 @@ export default function PlayerRoot() {
                     step={0.05}
                     value={muted ? 0 : volume}
                     className={styles.volumeSlider}
-                    aria-label="Volume"
+                    aria-label="Громкость"
                     onChange={(e) => changeVolume(Number(e.target.value))}
                   />
                 </div>
 
-                <IconBtn label="Mini player" onClick={goMini}>
+                <IconBtn label="Мини-плеер" onClick={goMini}>
                   <PictureInPicture2 size={20} />
                 </IconBtn>
 
                 <div className={styles.settingsWrap}>
                   <IconBtn
-                    label="Settings"
+                    label="Настройки"
                     active={settingsOpen}
                     badge={settings.upscale !== "off"}
                     onClick={() => {
@@ -720,7 +720,7 @@ export default function PlayerRoot() {
                   )}
                 </div>
 
-                <IconBtn label="Fullscreen" onClick={toggleFullscreen}>
+                <IconBtn label="Полноэкранный режим" onClick={toggleFullscreen}>
                   {fullscreen ? <Minimize size={20} /> : <Maximize size={20} />}
                 </IconBtn>
               </div>

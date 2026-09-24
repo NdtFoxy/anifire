@@ -224,7 +224,7 @@ export async function requestFriend(email: string): Promise<Friend> {
     body: JSON.stringify({ email }),
   });
   const body = await res.json();
-  if (!res.ok) throw new Error(body?.message ?? "Could not send that request.");
+  if (!res.ok) throw new Error(body?.message ?? "Не удалось отправить заявку.");
   return body as Friend;
 }
 

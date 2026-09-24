@@ -89,7 +89,7 @@ export default function Field({
         {/* Floating label: sits in the field until it holds a value or focus. */}
         <label className={styles.label} htmlFor={id}>
           {label}
-          {required ? null : <span className={styles.optional}>optional</span>}
+          {required ? null : <span className={styles.optional}>необязательно</span>}
         </label>
 
         {isPassword ? (
@@ -97,7 +97,7 @@ export default function Field({
             type="button"
             className={styles.eyeBtn}
             onClick={() => setShow((v) => !v)}
-            aria-label={show ? "Hide password" : "Show password"}
+            aria-label={show ? "Скрыть пароль" : "Показать пароль"}
           >
             {show ? <EyeOff size={18} /> : <Eye size={18} />}
           </button>
@@ -113,7 +113,7 @@ export default function Field({
 
       {caps ? (
         <p className={styles.capsHint}>
-          <AlertCircle size={13} /> Caps Lock is on
+          <AlertCircle size={13} /> Включён Caps Lock
         </p>
       ) : null}
 

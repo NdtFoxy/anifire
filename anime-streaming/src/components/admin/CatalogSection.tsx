@@ -57,11 +57,11 @@ export default function CatalogSection({
   return (
     <div className={styles.catalogGrid}>
       <section className={styles.card}>
-        <h3>{editingId ? "Edit title" : "Add a title"}</h3>
+        <h3>{editingId ? "Редактировать тайтл" : "Добавить тайтл"}</h3>
         <form className={styles.form} onSubmit={onSubmit}>
           <input
             className={styles.input}
-            placeholder="Title"
+            placeholder="Название"
             value={form.title}
             onChange={(e) => onForm({ ...form, title: e.target.value })}
             required
@@ -69,7 +69,7 @@ export default function CatalogSection({
           />
           <textarea
             className={styles.textarea}
-            placeholder="Synopsis"
+            placeholder="Описание"
             rows={4}
             value={form.description}
             onChange={(e) => onForm({ ...form, description: e.target.value })}
@@ -77,7 +77,7 @@ export default function CatalogSection({
           />
           <input
             className={styles.input}
-            placeholder="Poster URL"
+            placeholder="URL постера"
             value={form.imageUrl}
             onChange={(e) => onForm({ ...form, imageUrl: e.target.value })}
             maxLength={500}
@@ -88,7 +88,7 @@ export default function CatalogSection({
             step="0.01"
             min="0"
             max="10"
-            placeholder="Rating"
+            placeholder="Рейтинг"
             value={form.rating ?? ""}
             onChange={(e) =>
               onForm({ ...form, rating: e.target.value === "" ? null : Number(e.target.value) })
@@ -110,21 +110,21 @@ export default function CatalogSection({
           <div className={styles.formActions}>
             <button className={styles.btnPrimary} type="submit" disabled={busy}>
               {busy ? <Loader2 size={16} className={styles.spin} /> : <Plus size={16} />}
-              {editingId ? "Save changes" : "Add title"}
+              {editingId ? "Сохранить изменения" : "Добавить тайтл"}
             </button>
             {editingId ? (
               <button type="button" className={styles.btnGhost} onClick={onCancelEdit}>
-                <X size={16} /> Cancel
+                <X size={16} /> Отмена
               </button>
             ) : null}
           </div>
         </form>
 
-        <h3 className={styles.cardSubhead}>Categories</h3>
+        <h3 className={styles.cardSubhead}>Категории</h3>
         <form className={styles.inlineForm} onSubmit={onCategorySubmit}>
           <input
             className={styles.input}
-            placeholder="New category"
+            placeholder="Новая категория"
             value={categoryName}
             onChange={(e) => onCategoryName(e.target.value)}
             maxLength={120}
@@ -141,7 +141,7 @@ export default function CatalogSection({
                 type="button"
                 className={styles.iconBtn}
                 onClick={() => onCategoryDelete(category.id)}
-                aria-label={`Delete ${category.name}`}
+                aria-label={`Удалить ${category.name}`}
               >
                 <Trash2 size={14} />
               </button>
@@ -152,23 +152,23 @@ export default function CatalogSection({
 
       <section className={styles.card}>
         <div className={styles.listHead}>
-          <h3>Titles</h3>
+          <h3>Тайтлы</h3>
           <label className={styles.searchBox}>
             <Search size={15} />
             <input
               value={search}
               onChange={(e) => onSearch(e.target.value)}
-              placeholder="Search the catalogue…"
-              aria-label="Search the catalogue"
+              placeholder="Поиск по каталогу…"
+              aria-label="Поиск по каталогу"
             />
           </label>
           <select
             className={styles.select}
             value={categoryId ?? ""}
             onChange={(e) => onCategoryFilter(e.target.value ? Number(e.target.value) : null)}
-            aria-label="Filter by category"
+            aria-label="Фильтр по категории"
           >
-            <option value="">All categories</option>
+            <option value="">Все категории</option>
             {categories.map((category) => (
               <option key={category.id} value={category.id}>
                 {category.name}
@@ -184,14 +184,14 @@ export default function CatalogSection({
               <div>
                 <b>{movie.title}</b>
                 <small>
-                  {movie.match}% · {movie.tags.slice(0, 3).join(" · ") || "no category"}
+                  {movie.match}% · {movie.tags.slice(0, 3).join(" · ") || "без категории"}
                 </small>
               </div>
               <button
                 type="button"
                 className={styles.iconBtn}
                 onClick={() => onEdit(movie)}
-                aria-label={`Edit ${movie.title}`}
+                aria-label={`Редактировать ${movie.title}`}
               >
                 <Pencil size={15} />
               </button>
@@ -199,7 +199,7 @@ export default function CatalogSection({
                 type="button"
                 className={styles.iconBtn}
                 onClick={() => onDelete(movie.id)}
-                aria-label={`Delete ${movie.title}`}
+                aria-label={`Удалить ${movie.title}`}
               >
                 <Trash2 size={15} />
               </button>
@@ -214,7 +214,7 @@ export default function CatalogSection({
             disabled={page === 0}
             onClick={() => onPage(page - 1)}
           >
-            Previous
+            Назад
           </button>
           <span>
             {page + 1} / {totalPages}
@@ -225,7 +225,7 @@ export default function CatalogSection({
             disabled={page + 1 >= totalPages}
             onClick={() => onPage(page + 1)}
           >
-            Next
+            Далее
           </button>
         </div>
       </section>

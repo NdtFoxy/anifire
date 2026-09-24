@@ -35,10 +35,10 @@ const LANGS = [
 ] as const;
 
 const STATUS_LABEL: Record<string, string> = {
-  NEW: "new",
-  LEARNING: "learning",
-  KNOWN: "known",
-  IGNORED: "ignored",
+  NEW: "новое",
+  LEARNING: "изучаю",
+  KNOWN: "знаю",
+  IGNORED: "скрыто",
 };
 
 export default function VocabularyTab() {
@@ -82,16 +82,16 @@ export default function VocabularyTab() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  if (error) return <ErrorState message="Could not load your vocabulary." onRetry={() => load()} />;
+  if (error) return <ErrorState message="Не удалось загрузить словарь." onRetry={() => load()} />;
   if (!loaded && !stats) return <Skeleton />;
 
   // No language chosen yet — offer the picker instead of an empty list.
   if (!lang) {
     return (
       <div className={styles.vocabWrap}>
-        <EmptyState icon={<GraduationCap size={22} />} title="Pick a language to learn">
-          Words you tap in the subtitles land here, together with the scene they came
-          from. Choose what you are learning and the player starts highlighting.
+        <EmptyState icon={<GraduationCap size={22} />} title="Выберите язык для изучения">
+          Слова, на которые вы нажимаете в субтитрах, попадают сюда вместе со сценой, где они
+          встретились. Выберите язык, и плеер начнёт их подсвечивать.
         </EmptyState>
         <div className={styles.langPicker}>
           {LANGS.map((option) => (
@@ -144,7 +144,7 @@ export default function VocabularyTab() {
         </div>
         {current ? (
           <label className={styles.levelPicker}>
-            Known up to level
+            Знаю до уровня
             <select
               value={current.level}
               onChange={async (e) => {
@@ -165,19 +165,19 @@ export default function VocabularyTab() {
       {stats ? (
         <div className={styles.vocabStats}>
           <span>
-            <BookOpen size={14} /> Words<b>{stats.total}</b>
+            <BookOpen size={14} /> Слова<b>{stats.total}</b>
           </span>
           <span>
-            <Sparkles size={14} /> Learning<b>{stats.learning}</b>
+            <Sparkles size={14} /> Изучаю<b>{stats.learning}</b>
           </span>
           <span>
-            <GraduationCap size={14} /> Known<b>{stats.known}</b>
+            <GraduationCap size={14} /> Знаю<b>{stats.known}</b>
           </span>
           <span>
-            <Flame size={14} /> Reviewed today<b>{stats.reviewedToday}</b>
+            <Flame size={14} /> Повторено сегодня<b>{stats.reviewedToday}</b>
           </span>
           <span>
-            Accuracy (7d)<b>{stats.reviewed7d ? `${stats.accuracy7d}%` : "—"}</b>
+            Точность (7 дн.)<b>{stats.reviewed7d ? `${stats.accuracy7d}%` : "—"}</b>
           </span>
         </div>
       ) : null}
@@ -193,7 +193,7 @@ export default function VocabularyTab() {
           }}
         >
           {!loaded ? <Loader2 size={16} className={styles.spin} /> : <Play size={16} />}
-          {stats?.dueNow ? `Review ${stats.dueNow} due` : "Nothing due right now"}
+          {stats?.dueNow ? `Повторить (${stats.dueNow})` : "Сейчас нечего повторять"}
         </button>
         <div className={styles.filterChips}>
           {(["ALL", "LEARNING", "KNOWN"] as const).map((value) => (
@@ -203,16 +203,16 @@ export default function VocabularyTab() {
               data-on={filter === value}
               onClick={() => setFilter(value)}
             >
-              {value === "ALL" ? "All" : STATUS_LABEL[value]}
+              {value === "ALL" ? "Все" : STATUS_LABEL[value]}
             </button>
           ))}
         </div>
       </div>
 
       {visible.length === 0 ? (
-        <EmptyState icon={<BookOpen size={22} />} title="No words yet">
-          Tap a highlighted word while watching with subtitles in this language and it
-          will appear here with the line it came from.
+        <EmptyState icon={<BookOpen size={22} />} title="Слов пока нет">
+          Нажмите на подсвеченное слово во время просмотра с субтитрами на этом языке, и оно
+          появится здесь вместе с репликой, где встретилось.
         </EmptyState>
       ) : (
         <ul className={styles.wordList}>
@@ -222,7 +222,7 @@ export default function VocabularyTab() {
                 <b>{word.lemma}</b>
                 {word.reading && word.reading !== word.lemma ? <em>{word.reading}</em> : null}
                 {word.surface && word.surface !== word.lemma ? (
-                  <em>seen as {word.surface}</em>
+                  <em>встречено как {word.surface}</em>
                 ) : null}
                 <span className={styles.wordStatus} data-status={word.status}>
                   {STATUS_LABEL[word.status]}
@@ -231,12 +231,12 @@ export default function VocabularyTab() {
               {word.gloss ? <p className={styles.wordGloss}>{word.gloss}</p> : null}
               {word.contextLine ? <p className={styles.wordContext}>{word.contextLine}</p> : null}
               <div className={styles.wordFoot}>
-                <span>seen {word.timesSeen}×</span>
+                <span>встречено {word.timesSeen}×</span>
                 {word.animeKey && word.timeSec !== null ? (
                   <Link
                     href={`/watch/${word.animeKey}?t=${word.timeSec}${word.episode ? `&ep=${word.episode}` : ""}`}
                   >
-                    <Play size={12} /> episode {word.episode} · {formatTime(word.timeSec)}
+                    <Play size={12} /> серия {word.episode} · {formatTime(word.timeSec)}
                   </Link>
                 ) : null}
               </div>
@@ -247,7 +247,7 @@ export default function VocabularyTab() {
 
       {/* JMdict is CC BY-SA 4.0: crediting it is a licence condition, not a courtesy. */}
       <p className={styles.vocabCredit}>
-        Japanese meanings from{" "}
+        Значения японских слов из{" "}
         <a href="https://www.edrdg.org/jmdict/j_jmdict.html" target="_blank" rel="noreferrer">
           JMdict
         </a>{" "}

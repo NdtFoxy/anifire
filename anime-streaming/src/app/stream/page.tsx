@@ -72,7 +72,7 @@ function TitleCard({
           <button
             type="button"
             className={`${styles.cBtn} ${styles.cBtnGhost} ${inList(movie.id) ? styles.cBtnActive : ""}`}
-            aria-label={inList(movie.id) ? "Remove from My List" : "Add to My List"}
+            aria-label={inList(movie.id) ? "Убрать из «Моего списка»" : "Добавить в «Мой список»"}
             aria-pressed={inList(movie.id)}
             onClick={(e) => {
               e.stopPropagation();
@@ -84,7 +84,7 @@ function TitleCard({
           <button
             type="button"
             className={`${styles.cBtn} ${styles.cBtnGhost} ${isLiked(movie.id) ? styles.cBtnActive : ""}`}
-            aria-label={isLiked(movie.id) ? "Unlike" : "Like"}
+            aria-label={isLiked(movie.id) ? "Убрать лайк" : "Нравится"}
             aria-pressed={isLiked(movie.id)}
             onClick={(e) => {
               e.stopPropagation();
@@ -97,7 +97,7 @@ function TitleCard({
           <button
             type="button"
             className={`${styles.cBtn} ${styles.cBtnGhost}`}
-            aria-label="More info"
+            aria-label="Подробнее"
             onClick={(e) => {
               e.stopPropagation();
               onOpen(movie);
@@ -108,7 +108,7 @@ function TitleCard({
         </div>
 
         <div className={styles.cardMeta}>
-          <span className={styles.cMatch}>{movie.match}% Match</span>
+          <span className={styles.cMatch}>{movie.match}% совпадение</span>
           <span className={styles.cBadge}>{movie.rating}</span>
           <span>{movie.duration}</span>
           <span className={styles.cBadge}>HD</span>
@@ -281,7 +281,7 @@ function ContentRow({
       <button
         className={`${styles.rowArrow} ${styles.rowArrowLeft}`}
         type="button"
-        aria-label="Scroll left"
+        aria-label="Прокрутить влево"
         onClick={() => scroll(-1)}
       >
         <ChevronLeft size={28} />
@@ -296,7 +296,7 @@ function ContentRow({
       <button
         className={`${styles.rowArrow} ${styles.rowArrowRight}`}
         type="button"
-        aria-label="Scroll right"
+        aria-label="Прокрутить вправо"
         onClick={() => scroll(1)}
       >
         <ChevronRight size={28} />
@@ -500,7 +500,7 @@ function StreamExperience() {
               <h1 className={styles.heroTitle}>{active.title}</h1>
             )}
             <div className={styles.heroMetaRow}>
-              <span className={styles.matchScore}>{active.match}% Match</span>
+              <span className={styles.matchScore}>{active.match}% совпадение</span>
               <span className={styles.metaText}>{active.year}</span>
               <span className={styles.metaBadge}>{active.rating}</span>
               <span className={styles.metaText}>{active.duration}</span>
@@ -514,7 +514,7 @@ function StreamExperience() {
                 className={styles.btnPlay}
               >
                 <Play size={20} fill="currentColor" />
-                Play
+                Смотреть
               </Link>
               <button
                 className={styles.btnInfo}
@@ -522,7 +522,7 @@ function StreamExperience() {
                 onClick={() => openModal(active)}
               >
                 <Info size={20} />
-                More Info
+                Подробнее
               </button>
             </div>
           </div>
@@ -534,7 +534,7 @@ function StreamExperience() {
                   <button
                     key={m.id}
                     type="button"
-                    aria-label={`Go to ${m.title}`}
+                    aria-label={`Перейти к ${m.title}`}
                     aria-current={i === activeIndex ? "true" : undefined}
                     className={`${styles.dot} ${i === activeIndex ? styles.dotOn : ""}`}
                     onClick={() => goTo(i)}
@@ -545,7 +545,7 @@ function StreamExperience() {
                 <button
                   className={styles.arrow}
                   type="button"
-                  aria-label="Previous"
+                  aria-label="Назад"
                   onClick={() => goTo(activeIndex - 1)}
                 >
                   <ChevronLeft size={20} />
@@ -553,7 +553,7 @@ function StreamExperience() {
                 <button
                   className={styles.arrow}
                   type="button"
-                  aria-label="Next"
+                  aria-label="Вперёд"
                   onClick={() => goTo(activeIndex + 1)}
                 >
                   <ChevronRight size={20} />
@@ -565,20 +565,20 @@ function StreamExperience() {
               <button
                 className={styles.audioBtn}
                 type="button"
-                aria-label={heroPlaying ? "Pause preview" : "Play preview"}
-                title={heroPlaying ? "Show banner only" : "Play preview"}
+                aria-label={heroPlaying ? "Остановить превью" : "Включить превью"}
+                title={heroPlaying ? "Показывать только баннер" : "Включить превью"}
                 onClick={() => setHeroPlaying((v) => !v)}
               >
                 {heroPlaying ? <Pause size={18} /> : <Play size={18} fill="currentColor" />}
               </button>
               <div className={styles.audioText}>
-                <span className={styles.audioLabel}>Audio</span>
-                <span className={styles.audioVal}>Japanese / Subtitles</span>
+                <span className={styles.audioLabel}>Звук</span>
+                <span className={styles.audioVal}>Японский / Субтитры</span>
               </div>
               <button
                 className={styles.audioBtn}
                 type="button"
-                aria-label={muted ? "Unmute" : "Mute"}
+                aria-label={muted ? "Включить звук" : "Выключить звук"}
                 onClick={() => setMuted((v) => !v)}
               >
                 {muted ? <VolumeX size={18} /> : <Volume2 size={18} />}
@@ -589,8 +589,8 @@ function StreamExperience() {
 
         {/* ══════════ VIEW SWITCH ══════════ */}
         <div className={styles.viewBar} id="catalog">
-          <h2 className={styles.viewHeading}>Browse</h2>
-          <div className={styles.viewToggle} role="tablist" aria-label="View style">
+          <h2 className={styles.viewHeading}>Обзор</h2>
+          <div className={styles.viewToggle} role="tablist" aria-label="Вид отображения">
             <button
               type="button"
               role="tab"
@@ -598,7 +598,7 @@ function StreamExperience() {
               className={`${styles.viewBtn} ${view === "rows" ? styles.viewBtnOn : ""}`}
               onClick={() => setView("rows")}
             >
-              <LayoutGrid size={16} /> Rows
+              <LayoutGrid size={16} /> Подборки
             </button>
             <button
               type="button"
@@ -607,7 +607,7 @@ function StreamExperience() {
               className={`${styles.viewBtn} ${view === "catalog" ? styles.viewBtnOn : ""}`}
               onClick={() => setView("catalog")}
             >
-              <List size={16} /> Catalog
+              <List size={16} /> Каталог
             </button>
           </div>
         </div>
@@ -631,8 +631,8 @@ function StreamExperience() {
               <CatalogView movies={listMovies} onOpen={openModal} />
             ) : (
               <div className={styles.emptyList}>
-                <p>Your list is empty.</p>
-                <span>Tap the + on any title to save it here.</span>
+                <p>Ваш список пуст.</p>
+                <span>Нажмите «+» на любом тайтле, чтобы сохранить его здесь.</span>
               </div>
             );
           })()

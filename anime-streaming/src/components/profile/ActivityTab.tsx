@@ -27,20 +27,20 @@ export default function ActivityTab() {
   if (activity.error) {
     return (
       <ErrorState
-        message={`Could not load your watch history. ${activity.error}`}
+        message={`Не удалось загрузить историю просмотра. ${activity.error}`}
         onRetry={activity.reload}
       />
     );
   }
   if (groups.length === 0) {
     return (
-      <EmptyState icon={<History size={22} />} title="Nothing watched yet">
+      <EmptyState icon={<History size={22} />} title="Вы ещё ничего не смотрели">
         <p>
-          Start an episode and your history builds up here — day by day, with
-          the exact episode you stopped on.
+          Включите серию — и здесь появится ваша история просмотра по дням,
+          с точной серией, на которой вы остановились.
         </p>
         <Link href="/stream" className={styles.primaryLink}>
-          Start watching
+          Начать просмотр
         </Link>
       </EmptyState>
     );
@@ -53,7 +53,7 @@ export default function ActivityTab() {
           <h2 className={styles.dayHead}>
             {day}
             <span className={styles.dayCount}>
-              {events.length} episode{events.length === 1 ? "" : "s"}
+              серий: {events.length}
             </span>
           </h2>
           <ul className={styles.timeline}>
@@ -67,7 +67,7 @@ export default function ActivityTab() {
                   <span className={styles.eventTitle}>{ev.animeTitle}</span>
                   <span className={styles.eventMeta}>
                     <span className={styles.chip}>
-                      <Play size={11} /> Ep {ev.episode}
+                      <Play size={11} /> Серия {ev.episode}
                     </span>
                     {ev.provider ? (
                       <span className={styles.chipMuted}>{ev.provider}</span>

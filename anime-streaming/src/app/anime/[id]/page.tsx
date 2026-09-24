@@ -37,10 +37,10 @@ import styles from "./anime.module.css";
 
 /** The tab strip jumps to real sections on this page — never a dead control. */
 const SECTION_TABS: { label: string; hash: string; needsComments?: boolean }[] = [
-  { label: "Episodes", hash: "#episodes" },
-  { label: "Related", hash: "#related" },
-  { label: "Comments", hash: "#comments", needsComments: true },
-  { label: "Production", hash: "#production" },
+  { label: "Серии", hash: "#episodes" },
+  { label: "Похожие", hash: "#related" },
+  { label: "Комментарии", hash: "#comments", needsComments: true },
+  { label: "О производстве", hash: "#production" },
 ];
 
 /** Map an AniLiberty release onto the catalog detail shape the page renders. */
@@ -55,9 +55,9 @@ function aniReleaseToDetail(r: AniReleaseFull): AnimeDetail {
     background: "",
     type: r.typeLabel,
     source: null,
-    status: r.isOngoing ? "Ongoing" : "Finished Airing",
+    status: r.isOngoing ? "Онгоинг" : "Завершён",
     episodes: r.episodesTotal,
-    duration: r.avgDuration ? `${r.avgDuration} min` : null,
+    duration: r.avgDuration ? `${r.avgDuration} мин` : null,
     rating: r.ageLabel,
     score: null,
     rank: null,
@@ -78,7 +78,7 @@ function aniReleaseToDetail(r: AniReleaseFull): AnimeDetail {
 function aniReleaseToEpisodes(r: AniReleaseFull): Episode[] {
   return r.episodes.map((e) => ({
     number: e.ordinal,
-    title: e.name || `Episode ${e.ordinal}`,
+    title: e.name || `Серия ${e.ordinal}`,
     duration: e.duration
       ? `${Math.floor(e.duration / 60)}:${String(e.duration % 60).padStart(2, "0")}`
       : "24:00",
@@ -185,14 +185,14 @@ function AnimeDetailContent() {
 
   const epCount = detail?.episodes ?? (episodes.length || 12);
   const totalMinutes = epCount * 24;
-  const watchTime = `${Math.floor(totalMinutes / 60)}h ${totalMinutes % 60}m`;
+  const watchTime = `${Math.floor(totalMinutes / 60)} ч ${totalMinutes % 60} мин`;
 
   const allEpisodes: Episode[] = (
     episodes.length > 0
       ? episodes
       : Array.from({ length: Math.min(epCount, 12) }, (_, i) => ({
           number: i + 1,
-          title: `Episode ${i + 1}`,
+          title: `Серия ${i + 1}`,
           duration: "24:00",
           thumbnail: null,
         }))
@@ -213,10 +213,10 @@ function AnimeDetailContent() {
   const recommended = others.slice(0, 4);
 
   const infoRows: { key: string; val: string }[] = [
-    { key: "Type:", val: detail?.type ?? "TV Series" },
-    detail?.source ? { key: "Source:", val: detail.source } : null,
+    { key: "Тип:", val: detail?.type ?? "ТВ-сериал" },
+    detail?.source ? { key: "Источник:", val: detail.source } : null,
     {
-      key: "Season:",
+      key: "Сезон:",
       val:
         detail?.season && detail?.year
           ? `${detail.season} ${detail.year}`
@@ -224,14 +224,14 @@ function AnimeDetailContent() {
             ? String(detail.year)
             : movie.year,
     },
-    { key: "Status:", val: detail?.status ?? "Finished Airing" },
-    { key: "Genres:", val: genres },
+    { key: "Статус:", val: detail?.status ?? "Завершён" },
+    { key: "Жанры:", val: genres },
     detail?.studios.length
-      ? { key: "Studio:", val: detail.studios.join(", ") }
+      ? { key: "Студия:", val: detail.studios.join(", ") }
       : null,
-    { key: "Episode length:", val: `~ ${detail?.duration ?? movie.duration}` },
-    { key: "Total episodes:", val: `${epCount} episodes` },
-    { key: "Total watch time:", val: watchTime },
+    { key: "Длительность серии:", val: `~ ${detail?.duration ?? movie.duration}` },
+    { key: "Всего серий:", val: `${epCount}` },
+    { key: "Общее время просмотра:", val: watchTime },
   ].filter((r): r is { key: string; val: string } => r !== null);
 
   // Lazy load: skeleton until the real title resolves (no mock-title flash).
@@ -335,7 +335,7 @@ function AnimeDetailContent() {
               </dl>
 
               <Link href={`/watch/${watchId}?ep=1`} className={styles.watchBtn} data-tap>
-                <Play size={18} fill="currentColor" /> Watch from episode 1
+                <Play size={18} fill="currentColor" /> Смотреть с 1 серии
               </Link>
             </div>
           </div>
@@ -346,7 +346,7 @@ function AnimeDetailContent() {
           </div>
 
           {/* Section jumps — these move focus to sections that really exist. */}
-          <nav className={styles.tabs} aria-label="Sections">
+          <nav className={styles.tabs} aria-label="Разделы">
             {SECTION_TABS.filter((t) => !t.needsComments || !isAniAlias).map(
               (tab, i) => (
                 <a
@@ -364,16 +364,16 @@ function AnimeDetailContent() {
           <div className={styles.toolbar} id="episodes">
             <input
               className={styles.search}
-              placeholder="Search by name or number…"
-              aria-label="Search episodes"
+              placeholder="Поиск по названию или номеру…"
+              aria-label="Поиск серий"
               value={epSearch}
               onChange={(e) => setEpSearch(e.target.value)}
             />
             <button
               className={styles.toolBtn}
               type="button"
-              aria-label="Sort"
-              title={epAsc ? "Sort descending" : "Sort ascending"}
+              aria-label="Сортировка"
+              title={epAsc ? "По убыванию" : "По возрастанию"}
               onClick={() => setEpAsc((v) => !v)}
             >
               <ArrowUpDown size={18} />
@@ -381,7 +381,7 @@ function AnimeDetailContent() {
             <button
               className={`${styles.toolBtn} ${epView === "grid" ? styles.toolBtnActive : ""}`}
               type="button"
-              aria-label="Grid view"
+              aria-label="Плиткой"
               aria-pressed={epView === "grid"}
               onClick={() => setEpView("grid")}
             >
@@ -390,18 +390,18 @@ function AnimeDetailContent() {
             <button
               className={`${styles.toolBtn} ${epView === "list" ? styles.toolBtnActive : ""}`}
               type="button"
-              aria-label="List view"
+              aria-label="Списком"
               aria-pressed={epView === "list"}
               onClick={() => setEpView("list")}
             >
               <List size={18} />
             </button>
-            <button className={styles.toolBtn} type="button" aria-label="More">
+            <button className={styles.toolBtn} type="button" aria-label="Ещё">
               <MoreVertical size={18} />
             </button>
           </div>
           <p className={styles.watchedCount}>
-            Watched 0 of {allEpisodes.length}
+            Просмотрено 0 из {allEpisodes.length}
           </p>
 
           {/* Episodes grid */}
@@ -427,7 +427,7 @@ function AnimeDetailContent() {
                 </div>
                 <div className={styles.epInfo}>
                   <p className={styles.epName}>{ep.title}</p>
-                  <p className={styles.epNum}>Episode {ep.number}</p>
+                  <p className={styles.epNum}>Серия {ep.number}</p>
                 </div>
               </Link>
             ))}
@@ -437,8 +437,8 @@ function AnimeDetailContent() {
         {/* ───────── ASIDE ───────── */}
         <aside className={styles.aside}>
           <section className={styles.asideBlock}>
-            <h2 className={styles.asideTitle}>New Episodes</h2>
-            <p className={styles.asideSub}>The freshest episodes in your favorite dub</p>
+            <h2 className={styles.asideTitle}>Новые серии</h2>
+            <p className={styles.asideSub}>Самые свежие серии в любимой озвучке</p>
             {latest.length > 0
               ? latest.map((r) => (
                   <Link key={r.id} href={r.href} className={styles.newEp}>
@@ -448,12 +448,12 @@ function AnimeDetailContent() {
                     <div className={styles.newEpBody}>
                       <span className={styles.newEpTitle}>{r.title}</span>
                       <span className={styles.newEpMeta}>
-                        {r.episodeNumber ? `Episode ${r.episodeNumber}` : "New"}
+                        {r.episodeNumber ? `Серия ${r.episodeNumber}` : "Новинка"}
                         {r.year ? ` · ${r.year}` : ""}
                         {r.ageLabel ? ` · ${r.ageLabel}` : ""}
                       </span>
                       <span className={styles.newEpBtn}>
-                        <Play size={13} fill="currentColor" /> Watch
+                        <Play size={13} fill="currentColor" /> Смотреть
                       </span>
                     </div>
                   </Link>
@@ -466,10 +466,10 @@ function AnimeDetailContent() {
                     <div className={styles.newEpBody}>
                       <span className={styles.newEpTitle}>{m.title}</span>
                       <span className={styles.newEpMeta}>
-                        Episode {10 - i} · {m.year} · {m.rating}
+                        Серия {10 - i} · {m.year} · {m.rating}
                       </span>
                       <span className={styles.newEpBtn}>
-                        <Play size={13} fill="currentColor" /> Watch
+                        <Play size={13} fill="currentColor" /> Смотреть
                       </span>
                     </div>
                   </Link>
@@ -477,8 +477,8 @@ function AnimeDetailContent() {
           </section>
 
           <section className={styles.asideBlock} id="related">
-            <h2 className={styles.asideTitle}>Recommended</h2>
-            <p className={styles.asideSub}>Releases you might enjoy</p>
+            <h2 className={styles.asideTitle}>Рекомендуем</h2>
+            <p className={styles.asideSub}>Релизы, которые могут вам понравиться</p>
             <div className={styles.recGrid}>
               {recommended.map((m) => (
                 <Link key={m.id} href={`/anime/${m.id}`} className={styles.recCard}>

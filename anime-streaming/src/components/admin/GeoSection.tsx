@@ -77,7 +77,7 @@ export default function GeoSection() {
           setError(null);
         })
         .catch((err: unknown) => {
-          setError(err instanceof Error ? err.message : "Could not load geo rules.");
+          setError(err instanceof Error ? err.message : "Не удалось загрузить гео-правила.");
         }),
     []
   );
@@ -116,7 +116,7 @@ export default function GeoSection() {
       setNote("");
       await load();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not save that rule.");
+      setError(err instanceof Error ? err.message : "Не удалось сохранить правило.");
     } finally {
       setBusy(false);
     }
@@ -131,22 +131,22 @@ export default function GeoSection() {
       <header className={styles.sectionHead}>
         <div>
           <h2>
-            <Globe2 size={20} /> Regional access
+            <Globe2 size={20} /> Региональный доступ
           </h2>
           <p>
-            Click a country to allow or block it. Administrators are never blocked, so
-            this panel stays reachable from anywhere.
+            Нажмите на страну, чтобы разрешить или заблокировать её. Администраторы никогда не блокируются, поэтому
+            панель доступна из любой точки мира.
           </p>
         </div>
         <div className={styles.geoStats}>
           <span>
-            <b>{blocked.size}</b> blocked
+            <b>{blocked.size}</b> заблокировано
           </span>
           <span>
-            <b>{data?.refusalTotal ?? 0}</b> refused requests
+            <b>{data?.refusalTotal ?? 0}</b> отклонённых запросов
           </span>
           <span data-on={data?.enabled}>
-            {data?.enabled ? "Enforcement on" : "Enforcement off"}
+            {data?.enabled ? "Ограничения включены" : "Ограничения выключены"}
           </span>
         </div>
       </header>
@@ -156,10 +156,10 @@ export default function GeoSection() {
       {simulating ? (
         <div className={styles.simBanner}>
           <EyeOff size={16} />
-          Previewing the site as a visitor from <b>{simulating}</b>. Only your own
-          requests are affected.
+          Просмотр сайта глазами посетителя из страны <b>{simulating}</b>. Затрагиваются только ваши
+          запросы.
           <button type="button" onClick={() => preview(null)}>
-            Stop preview
+            Остановить просмотр
           </button>
         </div>
       ) : null}
@@ -173,23 +173,23 @@ export default function GeoSection() {
 
       <div className={styles.geoPanels}>
         <section className={styles.card}>
-          <h3>{selected ? `${selected.name} · ${selected.code}` : "Pick a country"}</h3>
+          <h3>{selected ? `${selected.name} · ${selected.code}` : "Выберите страну"}</h3>
           {selected ? (
             <>
               <p className={styles.geoState} data-blocked={isBlocked}>
                 {isBlocked ? (
                   <>
-                    <ShieldAlert size={16} /> Blocked — visitors get HTTP 451
+                    <ShieldAlert size={16} /> Заблокировано — посетители получают HTTP 451
                   </>
                 ) : (
                   <>
-                    <ShieldCheck size={16} /> Allowed
+                    <ShieldCheck size={16} /> Разрешено
                   </>
                 )}
               </p>
               <input
                 className={styles.input}
-                placeholder="Reason (kept in the audit trail)"
+                placeholder="Причина (сохраняется в журнале аудита)"
                 value={note}
                 onChange={(e) => setNote(e.target.value)}
                 maxLength={255}
@@ -202,7 +202,7 @@ export default function GeoSection() {
                   onClick={() => toggle(selected.code, !isBlocked)}
                 >
                   {busy ? <Loader2 size={16} className={styles.spin} /> : null}
-                  {isBlocked ? "Unblock" : "Block this country"}
+                  {isBlocked ? "Разблокировать" : "Заблокировать страну"}
                 </button>
                 <button
                   type="button"
@@ -210,22 +210,22 @@ export default function GeoSection() {
                   onClick={() => preview(simulating === selected.code ? null : selected.code)}
                 >
                   {simulating === selected.code ? <EyeOff size={16} /> : <Eye size={16} />}
-                  {simulating === selected.code ? "Stop preview" : "Preview as visitor"}
+                  {simulating === selected.code ? "Остановить просмотр" : "Просмотр как посетитель"}
                 </button>
               </div>
               {!stats && statsLoading ? (
                 <p className={styles.geoHint}>
-                  <Loader2 size={14} className={styles.spin} /> Loading regional numbers…
+                  <Loader2 size={14} className={styles.spin} /> Загрузка региональной статистики…
                 </p>
               ) : stats ? (
                 <div className={styles.statsBlock} data-refreshing={statsLoading}>
                   <div className={styles.statsRow}>
                     <span className={styles.liveDot} data-live={stats.watchingNow > 0} />
-                    <b>{stats.watchingNow}</b> watching right now
-                    <em>last 15 minutes</em>
+                    <b>{stats.watchingNow}</b> смотрят прямо сейчас
+                    <em>за последние 15 минут</em>
                   </div>
 
-                  <div className={styles.periodChips} role="group" aria-label="Reporting period">
+                  <div className={styles.periodChips} role="group" aria-label="Период отчёта">
                     {(["24h", "7d", "30d", "all"] as StatsPeriod[]).map((value) => (
                       <button
                         key={value}
@@ -233,7 +233,7 @@ export default function GeoSection() {
                         data-on={period === value}
                         onClick={() => setPeriod(value)}
                       >
-                        {value === "all" ? "All time" : value}
+                        {value === "all" ? "За всё время" : value}
                       </button>
                     ))}
                   </div>
@@ -251,7 +251,7 @@ export default function GeoSection() {
                     <tbody>
                       <tr>
                         <td>
-                          <UserPlus size={13} /> Sign-ups
+                          <UserPlus size={13} /> Регистрации
                         </td>
                         <td>{stats.signups.day}</td>
                         <td>{stats.signups.week}</td>
@@ -260,7 +260,7 @@ export default function GeoSection() {
                       </tr>
                       <tr>
                         <td>
-                          <Activity size={13} /> Views
+                          <Activity size={13} /> Просмотры
                         </td>
                         <td>{stats.views.day}</td>
                         <td>{stats.views.week}</td>
@@ -273,13 +273,13 @@ export default function GeoSection() {
                   {stats.topTitles.length > 0 ? (
                     <>
                       <h4 className={styles.statsHead}>
-                        Most watched {period === "all" ? "of all time" : `· last ${period}`}
+                        Самое популярное {period === "all" ? "за всё время" : `· за ${period}`}
                       </h4>
                       <ul className={styles.statsTop}>
                         {stats.topTitles.map((row) => (
                           <li key={row.title}>
                             <span>{row.title}</span>
-                            <b>{row.views} views</b>
+                            <b>просмотров: {row.views}</b>
                           </li>
                         ))}
                       </ul>
@@ -289,9 +289,9 @@ export default function GeoSection() {
                   {stats.topRated.length > 0 ? (
                     <>
                       <h4 className={styles.statsHead}>
-                        Best rated here
+                        Лучшие оценки в стране
                         {stats.averageScore
-                          ? ` · country average ${stats.averageScore.toFixed(1)}`
+                          ? ` · средняя по стране ${stats.averageScore.toFixed(1)}`
                           : ""}
                       </h4>
                       <ul className={styles.statsTop}>
@@ -300,7 +300,7 @@ export default function GeoSection() {
                             <span>{row.title}</span>
                             <b className={styles.scorePill}>
                               {row.average.toFixed(1)}
-                              <em>{row.votes} votes</em>
+                              <em>голосов: {row.votes}</em>
                             </b>
                           </li>
                         ))}
@@ -310,13 +310,13 @@ export default function GeoSection() {
 
                   <p className={styles.geoHint}>
                     {stats.refusedRequests > 0
-                      ? `${stats.refusedRequests} requests refused since the last restart. `
+                      ? `Отклонено запросов с последнего перезапуска: ${stats.refusedRequests}. `
                       : ""}
                     {stats.lastSignupAt
-                      ? `Newest account ${new Date(stats.lastSignupAt).toLocaleDateString()}.`
-                      : "No account has ever been created from here."}
+                      ? `Последний аккаунт создан ${new Date(stats.lastSignupAt).toLocaleDateString()}.`
+                      : "Из этой страны ещё не создано ни одного аккаунта."}
                     {stats.unattributedUsers > 0
-                      ? ` ${stats.unattributedUsers} accounts have no country recorded (created before attribution, or without a trusted proxy header).`
+                      ? ` Аккаунтов без указанной страны: ${stats.unattributedUsers} (созданы до определения страны или без доверенного заголовка прокси).`
                       : ""}
                   </p>
                 </div>
@@ -324,25 +324,25 @@ export default function GeoSection() {
             </>
           ) : (
             <p className={styles.geoHint}>
-              Nothing is blocked until you say so. An empty rule set means the whole
-              world has access.
+              Ничего не блокируется, пока вы этого не решите. Пустой набор правил означает, что доступ
+              открыт всему миру.
             </p>
           )}
         </section>
 
         <section className={styles.card}>
           <h3>
-            <History size={16} /> Recent changes
+            <History size={16} /> Последние изменения
           </h3>
           {audit.length === 0 ? (
-            <p className={styles.geoHint}>No rule has been changed yet.</p>
+            <p className={styles.geoHint}>Правила ещё не менялись.</p>
           ) : (
             <ul className={styles.auditList}>
               {audit.map((row, i) => (
                 <li key={`${row.country}-${row.at}-${i}`}>
                   <span className={styles.auditCode}>{row.country}</span>
-                  <span data-blocked={row.blocked}>{row.blocked ? "blocked" : "allowed"}</span>
-                  <em>{row.actorEmail ?? "system"}</em>
+                  <span data-blocked={row.blocked}>{row.blocked ? "заблокировано" : "разрешено"}</span>
+                  <em>{row.actorEmail ?? "система"}</em>
                   <time>{new Date(row.at).toLocaleString()}</time>
                   {row.note ? <small>{row.note}</small> : null}
                 </li>

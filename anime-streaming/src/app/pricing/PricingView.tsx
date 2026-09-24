@@ -106,18 +106,18 @@ export default function PricingView() {
 
       <header className={`${styles.shell} ${styles.head}`}>
         <span className={styles.eyebrow}>
-          <Sparkles size={14} /> Ads-free
+          <Sparkles size={14} /> Без рекламы
         </span>
-        <h1 className={styles.title}>Watch without the interruptions.</h1>
+        <h1 className={styles.title}>Смотрите без перерывов.</h1>
         <p className={styles.lead}>
-          The catalogue, your list and your progress stay free. A plan removes
-          the sponsor breaks and keeps the servers running.
+          Каталог, ваш список и прогресс остаются бесплатными. Подписка убирает
+          рекламные паузы и помогает поддерживать серверы.
         </p>
       </header>
 
       <main id="main" className={styles.shell}>
         {plans === null && !failed ? (
-          <div className={styles.skeletonGrid} aria-busy="true" aria-label="Loading plans">
+          <div className={styles.skeletonGrid} aria-busy="true" aria-label="Загрузка тарифов">
             {[0, 1, 2].map((i) => (
               <span key={i} className={styles.skeletonCard} />
             ))}
@@ -126,8 +126,7 @@ export default function PricingView() {
           <div className={styles.failure} role="alert">
             <AlertTriangle size={22} className={styles.failureIcon} />
             <p>
-              We could not load the plans right now, so there is nothing to
-              quote you. Nothing was charged.
+              Сейчас не удалось загрузить тарифы, поэтому показать цены не получится. Деньги не списаны.
             </p>
             <button
               type="button"
@@ -135,7 +134,7 @@ export default function PricingView() {
               onClick={retry}
               data-tap
             >
-              <RotateCcw size={16} /> Try again
+              <RotateCcw size={16} /> Повторить
             </button>
           </div>
         ) : (
@@ -152,7 +151,7 @@ export default function PricingView() {
                   <div className={styles.cardHead}>
                     <h2 className={styles.planTitle}>{plan.title}</h2>
                     {current ? (
-                      <span className={styles.currentPill}>Current</span>
+                      <span className={styles.currentPill}>Текущий</span>
                     ) : null}
                   </div>
 
@@ -178,7 +177,7 @@ export default function PricingView() {
                       className={styles.buy}
                       data-tap
                     >
-                      Manage plan
+                      Управление подпиской
                     </Link>
                   ) : (
                     <button
@@ -191,12 +190,12 @@ export default function PricingView() {
                       {pending ? (
                         <>
                           <Loader2 size={16} className={styles.spin} />
-                          Opening payment…
+                          Открываем оплату…
                         </>
                       ) : user ? (
-                        `Choose ${plan.title}`
+                        `Выбрать: ${plan.title}`
                       ) : (
-                        "Sign in to continue"
+                        "Войдите, чтобы продолжить"
                       )}
                     </button>
                   )}
@@ -215,11 +214,9 @@ export default function PricingView() {
 
         {included.length ? (
           <section className={styles.included} data-reveal>
-            <h2 className={styles.includedHead}>What you get</h2>
+            <h2 className={styles.includedHead}>Что входит</h2>
             <p className={styles.includedNote}>
-              Every plan carries the same entitlement — only the billing period
-              differs. Access is resolved on the server on each request, so it
-              works on every device you sign in on.
+              Все тарифы дают одинаковые возможности — отличается только период оплаты. Доступ проверяется на сервере при каждом запросе, поэтому он работает на любом устройстве, где вы вошли в аккаунт.
             </p>
             <ul className={styles.includedList}>
               {included.map((perk) => (
@@ -233,12 +230,11 @@ export default function PricingView() {
         ) : null}
 
         <p className={styles.foot}>
-          Payment is handled by the provider on their own page; card details
-          never reach Anifire. You can cancel at any time from{" "}
+          Оплата проходит на странице платёжного сервиса — данные карты не попадают в Anifire. Отменить подписку можно в любой момент в{" "}
           <Link href="/profile?tab=subscription" className={styles.footLink}>
-            your subscription settings
+            настройках подписки
           </Link>{" "}
-          and keep access until the period you paid for ends.
+          — доступ сохранится до конца оплаченного периода.
         </p>
       </main>
 

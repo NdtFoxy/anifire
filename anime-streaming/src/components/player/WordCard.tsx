@@ -32,17 +32,17 @@ export default function WordCard({
   const gloss = token.word?.gloss ?? null;
 
   return (
-    <div className={styles.wordCard} role="dialog" aria-label={`Word ${token.lemma}`}>
+    <div className={styles.wordCard} role="dialog" aria-label={`Слово ${token.lemma}`}>
       <header>
         <div>
           <b>{token.lemma}</b>
           {reading && reading !== token.lemma ? <em>{reading}</em> : null}
-          {token.surface !== token.lemma ? <em>as written: {token.surface}</em> : null}
+          {token.surface !== token.lemma ? <em>в тексте: {token.surface}</em> : null}
         </div>
         <span className={styles.wordLevel} data-level={level}>
-          level {level}
+          уровень {level}
         </span>
-        <button type="button" onClick={onClose} aria-label="Close">
+        <button type="button" onClick={onClose} aria-label="Закрыть">
           <X size={15} />
         </button>
       </header>
@@ -52,7 +52,7 @@ export default function WordCard({
       ) : (
         // No dictionary entry: the sentence in a language they read is still a
         // usable answer, so say what is missing instead of showing a blank box.
-        <p className={styles.wordGlossMissing}>Not in the dictionary — read it from the line below.</p>
+        <p className={styles.wordGlossMissing}>Нет в словаре — посмотрите значение в строке ниже.</p>
       )}
 
       <p className={styles.wordLine}>{line}</p>
@@ -60,18 +60,18 @@ export default function WordCard({
 
       <p className={styles.wordMeta}>
         {token.word?.pos ? `${token.word.pos} · ` : ""}
-        appears {occurrences}× in this episode
+        встречается в этой серии: {occurrences}×
       </p>
 
       <div className={styles.wordActions}>
         <button type="button" onClick={() => onMark("LEARNING")}>
-          <BookmarkPlus size={15} /> Learning
+          <BookmarkPlus size={15} /> Изучаю
         </button>
         <button type="button" onClick={() => onMark("KNOWN")}>
-          <Check size={15} /> I know it
+          <Check size={15} /> Знаю
         </button>
         <button type="button" onClick={() => onMark("IGNORED")}>
-          <EyeOff size={15} /> Ignore
+          <EyeOff size={15} /> Пропустить
         </button>
       </div>
     </div>

@@ -97,8 +97,8 @@ export async function startCheckout(
       return failure(
         res,
         res.status === 429
-          ? "Too many checkout attempts. Wait a moment and try again."
-          : "Could not open the payment page. Please try again."
+          ? "Слишком много попыток оплаты. Подождите немного и попробуйте снова."
+          : "Не удалось открыть страницу оплаты. Попробуйте ещё раз."
       );
     }
     const data = (await res.json()) as {
@@ -109,7 +109,7 @@ export async function startCheckout(
       return {
         ok: false,
         code: "no_confirmation_url",
-        message: "The payment provider did not return a payment page.",
+        message: "Платёжный сервис не вернул страницу оплаты.",
       };
     }
     return {
@@ -121,7 +121,7 @@ export async function startCheckout(
     return {
       ok: false,
       code: "network",
-      message: "Network error. Check your connection and try again.",
+      message: "Ошибка сети. Проверьте подключение и попробуйте снова.",
     };
   }
 }

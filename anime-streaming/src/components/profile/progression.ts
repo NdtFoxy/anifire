@@ -45,9 +45,9 @@ export function levelProgress(points: number, level: number): LevelProgress {
 
 /** Flavour title tied to the level, not to an arbitrary point cut-off. */
 export function levelTitle(level: number): string {
-  if (level >= 20) return "Immortal Ascension";
-  if (level >= 12) return "Flamekeeper";
-  if (level >= 7) return "Veteran";
-  if (level >= 3) return "Rising";
-  return "Newcomer";
+  if (level >= 20) return "Бессмертное восхождение";
+  if (level >= 12) return "Хранитель пламени";
+  if (level >= 7) return "Ветеран";
+  if (level >= 3) return "Восходящий";
+  return "Новичок";
 }

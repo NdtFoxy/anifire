@@ -58,7 +58,7 @@ export default function IdentityHeader({
   );
 
   const name =
-    profile.displayName || profile.email.split("@")[0] || "Anifire user";
+    profile.displayName || profile.email.split("@")[0] || "Пользователь Anifire";
   const avatar = preview.avatar ?? mediaUrl(profile.avatarUrl) ?? FALLBACK_AVATAR;
   const banner = preview.banner ?? mediaUrl(profile.bannerUrl) ?? FALLBACK_BANNER;
   const progress = levelProgress(profile.points, profile.level);
@@ -66,11 +66,11 @@ export default function IdentityHeader({
   async function upload(kind: ImageKind, file: File) {
     setImageError(null);
     if (!file.type.startsWith("image/")) {
-      setImageError("That file is not an image.");
+      setImageError("Этот файл не является изображением.");
       return;
     }
     if (file.size > MAX_BYTES) {
-      setImageError("Images must be 5 MB or smaller.");
+      setImageError("Размер изображения — не более 5 МБ.");
       return;
     }
     const url = URL.createObjectURL(file);
@@ -79,7 +79,7 @@ export default function IdentityHeader({
     try {
       onProfile(await uploadProfileImage(kind, file));
     } catch (err) {
-      setImageError(err instanceof Error ? err.message : "Upload failed.");
+      setImageError(err instanceof Error ? err.message : "Не удалось загрузить.");
     } finally {
       URL.revokeObjectURL(url);
       setPreview((p) => {
@@ -97,7 +97,7 @@ export default function IdentityHeader({
     try {
       onProfile(await removeProfileImage(kind));
     } catch (err) {
-      setImageError(err instanceof Error ? err.message : "Could not remove image.");
+      setImageError(err instanceof Error ? err.message : "Не удалось удалить изображение.");
     } finally {
       setBusy(null);
     }
@@ -115,7 +115,7 @@ export default function IdentityHeader({
       onProfile(await updateProfile({ displayName: value }));
       setEditingName(false);
     } catch (err) {
-      setNameError(err instanceof Error ? err.message : "Could not save name.");
+      setNameError(err instanceof Error ? err.message : "Не удалось сохранить имя.");
     } finally {
       setSavingName(false);
     }
@@ -127,7 +127,7 @@ export default function IdentityHeader({
     try {
       onProfile(await randomizeProfile());
     } catch (err) {
-      setImageError(err instanceof Error ? err.message : "Randomize failed.");
+      setImageError(err instanceof Error ? err.message : "Не удалось сгенерировать профиль.");
     } finally {
       setRandomizing(false);
     }
@@ -159,7 +159,7 @@ export default function IdentityHeader({
             ) : (
               <Camera size={15} />
             )}
-            {busy === "banner" ? "Uploading…" : "Change banner"}
+            {busy === "banner" ? "Загрузка…" : "Сменить баннер"}
           </button>
           {profile.bannerUrl ? (
             <button
@@ -167,7 +167,7 @@ export default function IdentityHeader({
               type="button"
               onClick={() => remove("banner")}
               disabled={busy !== null}
-              aria-label="Remove banner"
+              aria-label="Удалить баннер"
             >
               <Trash2 size={15} />
             </button>
@@ -207,7 +207,7 @@ export default function IdentityHeader({
             type="button"
             onClick={() => avatarInput.current?.click()}
             disabled={busy !== null}
-            aria-label="Change avatar"
+            aria-label="Сменить аватар"
           >
             <Camera size={16} />
           </button>
@@ -217,7 +217,7 @@ export default function IdentityHeader({
               type="button"
               onClick={() => remove("avatar")}
               disabled={busy !== null}
-              aria-label="Remove avatar"
+              aria-label="Удалить аватар"
             >
               <X size={16} />
             </button>
@@ -255,7 +255,7 @@ export default function IdentityHeader({
                   type="button"
                   onClick={() => void saveName()}
                   disabled={savingName}
-                  aria-label="Save nickname"
+                  aria-label="Сохранить никнейм"
                 >
                   {savingName ? (
                     <Loader2 size={15} className={styles.spin} />
@@ -268,7 +268,7 @@ export default function IdentityHeader({
                   type="button"
                   onClick={() => setEditingName(false)}
                   disabled={savingName}
-                  aria-label="Cancel"
+                  aria-label="Отмена"
                 >
                   <X size={15} />
                 </button>
@@ -280,7 +280,7 @@ export default function IdentityHeader({
                   <ShieldCheck
                     size={17}
                     className={styles.verified}
-                    aria-label="Email verified"
+                    aria-label="Email подтверждён"
                   />
                 ) : null}
                 <button
@@ -291,7 +291,7 @@ export default function IdentityHeader({
                     setNameError(null);
                     setEditingName(true);
                   }}
-                  aria-label="Edit nickname"
+                  aria-label="Изменить никнейм"
                 >
                   <Pencil size={14} />
                 </button>
@@ -303,14 +303,14 @@ export default function IdentityHeader({
               type="button"
               onClick={() => void randomize()}
               disabled={randomizing}
-              title="Fill the profile with random data (saved to the database)"
+              title="Заполнить профиль случайными данными (сохраняются в базе)"
             >
               {randomizing ? (
                 <Loader2 size={15} className={styles.spin} />
               ) : (
                 <Dices size={15} />
               )}
-              Randomize
+              Случайный профиль
             </button>
           </div>
 
@@ -319,7 +319,7 @@ export default function IdentityHeader({
 
           <div className={styles.levelRow}>
             <span className={styles.levelLabel}>
-              Lvl {progress.level} · {levelTitle(progress.level)}
+              Ур. {progress.level} · {levelTitle(progress.level)}
             </span>
             <div
               className={styles.levelBar}
@@ -327,7 +327,7 @@ export default function IdentityHeader({
               aria-valuemin={0}
               aria-valuemax={progress.span}
               aria-valuenow={progress.into}
-              aria-label={`Progress to level ${progress.nextLevel}`}
+              aria-label={`Прогресс до уровня ${progress.nextLevel}`}
             >
               <div
                 className={styles.levelFill}
@@ -335,8 +335,8 @@ export default function IdentityHeader({
               />
             </div>
             <span className={styles.levelPts}>
-              {fmt(progress.into)} / {fmt(progress.span)} pts ·{" "}
-              {fmt(progress.remaining)} to Lvl {progress.nextLevel}
+              {fmt(progress.into)} / {fmt(progress.span)} очк. ·{" "}
+              {fmt(progress.remaining)} до ур. {progress.nextLevel}
             </span>
           </div>
         </div>

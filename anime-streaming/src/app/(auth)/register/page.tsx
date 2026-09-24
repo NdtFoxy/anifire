@@ -77,7 +77,7 @@ export default function RegisterPage() {
       if (err instanceof AuthError) {
         setNotice(err.fields?.password ?? err.fields?.email ?? err.message);
       } else {
-        setNotice("Something went wrong. Try again.");
+        setNotice("Что-то пошло не так. Попробуйте ещё раз.");
       }
     }
   }
@@ -90,7 +90,7 @@ export default function RegisterPage() {
       router.replace("/stream");
     } catch (err) {
       setBusy(false);
-      setNotice(err instanceof AuthError ? err.message : "Social sign-up failed. Try again.");
+      setNotice(err instanceof AuthError ? err.message : "Не удалось зарегистрироваться через соцсеть. Попробуйте ещё раз.");
     }
   }
 
@@ -114,14 +114,13 @@ export default function RegisterPage() {
         <span className={styles.sentIcon} data-rise>
           <MailCheck size={28} />
         </span>
-        <h1 className={styles.head} data-rise>Confirm your email</h1>
+        <h1 className={styles.head} data-rise>Подтвердите почту</h1>
         <p className={styles.sub} data-rise>
-          A verification link for <strong>{sentTo}</strong> was created. In dev
-          there&apos;s no real email — open the <strong>backend terminal</strong> and
-          click the logged <code>/verify-email?token=…</code> link, then sign in.
+          Мы отправили письмо со ссылкой на <strong>{sentTo}</strong>. Откройте его, подтвердите
+          адрес и войдите. Письма нет? Проверьте «Спам».
         </p>
         <Link href="/login" className={styles.back} data-rise>
-          <ArrowLeft size={16} /> Back to sign in
+          <ArrowLeft size={16} /> Вернуться ко входу
         </Link>
       </div>
     );
@@ -139,10 +138,10 @@ export default function RegisterPage() {
       </Link>
 
       <h1 className={styles.head} data-rise>
-        Create your account
+        Создайте аккаунт
       </h1>
       <p className={styles.sub} data-rise>
-        Start streaming in under a minute. No card, no ads on the free tier.
+        Начните смотреть меньше чем за минуту. Без карты и без рекламы на бесплатном тарифе.
       </p>
 
       {notice ? (
@@ -156,14 +155,14 @@ export default function RegisterPage() {
       </div>
 
       <div className={styles.divider} data-rise>
-        or sign up with email
+        или зарегистрируйтесь по email
       </div>
 
       <form className={styles.form} onSubmit={handleSubmit} onKeyDown={handleFormKeyDown}>
         <div data-rise>
           <Field
             id="name"
-            label="Name"
+            label="Имя"
             icon={<User size={17} />}
             autoComplete="name"
             required={false}
@@ -181,10 +180,10 @@ export default function RegisterPage() {
             onValueChange={setEmail}
             validate={(v) =>
               v.length === 0
-                ? "Enter your email"
+                ? "Введите email"
                 : EMAIL_RE.test(v)
                   ? null
-                  : "That email address looks incomplete"
+                  : "Похоже, адрес email указан не полностью"
             }
           />
         </div>
@@ -192,7 +191,7 @@ export default function RegisterPage() {
         <div data-rise>
           <Field
             id="password"
-            label="Password"
+            label="Пароль"
             type="password"
             icon={<Lock size={17} />}
             autoComplete="new-password"
@@ -201,15 +200,15 @@ export default function RegisterPage() {
             validate={(v) =>
               passwordRules(v).every((rule) => rule.ok)
                 ? null
-                : "Password does not meet the requirements below"
+                : "Пароль не соответствует требованиям ниже"
             }
             hint={<PasswordStrength value={password} />}
           />
         </div>
 
         <p className={styles.terms} data-rise>
-          By creating an account you agree to our <a href="#terms">Terms</a> and{" "}
-          <a href="#privacy">Privacy Policy</a>.
+          Создавая аккаунт, вы соглашаетесь с <a href="#terms">Условиями использования</a> и{" "}
+          <a href="#privacy">Политикой конфиденциальности</a>.
         </p>
 
         <button
@@ -220,7 +219,7 @@ export default function RegisterPage() {
           data-rise
         >
           <span className={styles.submitLabel}>
-            {done ? "Welcome aboard" : busy ? "Creating account" : "Create account"}
+            {done ? "Добро пожаловать" : busy ? "Создаём аккаунт" : "Создать аккаунт"}
             {!busy && !done ? <ArrowRight size={17} /> : null}
           </span>
           {busy && !done ? <span className={styles.spinner} /> : null}
@@ -228,7 +227,7 @@ export default function RegisterPage() {
       </form>
 
       <p className={styles.alt} data-rise>
-        Already have an account? <Link href="/login">Sign in</Link>
+        Уже есть аккаунт? <Link href="/login">Войти</Link>
       </p>
     </div>
   );

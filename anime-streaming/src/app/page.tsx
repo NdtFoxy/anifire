@@ -33,20 +33,20 @@ import styles from "./home.module.css";
 const HERO_ROTATE_MS = 9000;
 const FAQ = [
   {
-    q: "What is Anifire?",
-    a: "A streaming service for anime: series and films in HD with multi-language subtitles and dubs, a personal list, and resume-where-you-left-off across every device.",
+    q: "Что такое Anifire?",
+    a: "Стриминговый сервис аниме: сериалы и фильмы в HD с субтитрами и озвучкой на разных языках, личный список и продолжение просмотра с того же места на любом устройстве.",
   },
   {
-    q: "How much does it cost?",
-    a: "Browsing the catalogue is free. Watching needs a free account; an optional ad-free plan removes the pre-roll sponsor spots for good.",
+    q: "Сколько это стоит?",
+    a: "Просматривать каталог можно бесплатно. Для просмотра нужен бесплатный аккаунт, а дополнительная подписка без рекламы навсегда убирает рекламные вставки перед видео.",
   },
   {
-    q: "Where can I watch?",
-    a: "Anywhere with a browser — phone, tablet, laptop, ultrawide desktop and TV. The TV layout is driven entirely by the remote's D-pad.",
+    q: "Где можно смотреть?",
+    a: "Везде, где есть браузер: на телефоне, планшете, ноутбуке, широкоформатном мониторе и телевизоре. На телевизоре всё управляется кнопками пульта.",
   },
   {
-    q: "Can I cancel anytime?",
-    a: "Yes. The free tier never charges, and a paid plan stays active until the end of the period you already paid for.",
+    q: "Можно ли отменить подписку в любой момент?",
+    a: "Да. Бесплатный тариф никогда не списывает деньги, а платная подписка действует до конца уже оплаченного периода.",
   },
 ];
 
@@ -138,22 +138,22 @@ export default function HomePage() {
           Anifire
         </Link>
         <nav className={styles.navLinks}>
-          <a href="#trending">Trending</a>
-          <a href="#browse">Browse</a>
-          <a href="#faq">FAQ</a>
+          <a href="#trending">В тренде</a>
+          <a href="#browse">Каталог</a>
+          <a href="#faq">Вопросы</a>
         </nav>
         <div className={styles.navActions}>
           {user ? (
             <Link href="/stream" className={styles.navPrimary} data-tap>
-              Go to catalogue
+              Перейти в каталог
             </Link>
           ) : (
             <>
               <Link href="/login" className={styles.navGhost} data-tap>
-                Sign in
+                Войти
               </Link>
               <Link href="/register" className={styles.navPrimary} data-tap>
-                Join free
+                Присоединиться бесплатно
               </Link>
             </>
           )}
@@ -161,7 +161,7 @@ export default function HomePage() {
       </header>
 
       {/* ═══════════ HERO ═══════════ */}
-      <section className={styles.hero} aria-label="Featured title">
+      <section className={styles.hero} aria-label="Рекомендуемый тайтл">
         <div className={styles.heroStage}>
           {featured.map((movie, i) => (
             <div
@@ -188,13 +188,13 @@ export default function HomePage() {
         <div className={styles.heroInner}>
           <div className={styles.heroCopy} data-hero-copy>
             <span className={styles.heroEyebrow}>
-              <Sparkles size={14} /> No account needed to look around
+              <Sparkles size={14} /> Смотрите каталог без регистрации
             </span>
             {hero ? (
               <>
                 <h1 className={styles.heroTitle}>{hero.title}</h1>
                 <div className={styles.heroMeta}>
-                  <span className={styles.heroMatch}>{hero.match}% match</span>
+                  <span className={styles.heroMatch}>{hero.match}% совпадение</span>
                   <span>{hero.year}</span>
                   <span className={styles.heroPill}>{hero.rating}</span>
                   <span>{hero.duration}</span>
@@ -207,10 +207,10 @@ export default function HomePage() {
                     className={styles.playBtn}
                     onClick={() => play(hero)}
                   >
-                    <Play size={19} fill="currentColor" /> Play
+                    <Play size={19} fill="currentColor" /> Смотреть
                   </button>
                   <Link href="/register" className={styles.infoBtn} data-tap>
-                    <Info size={19} /> Start free
+                    <Info size={19} /> Начать бесплатно
                   </Link>
                 </div>
               </>
@@ -224,7 +224,7 @@ export default function HomePage() {
           </div>
 
           {featured.length > 1 ? (
-            <div className={styles.heroDots} role="tablist" aria-label="Featured titles">
+            <div className={styles.heroDots} role="tablist" aria-label="Рекомендуемые тайтлы">
               {featured.map((movie, i) => (
                 <button
                   key={movie.id}
@@ -247,8 +247,8 @@ export default function HomePage() {
       {/* ═══════════ TOP 10 ═══════════ */}
       <section id="trending" className={styles.section} data-reveal>
         <div className={styles.sectionHead}>
-          <h2 className={styles.sectionTitle}>Top 10 this week</h2>
-          <span className={styles.sectionNote}>Ranked by viewer match</span>
+          <h2 className={styles.sectionTitle}>Топ-10 за неделю</h2>
+          <span className={styles.sectionNote}>По совпадению со вкусами зрителей</span>
         </div>
         <Rail>
           {top10.map((movie, i) => (
@@ -281,7 +281,7 @@ export default function HomePage() {
             <div className={styles.sectionHead}>
               <h2 className={styles.sectionTitle}>{row.title}</h2>
               <Link href="/register" className={styles.sectionMore}>
-                See all <ChevronRight size={15} />
+                Смотреть все <ChevronRight size={15} />
               </Link>
             </div>
             <Rail>
@@ -297,7 +297,7 @@ export default function HomePage() {
                     type="button"
                     className={styles.cardArt}
                     onClick={() => play(movie)}
-                    aria-label={`Play ${movie.title}`}
+                    aria-label={`Смотреть ${movie.title}`}
                   >
                     <RemoteImage src={movie.imageUrl} alt={movie.title} fill sizes="208px" />
                     <span className={styles.cardHover}>
@@ -327,18 +327,18 @@ export default function HomePage() {
         {[
           {
             icon: <Play size={22} fill="currentColor" />,
-            title: "Watch on any screen",
-            body: "Phone, tablet, laptop, ultrawide and TV — the TV layout is fully drivable from a remote.",
+            title: "Смотрите на любом экране",
+            body: "Телефон, планшет, ноутбук, широкоформатный монитор и телевизор — на ТВ всё управляется пультом.",
           },
           {
             icon: <Volume2 size={22} />,
-            title: "Subs and dubs",
-            body: "Multi-language subtitle tracks with styling controls, and dubbed audio where the release has it.",
+            title: "Субтитры и озвучка",
+            body: "Субтитры на разных языках с настройкой оформления и озвучка, если она есть в релизе.",
           },
           {
             icon: <Flame size={22} fill="currentColor" />,
-            title: "Pick up where you left off",
-            body: "Every episode remembers its position, and your list follows the account, not the device.",
+            title: "Продолжайте с того же места",
+            body: "Каждая серия запоминает, где вы остановились, а ваш список привязан к аккаунту, а не к устройству.",
           },
         ].map((item) => (
           <article key={item.title} className={styles.valueCard}>
@@ -351,7 +351,7 @@ export default function HomePage() {
 
       {/* ═══════════ FAQ ═══════════ */}
       <section id="faq" className={styles.faq} data-reveal>
-        <h2 className={styles.faqHead}>Frequently asked questions</h2>
+        <h2 className={styles.faqHead}>Частые вопросы</h2>
         <div className={styles.faqList}>
           {FAQ.map((item, i) => (
             <div key={item.q} className={styles.faqItem} data-open={openFaq === i}>
@@ -374,22 +374,22 @@ export default function HomePage() {
 
       {/* ═══════════ CLOSING CTA ═══════════ */}
       <section className={styles.cta} data-reveal>
-        <h2>Ready when you are.</h2>
-        <p>Create a free account and start the first episode in under a minute.</p>
+        <h2>Всё готово — дело за вами.</h2>
+        <p>Создайте бесплатный аккаунт и начните первую серию меньше чем через минуту.</p>
         <div className={styles.ctaRow}>
           <Link href="/register" className={styles.playBtn} data-tap>
-            Join free <ChevronRight size={18} />
+            Присоединиться бесплатно <ChevronRight size={18} />
           </Link>
           <Link href="/login" className={styles.infoBtn} data-tap>
-            I already have an account
+            У меня уже есть аккаунт
           </Link>
         </div>
       </section>
 
       <footer className={styles.footer}>
         <span>© 2026 Anifire</span>
-        <a href="#privacy">Privacy</a>
-        <a href="#terms">Terms</a>
+        <a href="#privacy">Конфиденциальность</a>
+        <a href="#terms">Условия</a>
       </footer>
     </main>
   );
@@ -433,7 +433,7 @@ function Rail({ children }: { children: React.ReactNode }) {
         className={`${styles.railBtn} ${styles.railPrev}`}
         onClick={() => page(-1)}
         disabled={edge.start}
-        aria-label="Scroll left"
+        aria-label="Прокрутить влево"
       >
         <ChevronLeft size={22} />
       </button>
@@ -445,7 +445,7 @@ function Rail({ children }: { children: React.ReactNode }) {
         className={`${styles.railBtn} ${styles.railNext}`}
         onClick={() => page(1)}
         disabled={edge.end}
-        aria-label="Scroll right"
+        aria-label="Прокрутить вправо"
       >
         <ChevronRight size={22} />
       </button>

@@ -52,7 +52,7 @@ export default function LoginPage() {
       router.replace(nextPath());
     } catch (err) {
       setBusy(null);
-      setNotice(err instanceof AuthError ? err.message : "Something went wrong. Try again.");
+      setNotice(err instanceof AuthError ? err.message : "Что-то пошло не так. Попробуйте ещё раз.");
     }
   }
 
@@ -64,7 +64,7 @@ export default function LoginPage() {
       router.replace(nextPath());
     } catch (err) {
       setBusy(null);
-      setNotice(err instanceof AuthError ? err.message : "Social sign-in failed. Try again.");
+      setNotice(err instanceof AuthError ? err.message : "Не удалось войти через соцсеть. Попробуйте ещё раз.");
     }
   }
 
@@ -85,8 +85,8 @@ export default function LoginPage() {
         <span className={styles.logoText}>Anifire</span>
       </Link>
 
-      <h1 className={styles.head}>Welcome back</h1>
-      <p className={styles.sub}>Sign in to pick up where you left off.</p>
+      <h1 className={styles.head}>С возвращением</h1>
+      <p className={styles.sub}>Войдите, чтобы продолжить с того места, где остановились.</p>
 
       {notice ? (
         <div className={`${styles.notice} ${styles.noticeInfo}`}>{notice}</div>
@@ -98,19 +98,19 @@ export default function LoginPage() {
         onError={setNotice}
       />
 
-      <div className={styles.divider}>or continue with email</div>
+      <div className={styles.divider}>или войдите по email</div>
 
       <form className={styles.form} onSubmit={handleSubmit} onKeyDown={handleFormKeyDown}>
         <Field
           id="email"
-          label="Email"
+          label="Эл. почта"
           type="email"
           icon={<Mail size={17} />}
           autoComplete="email"
         />
         <Field
           id="password"
-          label="Password"
+          label="Пароль"
           type="password"
           icon={<Lock size={17} />}
           autoComplete="current-password"
@@ -122,20 +122,20 @@ export default function LoginPage() {
             <span className={styles.checkBox}>
               <Check size={13} strokeWidth={3} />
             </span>
-            Remember me
+            Запомнить меня
           </label>
           <Link href="/forgot-password" className={styles.link}>
-            Forgot password?
+            Забыли пароль?
           </Link>
         </div>
 
         <button className={styles.submit} type="submit" disabled={busy !== null}>
-          {busy === "email" ? <span className={styles.spinner} /> : "Sign in"}
+          {busy === "email" ? <span className={styles.spinner} /> : "Войти"}
         </button>
       </form>
 
       <p className={styles.alt}>
-        New to Anifire? <Link href="/register">Create an account</Link>
+        Впервые на Anifire? <Link href="/register">Создать аккаунт</Link>
       </p>
     </div>
   );

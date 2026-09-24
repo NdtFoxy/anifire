@@ -1,19 +1,19 @@
 export function fmt(n: number): string {
-  return n.toLocaleString("en-US");
+  return n.toLocaleString("ru-RU");
 }
 
 export function monthYear(iso: string | null | undefined): string {
   if (!iso) return "—";
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return "—";
-  return d.toLocaleDateString("en-US", { month: "short", year: "numeric" });
+  return d.toLocaleDateString("ru-RU", { month: "short", year: "numeric" });
 }
 
 export function fullDate(iso: string | null | undefined): string {
   if (!iso) return "—";
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return "—";
-  return d.toLocaleDateString("en-US", {
+  return d.toLocaleDateString("ru-RU", {
     day: "numeric",
     month: "long",
     year: "numeric",
@@ -38,7 +38,7 @@ const UNITS: [limit: number, div: number, name: Intl.RelativeTimeFormatUnit][] =
   [Infinity, 31_557_600, "year"],
 ];
 
-const RTF = new Intl.RelativeTimeFormat("en-US", { numeric: "auto" });
+const RTF = new Intl.RelativeTimeFormat("ru-RU", { numeric: "auto" });
 
 export function relativeTime(iso: string): string {
   const t = new Date(iso).getTime();
@@ -54,14 +54,14 @@ export function relativeTime(iso: string): string {
 /** "Today" / "Yesterday" / "12 March 2026" — the day bucket for a timestamp. */
 export function dayLabel(iso: string): string {
   const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return "Unknown date";
+  if (Number.isNaN(d.getTime())) return "Дата неизвестна";
   const today = new Date();
   const startOf = (x: Date) =>
     new Date(x.getFullYear(), x.getMonth(), x.getDate()).getTime();
   const diff = Math.round((startOf(today) - startOf(d)) / 86_400_000);
-  if (diff === 0) return "Today";
-  if (diff === 1) return "Yesterday";
-  return d.toLocaleDateString("en-US", {
+  if (diff === 0) return "Сегодня";
+  if (diff === 1) return "Вчера";
+  return d.toLocaleDateString("ru-RU", {
     day: "numeric",
     month: "long",
     year: d.getFullYear() === today.getFullYear() ? undefined : "numeric",
@@ -71,5 +71,5 @@ export function dayLabel(iso: string): string {
 export function clockTime(iso: string): string {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return "";
-  return d.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" });
+  return d.toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" });
 }

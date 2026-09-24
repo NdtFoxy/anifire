@@ -79,7 +79,7 @@ async function parse<T>(res: Response): Promise<T> {
   const data = await res.json().catch(() => ({}) as Record<string, unknown>);
   if (!res.ok) {
     throw new AuthError(
-      (data.message as string) || "Request failed.",
+      (data.message as string) || "Не удалось выполнить запрос.",
       (data.error as string) || "error",
       res.status,
       data.fields as Record<string, string> | undefined
@@ -205,7 +205,7 @@ export async function authFetch(
 ): Promise<Response> {
   const token = await validToken();
   if (!token) {
-    throw new AuthError("Please sign in first.", "unauthorized", 401);
+    throw new AuthError("Сначала войдите в аккаунт.", "unauthorized", 401);
   }
   const headers = new Headers(init.headers);
   headers.set("Authorization", `Bearer ${token}`);

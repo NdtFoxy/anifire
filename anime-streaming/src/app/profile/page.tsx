@@ -20,12 +20,12 @@ import { useResource } from "@/components/profile/useResource";
 import styles from "./profile.module.css";
 
 const TABS = [
-  { key: "overview", label: "Overview" },
-  { key: "bookmarks", label: "Bookmarks" },
-  { key: "activity", label: "Activity" },
-  { key: "friends", label: "Friends" },
-  { key: "vocabulary", label: "Vocabulary" },
-  { key: "subscription", label: "Subscription" },
+  { key: "overview", label: "Обзор" },
+  { key: "bookmarks", label: "Закладки" },
+  { key: "activity", label: "Активность" },
+  { key: "friends", label: "Друзья" },
+  { key: "vocabulary", label: "Словарь" },
+  { key: "subscription", label: "Подписка" },
 ] as const;
 
 type TabKey = (typeof TABS)[number]["key"];
@@ -45,7 +45,7 @@ function ProfileContent() {
     // `getProfile` resolves to null instead of throwing; turn that back into a
     // real failure so the error state (and its retry) actually shows up.
     const p = await getProfile();
-    if (!p) throw new Error("The server did not return your profile.");
+    if (!p) throw new Error("Сервер не вернул данные профиля.");
     return p;
   });
 
@@ -78,7 +78,7 @@ function ProfileContent() {
         <StreamNav />
         <main id="main" className={styles.loading}>
           <Loader2 size={26} className={styles.spin} />
-          <span>Loading your profile…</span>
+          <span>Загружаем профиль…</span>
         </main>
       </div>
     );
@@ -91,7 +91,7 @@ function ProfileContent() {
         <div className={styles.shell}>
           <main id="main" className={styles.errorWrap}>
             <ErrorState
-              message={profile.error ?? "Your profile could not be loaded."}
+              message={profile.error ?? "Не удалось загрузить профиль."}
               onRetry={profile.reload}
               retrying={loading}
             />
@@ -111,7 +111,7 @@ function ProfileContent() {
       <IdentityHeader profile={data} onProfile={profile.set} />
 
       <div className={styles.shell}>
-        <nav className={styles.tabs} aria-label="Profile sections">
+        <nav className={styles.tabs} aria-label="Разделы профиля">
           {TABS.map((tab) => (
             <button
               key={tab.key}

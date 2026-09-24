@@ -127,7 +127,7 @@ export default function WorldMap({
         ref={svgRef}
         viewBox={`${frame.x} ${frame.y} ${frame.w} ${frame.h}`}
         role="img"
-        aria-label="World map of access rules"
+        aria-label="Карта мира с правилами доступа"
         data-dragging={dragging}
         onWheel={(e) => {
           if (!e.ctrlKey && Math.abs(e.deltaY) < 2) return;
@@ -190,7 +190,7 @@ export default function WorldMap({
               strokeWidth={0.4 / zoom}
               tabIndex={0}
               role="button"
-              aria-label={`${country.name}: ${isBlocked ? "blocked" : "allowed"}`}
+              aria-label={`${country.name}: ${isBlocked ? "заблокирована" : "разрешена"}`}
               onClick={() => {
                 // A pan that ends over a country must not also select it.
                 if (drag.current?.moved) return;
@@ -220,16 +220,16 @@ export default function WorldMap({
       {hover ? (
         <span className={styles.mapTip} style={{ left: hover.x, top: hover.y }}>
           <b>{hover.name}</b>
-          <em>{blocked.has(hover.code) ? "Blocked" : "Allowed"}</em>
-          {refusals[hover.code] ? <i>{refusals[hover.code]} refused</i> : null}
+          <em>{blocked.has(hover.code) ? "Заблокирована" : "Разрешена"}</em>
+          {refusals[hover.code] ? <i>{refusals[hover.code]} отказов</i> : null}
         </span>
       ) : null}
 
       <div className={styles.mapControls}>
-        <button type="button" onClick={() => zoomAt(1.4)} aria-label="Zoom in">
+        <button type="button" onClick={() => zoomAt(1.4)} aria-label="Приблизить">
           <Plus size={16} />
         </button>
-        <button type="button" onClick={() => zoomAt(1 / 1.4)} aria-label="Zoom out">
+        <button type="button" onClick={() => zoomAt(1 / 1.4)} aria-label="Отдалить">
           <Minus size={16} />
         </button>
         <button
@@ -238,7 +238,7 @@ export default function WorldMap({
             setZoom(1);
             setCenter({ x: 0.5, y: 0.5 });
           }}
-          aria-label="Reset the view"
+          aria-label="Сбросить вид"
         >
           <Crosshair size={16} />
         </button>
@@ -246,11 +246,11 @@ export default function WorldMap({
       </div>
 
       <div className={styles.mapLegend}>
-        <span data-kind="allowed">Allowed</span>
-        <span data-kind="blocked">Blocked</span>
-        <span data-kind="selected">Selected</span>
+        <span data-kind="allowed">Разрешены</span>
+        <span data-kind="blocked">Заблокированы</span>
+        <span data-kind="selected">Выбрана</span>
         <span data-kind="count">
-          {blocked.size} blocked of {entries.length} · scroll to zoom, drag to pan
+          {blocked.size} заблокировано из {entries.length} · колесо — масштаб, перетаскивание — перемещение
         </span>
       </div>
     </div>

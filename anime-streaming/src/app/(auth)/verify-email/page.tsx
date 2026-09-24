@@ -13,7 +13,7 @@ function VerifyInner() {
   const token = useSearchParams().get("token");
   const [status, setStatus] = useState<Status>(token ? "pending" : "error");
   const [message, setMessage] = useState(
-    token ? "" : "This verification link is invalid or missing."
+    token ? "" : "Ссылка для подтверждения недействительна или отсутствует."
   );
 
   useEffect(() => {
@@ -31,7 +31,7 @@ function VerifyInner() {
       .catch((err) => {
         if (!cancelled) {
           setStatus("error");
-          setMessage(err instanceof AuthError ? err.message : "Verification failed.");
+          setMessage(err instanceof AuthError ? err.message : "Не удалось подтвердить почту.");
         }
       });
     return () => {
@@ -50,7 +50,7 @@ function VerifyInner() {
 
       {status === "pending" ? (
         <>
-          <h1 className={styles.head}>Verifying your email…</h1>
+          <h1 className={styles.head}>Подтверждаем почту…</h1>
           <p className={styles.sub}>
             <span className={styles.spinner} style={{ borderTopColor: "var(--ember)" }} />
           </p>
@@ -60,10 +60,10 @@ function VerifyInner() {
           <span className={styles.sentIcon}>
             <MailCheck size={28} />
           </span>
-          <h1 className={styles.head}>Email verified</h1>
-          <p className={styles.sub}>{message} Welcome to Anifire.</p>
+          <h1 className={styles.head}>Почта подтверждена</h1>
+          <p className={styles.sub}>{message} Добро пожаловать в Anifire.</p>
           <Link href="/login" className={styles.back}>
-            <ArrowLeft size={16} /> Continue to sign in
+            <ArrowLeft size={16} /> Перейти ко входу
           </Link>
         </>
       ) : (
@@ -71,10 +71,10 @@ function VerifyInner() {
           <span className={styles.sentIcon} style={{ color: "var(--gold)" }}>
             <TriangleAlert size={28} />
           </span>
-          <h1 className={styles.head}>Verification failed</h1>
+          <h1 className={styles.head}>Не удалось подтвердить почту</h1>
           <p className={styles.sub}>{message}</p>
           <Link href="/login" className={styles.back}>
-            <ArrowLeft size={16} /> Back to sign in
+            <ArrowLeft size={16} /> Вернуться ко входу
           </Link>
         </>
       )}

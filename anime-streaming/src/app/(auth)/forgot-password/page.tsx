@@ -36,28 +36,28 @@ export default function ForgotPasswordPage() {
           <span className={styles.sentIcon}>
             <MailCheck size={28} />
           </span>
-          <h1 className={styles.head}>Check your inbox</h1>
+          <h1 className={styles.head}>Проверьте почту</h1>
           <p className={styles.sub}>
-            If an account exists for <strong>{sentTo}</strong>, we&apos;ve sent a
-            link to reset your password. It expires in 30 minutes.
+            Если аккаунт с адресом <strong>{sentTo}</strong> существует, мы отправили на него
+            ссылку для сброса пароля. Она действительна 30 минут.
           </p>
           <button
             type="button"
             className={styles.submit}
             onClick={() => setSentTo(null)}
           >
-            Use a different email
+            Указать другой email
           </button>
           <Link href="/login" className={styles.back}>
-            <ArrowLeft size={16} /> Back to sign in
+            <ArrowLeft size={16} /> Вернуться ко входу
           </Link>
         </>
       ) : (
         <>
-          <h1 className={styles.head}>Reset your password</h1>
+          <h1 className={styles.head}>Сброс пароля</h1>
           <p className={styles.sub}>
-            Enter the email tied to your account and we&apos;ll send you a reset
-            link.
+            Введите email, привязанный к аккаунту, и мы пришлём ссылку
+            для сброса пароля.
           </p>
 
           <form className={styles.form} onSubmit={handleSubmit}>
@@ -69,12 +69,12 @@ export default function ForgotPasswordPage() {
               autoComplete="email"
             />
             <button className={styles.submit} type="submit" disabled={busy}>
-              {busy ? <span className={styles.spinner} /> : "Send reset link"}
+              {busy ? <span className={styles.spinner} /> : "Отправить ссылку"}
             </button>
           </form>
 
           <Link href="/login" className={styles.back}>
-            <ArrowLeft size={16} /> Back to sign in
+            <ArrowLeft size={16} /> Вернуться ко входу
           </Link>
         </>
       )}

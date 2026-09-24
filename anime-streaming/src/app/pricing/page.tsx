@@ -8,9 +8,9 @@ import PricingView from "./PricingView";
  * current plan.
  */
 export const metadata: Metadata = {
-  title: "Anifire — Ads-free plans",
+  title: "Anifire — Тарифы без рекламы",
   description:
-    "Remove the sponsor breaks. Monthly, yearly and lifetime ads-free plans for Anifire, cancellable at any time.",
+    "Смотрите без рекламных пауз. Тарифы Anifire без рекламы на месяц, год или навсегда — отменить можно в любой момент.",
 };
 
 export default function PricingPage() {

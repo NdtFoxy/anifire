@@ -32,8 +32,8 @@ export function useChapterSkip({
   if (!offerButton || !source) return null;
   const intro = activeChapter(source.chapters, time, "intro");
   const outro = activeChapter(source.chapters, time, "outro");
-  if (intro) return { label: "Skip intro", to: intro.end + 0.5 };
-  if (outro) return { label: "Skip outro", to: outro.end + 0.5 };
+  if (intro) return { label: "Пропустить заставку", to: intro.end + 0.5 };
+  if (outro) return { label: "Пропустить титры", to: outro.end + 0.5 };
   return null;
 }
 

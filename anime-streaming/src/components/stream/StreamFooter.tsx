@@ -14,16 +14,16 @@ import styles from "@/app/stream/stream.module.css";
  * /profile or /anime/[id] where this footer also renders.
  */
 const BROWSE = [
-  { label: "Home", href: "/stream" },
-  { label: "Catalog", href: "/stream?view=catalog" },
-  { label: "Genres", href: "/stream?view=genres" },
-  { label: "My List", href: "/mylist" },
+  { label: "Главная", href: "/stream" },
+  { label: "Каталог", href: "/stream?view=catalog" },
+  { label: "Жанры", href: "/stream?view=genres" },
+  { label: "Моё", href: "/mylist" },
 ];
 
 const ACCOUNT = [
-  { label: "Profile", href: "/profile" },
-  { label: "Subscription", href: "/profile?tab=subscription" },
-  { label: "Activity", href: "/profile?tab=activity" },
+  { label: "Профиль", href: "/profile" },
+  { label: "Подписка", href: "/profile?tab=subscription" },
+  { label: "Активность", href: "/profile?tab=activity" },
 ];
 
 export default function StreamFooter() {
@@ -39,14 +39,14 @@ export default function StreamFooter() {
               <span className={styles.logoText}>Anifire</span>
             </Link>
             <p>
-              Stream the best anime in HD with multi-language subtitles and dubs. A
-              demo streaming front end built on Next.js, Spring Boot and PostgreSQL.
+              Смотрите лучшее аниме в HD с субтитрами и озвучкой на разных языках.
+              Демо-версия стримингового сервиса на Next.js, Spring Boot и PostgreSQL.
             </p>
           </div>
 
           <div className={styles.footerCols}>
             <div>
-              <h3>Browse</h3>
+              <h3>Обзор</h3>
               {BROWSE.map((item) => (
                 <Link key={item.label} href={item.href}>
                   {item.label}
@@ -54,7 +54,7 @@ export default function StreamFooter() {
               ))}
             </div>
             <div>
-              <h3>Account</h3>
+              <h3>Аккаунт</h3>
               {ACCOUNT.map((item) => (
                 <Link key={item.label} href={item.href}>
                   {item.label}
@@ -65,7 +65,7 @@ export default function StreamFooter() {
         </div>
 
         <div className={styles.footerBottom}>
-          <p>© 2026 Anifire Streaming. All rights reserved.</p>
+          <p>© 2026 Anifire Streaming. Все права защищены.</p>
           <div className={styles.footerSocials}>
             <Link href="/" aria-label="Telegram">
               <Send size={17} />
@@ -73,7 +73,7 @@ export default function StreamFooter() {
             <Link href="/" aria-label="Discord">
               <MessageCircle size={17} />
             </Link>
-            <Link href="/" aria-label="Website">
+            <Link href="/" aria-label="Сайт">
               <Globe size={17} />
             </Link>
           </div>

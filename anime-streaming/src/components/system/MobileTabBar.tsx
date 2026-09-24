@@ -33,14 +33,14 @@ export default function MobileTabBar({
     !searchOpen && (href === "/stream" ? pathname === "/stream" : pathname.startsWith(href));
 
   return (
-    <nav className={styles.bar} role="navigation" aria-label="Primary">
+    <nav className={styles.bar} role="navigation" aria-label="Основная навигация">
       <Link
         href="/stream"
         className={styles.tab}
         aria-current={isActive("/stream") ? "page" : undefined}
       >
         <Home size={22} aria-hidden="true" />
-        <span className={styles.label}>Home</span>
+        <span className={styles.label}>Главная</span>
       </Link>
 
       <button
@@ -50,7 +50,7 @@ export default function MobileTabBar({
         onClick={onSearch}
       >
         <Search size={22} aria-hidden="true" />
-        <span className={styles.label}>Search</span>
+        <span className={styles.label}>Поиск</span>
       </button>
 
       <Link
@@ -59,7 +59,7 @@ export default function MobileTabBar({
         aria-current={isActive("/mylist") ? "page" : undefined}
       >
         <Bookmark size={22} aria-hidden="true" />
-        <span className={styles.label}>My List</span>
+        <span className={styles.label}>Моё</span>
       </Link>
 
       <Link
@@ -68,7 +68,7 @@ export default function MobileTabBar({
         aria-current={isActive("/profile") ? "page" : undefined}
       >
         <User size={22} aria-hidden="true" />
-        <span className={styles.label}>Profile</span>
+        <span className={styles.label}>Профиль</span>
       </Link>
     </nav>
   );

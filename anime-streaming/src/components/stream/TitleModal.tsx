@@ -158,7 +158,7 @@ function TitleModalBody({
         <button
           className={styles.modalHandle}
           type="button"
-          aria-label="Close"
+          aria-label="Закрыть"
           onPointerDown={onHandleDown}
           onPointerMove={onHandleMove}
           onPointerUp={endDrag}
@@ -168,7 +168,7 @@ function TitleModalBody({
         <button
           className={styles.modalClose}
           type="button"
-          aria-label="Close"
+          aria-label="Закрыть"
           onClick={onClose}
         >
           <X size={18} />
@@ -188,7 +188,7 @@ function TitleModalBody({
           <button
             className={styles.modalBigPlay}
             type="button"
-            aria-label={playing ? "Pause" : "Play"}
+            aria-label={playing ? "Пауза" : "Смотреть"}
             onClick={() => setPlaying((v) => !v)}
           >
             {playing ? <Pause size={24} fill="currentColor" /> : <Play size={24} fill="currentColor" />}
@@ -199,7 +199,7 @@ function TitleModalBody({
             <button
               className={styles.modalMute}
               type="button"
-              aria-label={muted ? "Unmute" : "Mute"}
+              aria-label={muted ? "Включить звук" : "Выключить звук"}
               onClick={() => setMuted((v) => !v)}
             >
               {muted ? <VolumeX size={16} /> : <Volume2 size={16} />}
@@ -216,12 +216,12 @@ function TitleModalBody({
         <div className={styles.modalBody}>
           <div className={styles.modalActions}>
             <Link ref={playRef} href={`/anime/${movie.id}`} className={styles.modalPlayBtn}>
-              <Play size={18} fill="currentColor" /> Play
+              <Play size={18} fill="currentColor" /> Смотреть
             </Link>
             <button
               className={`${styles.modalRound} ${inList(movie.id) ? styles.modalRoundOn : ""}`}
               type="button"
-              aria-label={inList(movie.id) ? "Remove from My List" : "Add to My List"}
+              aria-label={inList(movie.id) ? "Удалить из «Моего списка»" : "Добавить в «Мой список»"}
               aria-pressed={inList(movie.id)}
               onClick={() => toggleList(movie.id)}
             >
@@ -230,7 +230,7 @@ function TitleModalBody({
             <button
               className={`${styles.modalRound} ${isLiked(movie.id) ? styles.modalRoundOn : ""}`}
               type="button"
-              aria-label={isLiked(movie.id) ? "Unlike" : "Like"}
+              aria-label={isLiked(movie.id) ? "Убрать отметку «Нравится»" : "Нравится"}
               aria-pressed={isLiked(movie.id)}
               onClick={() => toggleLike(movie.id)}
             >
@@ -241,12 +241,12 @@ function TitleModalBody({
               href={`/anime/${movie.id}`}
               className={styles.modalDetailsBtn}
             >
-              <Info size={16} /> Full page
+              <Info size={16} /> Подробнее
             </Link>
           </div>
 
           <div className={styles.modalMeta}>
-            <span className={styles.modalMatch}>{movie.match}% Match</span>
+            <span className={styles.modalMatch}>{movie.match}% совпадение</span>
             <span className={styles.modalBadge}>{movie.rating}</span>
             <span>{movie.year}</span>
             <span>{movie.duration}</span>
@@ -256,11 +256,11 @@ function TitleModalBody({
           <p className={styles.modalDesc}>{movie.description}</p>
 
           <div className={styles.modalTags}>
-            <span className={styles.modalTagsLabel}>Genres:</span>
+            <span className={styles.modalTagsLabel}>Жанры:</span>
             <span>{movie.genre}</span>
           </div>
           <div className={styles.modalTags}>
-            <span className={styles.modalTagsLabel}>Tags:</span>
+            <span className={styles.modalTagsLabel}>Теги:</span>
             <span>{movie.tags.join(" • ")}</span>
           </div>
         </div>

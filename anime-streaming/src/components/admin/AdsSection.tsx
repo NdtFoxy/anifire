@@ -37,12 +37,12 @@ import styles from "@/app/admin/admin.module.css";
  */
 
 const PERIODS: { key: StatsPeriod; label: string }[] = [
-  { key: "24h", label: "24h" },
-  { key: "7d", label: "7 days" },
-  { key: "30d", label: "30 days" },
+  { key: "24h", label: "24 ч" },
+  { key: "7d", label: "7 дней" },
+  { key: "30d", label: "30 дней" },
 ];
 
-const int = (n: number) => (n ?? 0).toLocaleString("en-US");
+const int = (n: number) => (n ?? 0).toLocaleString("ru-RU");
 /** The server sends percentages already multiplied out, so only the sign is added. */
 const pct = (n: number) => `${n ?? 0}%`;
 
@@ -51,8 +51,8 @@ const flight = (campaign: AdCampaign) => {
     iso ? new Date(iso).toLocaleDateString(undefined, { day: "2-digit", month: "short" }) : null;
   const from = day(campaign.startsAt);
   const to = day(campaign.endsAt);
-  if (!from && !to) return "always on";
-  return `${from ?? "—"} → ${to ?? "open"}`;
+  if (!from && !to) return "без ограничений";
+  return `${from ?? "—"} → ${to ?? "без даты"}`;
 };
 
 /**
@@ -66,7 +66,7 @@ const flight = (campaign: AdCampaign) => {
  */
 function DailyChart({ daily }: { daily: AdStats["daily"] }) {
   if (daily.length === 0) {
-    return <p className={styles.geoHint}>No delivery recorded in this window yet.</p>;
+    return <p className={styles.geoHint}>За этот период показов пока нет.</p>;
   }
 
   // A 24h window holds a single day, and one full-width slab reads as a block of
@@ -84,7 +84,7 @@ function DailyChart({ daily }: { daily: AdStats["daily"] }) {
         viewBox="0 0 100 32"
         preserveAspectRatio="none"
         role="img"
-        aria-label={`Daily impressions and clicks over ${daily.length} days, peak ${maxImpressions} impressions`}
+        aria-label={`Показы и клики по дням (дней: ${daily.length}), пик показов: ${maxImpressions}`}
       >
         {daily.map((day, i) => {
           const impressions = bar(day.impressions, maxImpressions);
@@ -98,7 +98,7 @@ function DailyChart({ daily }: { daily: AdStats["daily"] }) {
                 width={slot * 0.38}
                 height={impressions}
               >
-                <title>{`${day.date}: ${int(day.impressions)} impressions`}</title>
+                <title>{`${day.date}: показов — ${int(day.impressions)}`}</title>
               </rect>
               <rect
                 className={styles.adBarClicks}
@@ -107,7 +107,7 @@ function DailyChart({ daily }: { daily: AdStats["daily"] }) {
                 width={slot * 0.38}
                 height={clicks}
               >
-                <title>{`${day.date}: ${int(day.clicks)} clicks`}</title>
+                <title>{`${day.date}: кликов — ${int(day.clicks)}`}</title>
               </rect>
             </g>
           );
@@ -115,8 +115,8 @@ function DailyChart({ daily }: { daily: AdStats["daily"] }) {
       </svg>
       <footer className={styles.cardFoot}>
         <span className={styles.chartLegend}>
-          <i data-series="impressions" /> impressions (peak {int(maxImpressions)})
-          <i data-series="clicks" /> clicks, own scale (peak {int(maxClicks)})
+          <i data-series="impressions" /> показы (пик {int(maxImpressions)})
+          <i data-series="clicks" /> клики, своя шкала (пик {int(maxClicks)})
         </span>
         <span>
           {daily[0].date} → {daily[daily.length - 1].date}
@@ -151,7 +151,7 @@ export default function AdsSection() {
       Promise.all([fetchAdStats(period), fetchCampaigns()]).then(
         ([nextStats, nextCampaigns]) => {
           setLoaded({ period, stats: nextStats, campaigns: nextCampaigns });
-          setNotice(nextStats === null ? "Could not load delivery statistics." : null);
+          setNotice(nextStats === null ? "Не удалось загрузить статистику показов." : null);
         }
       ),
     [period]
@@ -164,27 +164,27 @@ export default function AdsSection() {
   const kpis = useMemo(
     () => [
       {
-        label: "Impressions",
+        label: "Показы",
         value: stats ? int(stats.impressions) : "—",
-        hint: stats ? `${int(stats.completes)} watched to the end` : "",
+        hint: stats ? `досмотрели до конца: ${int(stats.completes)}` : "",
         Icon: Eye,
       },
       {
-        label: "Completion rate",
+        label: "Досматриваемость",
         value: stats ? pct(stats.completionRate) : "—",
-        hint: stats ? `${int(stats.skips)} skipped` : "",
+        hint: stats ? `пропущено: ${int(stats.skips)}` : "",
         Icon: PlayCircle,
       },
       {
         label: "CTR",
         value: stats ? pct(stats.ctr) : "—",
-        hint: stats ? `${int(stats.clicks)} clicks` : "",
+        hint: stats ? `кликов: ${int(stats.clicks)}` : "",
         Icon: BarChart3,
       },
       {
-        label: "Clicks",
+        label: "Клики",
         value: stats ? int(stats.clicks) : "—",
-        hint: `${campaigns.filter((c) => c.status === "ACTIVE").length} active campaigns`,
+        hint: `${campaigns.filter((c) => c.status === "ACTIVE").length} — активных кампаний`,
         Icon: MousePointerClick,
       },
     ],
@@ -238,15 +238,15 @@ export default function AdsSection() {
       <header className={styles.sectionHead}>
         <div>
           <h2>
-            <Megaphone size={20} /> Advertising
+            <Megaphone size={20} /> Реклама
           </h2>
           <p>
-            Pre-roll for viewers without a subscription. Selection happens on the server for
-            every request — nothing here is decided in the browser.
+            Преролл для зрителей без подписки. Выбор креатива происходит на сервере при
+            каждом запросе — в браузере ничего не решается.
           </p>
         </div>
         <div className={styles.geoStats}>
-          <div className={styles.periodChips} role="group" aria-label="Statistics period">
+          <div className={styles.periodChips} role="group" aria-label="Период статистики">
             {PERIODS.map(({ key, label }) => (
               <button
                 key={key}
@@ -260,10 +260,10 @@ export default function AdsSection() {
           </div>
           <button type="button" className={styles.btnGhost} onClick={load} disabled={loading}>
             {loading ? <Loader2 size={15} className={styles.spin} /> : <RefreshCw size={15} />}
-            Refresh
+            Обновить
           </button>
           <button type="button" className={styles.btnPrimary} onClick={() => setDrawer("new")}>
-            <Plus size={15} /> New campaign
+            <Plus size={15} /> Новая кампания
           </button>
         </div>
       </header>
@@ -298,7 +298,7 @@ export default function AdsSection() {
               </b>
             ) : null}{" "}
             {blocked.inactiveCreatives > 0
-              ? `${blocked.inactiveCreatives} creative(s) switched off and never selected.`
+              ? `Отключено креативов: ${blocked.inactiveCreatives} — они не выдаются.`
               : ""}
           </span>
         </div>
@@ -306,7 +306,7 @@ export default function AdsSection() {
 
       <section className={styles.card}>
         <h3>
-          <BarChart3 size={16} /> Delivery, last {period}
+          <BarChart3 size={16} /> Показы за период: {period}
         </h3>
         <DailyChart daily={stats?.daily ?? []} />
 
@@ -315,23 +315,23 @@ export default function AdsSection() {
             <table className={styles.table}>
               <thead>
                 <tr>
-                  <th>Campaign</th>
-                  <th>Impressions</th>
-                  <th>Completed</th>
-                  <th>Skipped</th>
-                  <th>Clicks</th>
+                  <th>Кампания</th>
+                  <th>Показы</th>
+                  <th>Досмотрено</th>
+                  <th>Пропущено</th>
+                  <th>Клики</th>
                 </tr>
               </thead>
               <tbody>
                 {stats.byCampaign.map((row) => (
                   <tr key={row.campaignId}>
-                    <td data-label="Campaign">
+                    <td data-label="Кампания">
                       <span className={styles.userName}>{row.name}</span>
                     </td>
-                    <td data-label="Impressions">{int(row.impressions)}</td>
-                    <td data-label="Completed">{int(row.completes)}</td>
-                    <td data-label="Skipped">{int(row.skips)}</td>
-                    <td data-label="Clicks">{int(row.clicks)}</td>
+                    <td data-label="Показы">{int(row.impressions)}</td>
+                    <td data-label="Досмотрено">{int(row.completes)}</td>
+                    <td data-label="Пропущено">{int(row.skips)}</td>
+                    <td data-label="Клики">{int(row.clicks)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -343,7 +343,7 @@ export default function AdsSection() {
       <section className={styles.card}>
         <div className={styles.listHead}>
           <h3>
-            {campaigns.length} campaign{campaigns.length === 1 ? "" : "s"}
+            {campaigns.length} — кампаний{campaigns.length === 1 ? "" : "s"}
           </h3>
           {loading ? <Loader2 size={15} className={styles.spin} /> : null}
         </div>
@@ -352,46 +352,46 @@ export default function AdsSection() {
           <table className={styles.table}>
             <thead>
               <tr>
-                <th>Campaign</th>
-                <th>Status</th>
-                <th>Priority</th>
-                <th>Daily cap</th>
-                <th>Flight</th>
-                <th>Creatives</th>
-                <th>Actions</th>
+                <th>Кампания</th>
+                <th>Статус</th>
+                <th>Приоритет</th>
+                <th>Лимит в день</th>
+                <th>Период</th>
+                <th>Креативы</th>
+                <th>Действия</th>
               </tr>
             </thead>
             <tbody>
               {campaigns.map((campaign) => (
                 <tr key={campaign.id}>
-                  <td data-label="Campaign">
+                  <td data-label="Кампания">
                     <span className={styles.userName}>{campaign.name}</span>
                     <small>
                       {campaign.advertiser} · ИНН {campaign.advertiserInn}
                     </small>
                   </td>
-                  <td data-label="Status">
+                  <td data-label="Статус">
                     <span className={styles.statusChip} data-status={campaign.status}>
                       {campaign.status}
                     </span>
                   </td>
-                  <td data-label="Priority">
+                  <td data-label="Приоритет">
                     <span className={styles.activityCell}>{campaign.priority}</span>
                   </td>
-                  <td data-label="Daily cap">
+                  <td data-label="Лимит в день">
                     <span className={styles.activityCell}>
                       {campaign.dailyImpressionCap > 0
                         ? int(campaign.dailyImpressionCap)
-                        : "uncapped"}
+                        : "без лимита"}
                     </span>
                   </td>
-                  <td data-label="Flight">
+                  <td data-label="Период">
                     <span className={styles.activityCell}>{flight(campaign)}</span>
                   </td>
-                  <td data-label="Creatives">
+                  <td data-label="Креативы">
                     <span className={styles.activityCell}>{campaign.creativeCount}</span>
                   </td>
-                  <td data-label="Actions">
+                  <td data-label="Действия">
                     <div className={styles.rowActions}>
                       {confirmArchive === campaign.id ? (
                         <>
@@ -404,14 +404,14 @@ export default function AdsSection() {
                             {busyId === campaign.id ? (
                               <Loader2 size={14} className={styles.spin} />
                             ) : null}
-                            Archive it
+                            В архив
                           </button>
                           <button
                             type="button"
                             className={styles.btnGhost}
                             onClick={() => setConfirmArchive(null)}
                           >
-                            Keep
+                            Оставить
                           </button>
                         </>
                       ) : (
@@ -420,7 +420,7 @@ export default function AdsSection() {
                             type="button"
                             className={styles.iconBtn}
                             onClick={() => setDrawer(campaign)}
-                            aria-label={`Edit ${campaign.name}`}
+                            aria-label={`Изменить «${campaign.name}»`}
                           >
                             <Pencil size={15} />
                           </button>
@@ -436,8 +436,8 @@ export default function AdsSection() {
                             }
                             aria-label={
                               campaign.status === "ACTIVE"
-                                ? `Pause ${campaign.name}`
-                                : `Activate ${campaign.name}`
+                                ? `Приостановить «${campaign.name}»`
+                                : `Запустить «${campaign.name}»`
                             }
                           >
                             {busyId === campaign.id ? (
@@ -454,7 +454,7 @@ export default function AdsSection() {
                             data-tone="bad"
                             disabled={campaign.status === "ARCHIVED"}
                             onClick={() => setConfirmArchive(campaign.id)}
-                            aria-label={`Archive ${campaign.name}`}
+                            aria-label={`Архивировать «${campaign.name}»`}
                           >
                             <Archive size={15} />
                           </button>
@@ -467,8 +467,8 @@ export default function AdsSection() {
               {campaigns.length === 0 && !loading ? (
                 <tr>
                   <td colSpan={7} className={styles.emptyCell}>
-                    No campaigns yet. Viewers see the player without a pre-roll until one is
-                    active with a creative attached.
+                    Кампаний пока нет. Зрители видят плеер без преролла, пока не появится
+                    активная кампания с креативом.
                   </td>
                 </tr>
               ) : null}

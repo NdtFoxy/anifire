@@ -18,11 +18,11 @@ import RemoteImage from "@/components/system/RemoteImage";
 import styles from "@/app/stream/stream.module.css";
 
 const GENRES = [
-  "Action", "Adventure", "Comedy", "Drama", "Fantasy", "Romance",
-  "Sci-Fi", "Slice of Life", "Supernatural", "Mystery", "Horror", "Sports",
+  "Экшен", "Приключения", "Комедия", "Драма", "Фэнтези", "Романтика",
+  "Фантастика", "Повседневность", "Сверхъестественное", "Детектив", "Ужасы", "Спорт",
 ];
 const TYPES = ["TV", "ONA", "WEB", "OVA", "Movie", "Special"];
-const STATUSES = ["Ongoing", "Finished"];
+const STATUSES = ["Выходит", "Завершён"];
 
 function toggle(set: Set<string>, value: string): Set<string> {
   const next = new Set(set);
@@ -103,17 +103,17 @@ export default function CatalogView({
         </span>
         <input
           className={styles.catSearchInput}
-          placeholder="Search the catalog…"
+          placeholder="Поиск по каталогу…"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          aria-label="Search catalog"
+          aria-label="Поиск по каталогу"
         />
         <button
           className={styles.catClearBtn}
           type="button"
           onClick={clearAll}
           disabled={!hasFilters}
-          aria-label="Clear filters"
+          aria-label="Сбросить фильтры"
         >
           <X size={18} />
         </button>
@@ -130,7 +130,7 @@ export default function CatalogView({
           >
             <span className={styles.filterToggleLeft}>
               <SlidersHorizontal size={17} />
-              Filters
+              Фильтры
               {activeFilters > 0 ? (
                 <span className={styles.filterCount}>{activeFilters}</span>
               ) : null}
@@ -144,9 +144,9 @@ export default function CatalogView({
           {filtersOpen ? (
             <div className={styles.filterBody}>
               <div className={styles.filterSection}>
-                <h4 className={styles.filterTitle}>Genres</h4>
+                <h4 className={styles.filterTitle}>Жанры</h4>
                 <p className={styles.filterHint}>
-                  Pick genres — multiple selections are combined.
+                  Выберите жанры — можно отметить несколько.
                 </p>
                 <div className={styles.filterChips}>
                   {GENRES.map((g) => (
@@ -164,8 +164,8 @@ export default function CatalogView({
               </div>
 
               <div className={styles.filterSection}>
-                <h4 className={styles.filterTitle}>Type</h4>
-                <p className={styles.filterHint}>Filter releases by format.</p>
+                <h4 className={styles.filterTitle}>Тип</h4>
+                <p className={styles.filterHint}>Фильтр по формату релиза.</p>
                 <div className={styles.filterChips}>
                   {TYPES.map((t) => (
                     <button
@@ -182,8 +182,8 @@ export default function CatalogView({
               </div>
 
               <div className={styles.filterSection}>
-                <h4 className={styles.filterTitle}>Release status</h4>
-                <p className={styles.filterHint}>Airing or finished.</p>
+                <h4 className={styles.filterTitle}>Статус выхода</h4>
+                <p className={styles.filterHint}>Выходит или завершён.</p>
                 <div className={styles.filterChips}>
                   {STATUSES.map((s) => (
                     <button
@@ -205,7 +205,7 @@ export default function CatalogView({
                 onClick={clearAll}
                 disabled={!hasFilters}
               >
-                Reset filters
+                Сбросить фильтры
               </button>
             </div>
           ) : null}
@@ -214,7 +214,7 @@ export default function CatalogView({
         {/* ───────── poster grid ───────── */}
         <div ref={listRef} className={styles.catList}>
           {filtered.length === 0 ? (
-            <p className={styles.catEmpty}>Nothing matches your filters.</p>
+            <p className={styles.catEmpty}>По вашим фильтрам ничего не найдено.</p>
           ) : (
             filtered.map((m) => (
               <article
@@ -245,7 +245,7 @@ export default function CatalogView({
                         isLiked(m.id) ? styles.catIconBtnOn : ""
                       }`}
                       type="button"
-                      aria-label={isLiked(m.id) ? `Unlike ${m.title}` : `Like ${m.title}`}
+                      aria-label={isLiked(m.id) ? `Убрать отметку «Нравится»: ${m.title}` : `Нравится: ${m.title}`}
                       aria-pressed={isLiked(m.id)}
                       onClick={(e) => {
                         e.stopPropagation();
@@ -261,8 +261,8 @@ export default function CatalogView({
                       type="button"
                       aria-label={
                         inList(m.id)
-                          ? `Remove ${m.title} from My List`
-                          : `Add ${m.title} to My List`
+                          ? `Удалить ${m.title} из «Моего списка»`
+                          : `Добавить ${m.title} в «Мой список»`
                       }
                       aria-pressed={inList(m.id)}
                       onClick={(e) => {
@@ -277,7 +277,7 @@ export default function CatalogView({
                 <h3 className={styles.catTitle}>{m.title}</h3>
                 <div className={styles.catMeta}>
                   <span>{m.year}</span>
-                  <span className={styles.catMatch}>{m.match}% Match</span>
+                  <span className={styles.catMatch}>{m.match}% совпадение</span>
                   <span>{m.rating}</span>
                 </div>
               </article>

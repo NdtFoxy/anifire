@@ -24,22 +24,22 @@ export default function OverviewSection({ analytics }: { analytics: AdminAnalyti
 
   const kpis = [
     {
-      label: "Viewers",
+      label: "Зрители",
       value: analytics.users.total,
-      hint: `${verifiedRate}% verified`,
+      hint: `${verifiedRate}% подтверждено`,
       Icon: Users2,
     },
-    { label: "Titles", value: analytics.content.anime, hint: `${analytics.content.categories} categories`, Icon: Film },
+    { label: "Тайтлы", value: analytics.content.anime, hint: `категорий: ${analytics.content.categories}`, Icon: Film },
     {
-      label: "Views (7d)",
+      label: "Просмотры (7 дн.)",
       value: analytics.watch.views7d,
-      hint: `${analytics.watch.uniqueViewers7d} unique`,
+      hint: `уникальных: ${analytics.watch.uniqueViewers7d}`,
       Icon: Eye,
     },
     {
-      label: "Comments",
+      label: "Комментарии",
       value: analytics.content.comments,
-      hint: `${analytics.content.averageCommentsPerAnime.toFixed(1)} per title`,
+      hint: `${analytics.content.averageCommentsPerAnime.toFixed(1)} на тайтл`,
       Icon: MessageCircle,
     },
   ];
@@ -55,7 +55,7 @@ export default function OverviewSection({ analytics }: { analytics: AdminAnalyti
                 <Icon size={16} />
               </i>
             </header>
-            <strong>{value.toLocaleString("en-US")}</strong>
+            <strong>{value.toLocaleString("ru-RU")}</strong>
             <small>{hint}</small>
           </article>
         ))}
@@ -64,7 +64,7 @@ export default function OverviewSection({ analytics }: { analytics: AdminAnalyti
       <div className={styles.panelGrid}>
         <section className={styles.card}>
           <h3>
-            <TrendingUp size={16} /> Views, last {analytics.dailyViews.length} days
+            <TrendingUp size={16} /> Просмотры, дней: {analytics.dailyViews.length} 
           </h3>
           <div className={styles.bars}>
             {analytics.dailyViews.map((day) => (
@@ -77,14 +77,14 @@ export default function OverviewSection({ analytics }: { analytics: AdminAnalyti
             ))}
           </div>
           <footer className={styles.cardFoot}>
-            <span>{analytics.watch.totalViews.toLocaleString("en-US")} all time</span>
-            <span>{analytics.watch.viewsToday} today</span>
+            <span>{analytics.watch.totalViews.toLocaleString("ru-RU")} за всё время</span>
+            <span>{analytics.watch.viewsToday} сегодня</span>
           </footer>
         </section>
 
         <section className={styles.card}>
           <h3>
-            <Layers size={16} /> Catalogue by category
+            <Layers size={16} /> Каталог по категориям
           </h3>
           <ul className={styles.meters}>
             {analytics.categories.slice(0, 8).map((category) => (
@@ -100,7 +100,7 @@ export default function OverviewSection({ analytics }: { analytics: AdminAnalyti
         </section>
 
         <section className={styles.card}>
-          <h3>Most watched</h3>
+          <h3>Самое популярное</h3>
           <ol className={styles.topList}>
             {analytics.topAnime.slice(0, 8).map((row, i) => (
               <li key={row.animeKey}>

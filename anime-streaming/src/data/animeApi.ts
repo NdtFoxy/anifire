@@ -171,8 +171,8 @@ function mapToMovie(a: BackendAnime): Movie {
     description: a.synopsis || "",
     year: "—",
     rating: "16+",
-    duration: "24 min",
-    genre: categories.length ? categories.join(" • ") : "Anime",
+    duration: "24 мин",
+    genre: categories.length ? categories.join(" • ") : "Аниме",
     match: a.rating ? Math.round(a.rating * 10) : 90,
     imageUrl: a.imageUrl || "/hero-1.png",
     heroImageUrl: heroImage(a.imageUrl || "/hero-1.png"),
@@ -323,8 +323,8 @@ export function buildRows(movies: Movie[]): Row[] {
 
   const topRated = [...movies].sort((a, b) => b.match - a.match);
   const rows: Row[] = [
-    { title: "Trending Now", items: topRated },
-    { title: "New Releases", items: [...movies].reverse() },
+    { title: "Сейчас в тренде", items: topRated },
+    { title: "Новинки", items: [...movies].reverse() },
   ];
 
   // Genres with enough titles to scroll, biggest first.
@@ -348,7 +348,7 @@ async function parseApi<T>(res: Response): Promise<T> {
     const message =
       typeof data === "object" && data && "message" in data
         ? String((data as { message?: unknown }).message)
-        : "Request failed.";
+        : "Не удалось выполнить запрос.";
     throw new Error(message);
   }
   return data as T;
@@ -411,7 +411,7 @@ export async function deleteAnime(id: number): Promise<void> {
   const res = await authFetch(`${API_BASE}/api/v1/animes/${id}`, {
     method: "DELETE",
   });
-  if (!res.ok) throw new Error("Failed to delete anime.");
+  if (!res.ok) throw new Error("Не удалось удалить аниме.");
 }
 
 export async function createCategory(name: string): Promise<Category> {
@@ -434,7 +434,7 @@ export async function deleteCategory(id: number): Promise<void> {
   const res = await authFetch(`${API_BASE}/api/v1/categories/${id}`, {
     method: "DELETE",
   });
-  if (!res.ok) throw new Error("Failed to delete category.");
+  if (!res.ok) throw new Error("Не удалось удалить категорию.");
 }
 
 export async function fetchComments(animeId: number): Promise<Comment[]> {
@@ -465,7 +465,7 @@ export async function deleteComment(id: number): Promise<void> {
   const res = await authFetch(`${API_BASE}/api/v1/comments/${id}`, {
     method: "DELETE",
   });
-  if (!res.ok) throw new Error("Failed to delete comment.");
+  if (!res.ok) throw new Error("Не удалось удалить комментарий.");
 }
 
 /**
@@ -670,7 +670,7 @@ async function loadEpisodes(malId: number): Promise<Episode[] | null> {
     const thumbs = media?.streamingEpisodes ?? [];
     return (data ?? []).map((e, i) => ({
       number: i + 1,
-      title: e.title || thumbs[i]?.title || `Episode ${i + 1}`,
+      title: e.title || thumbs[i]?.title || `Серия ${i + 1}`,
       duration: "24:00",
       thumbnail: thumbs[i]?.thumbnail ?? null,
     }));

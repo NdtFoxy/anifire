@@ -36,7 +36,7 @@ export default function ProgressBar({
       ref={barRef}
       className={styles.progress}
       role="slider"
-      aria-label="Seek"
+      aria-label="Перемотка"
       aria-valuemin={0}
       aria-valuemax={Math.round(duration)}
       aria-valuenow={Math.round((pct / 100) * duration)}

@@ -27,7 +27,7 @@ export default function RequireAuth({ children }: { children: ReactNode }) {
           fontFamily: "var(--font-sans), system-ui, sans-serif",
         }}
       >
-        Loading Anifire...
+        Загрузка Anifire...
       </div>
     );
   }

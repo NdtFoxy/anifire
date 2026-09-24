@@ -119,23 +119,23 @@ function absoluteHttp(value: string): boolean {
 function validateCampaign(form: CampaignForm): Errors<CampaignForm> {
   const errors: Errors<CampaignForm> = {};
 
-  if (!form.name.trim()) errors.name = "Give the campaign a name you will recognise later.";
+  if (!form.name.trim()) errors.name = "Дайте кампании название, по которому вы её потом узнаете.";
   if (!form.advertiser.trim()) {
-    errors.advertiser = "This name is printed on every creative — it cannot be blank.";
+    errors.advertiser = "Это название выводится на каждом креативе — оно не может быть пустым.";
   }
   if (!INN.test(form.advertiserInn.trim())) {
-    errors.advertiserInn = "ИНН is 10 digits for an organisation or 12 for a sole trader.";
+    errors.advertiserInn = "ИНН — 10 цифр для организации или 12 для ИП.";
   }
 
   const starts = form.startsAt ? new Date(form.startsAt).getTime() : null;
   const ends = form.endsAt ? new Date(form.endsAt).getTime() : null;
   if (starts !== null && ends !== null && ends <= starts) {
-    errors.endsAt = "The flight has to end after it starts.";
+    errors.endsAt = "Период показа должен заканчиваться после начала.";
   }
 
   const cap = form.dailyImpressionCap.trim();
   if (cap === "" || !Number.isInteger(Number(cap)) || Number(cap) < 0) {
-    errors.dailyImpressionCap = "A whole number of impressions per day; 0 means no cap.";
+    errors.dailyImpressionCap = "Целое число показов в день; 0 — без ограничения.";
   }
 
   const priority = form.priority.trim();
@@ -145,7 +145,7 @@ function validateCampaign(form: CampaignForm): Errors<CampaignForm> {
     Number(priority) < 0 ||
     Number(priority) > 100
   ) {
-    errors.priority = "Priority runs from 0 to 100.";
+    errors.priority = "Приоритет — от 0 до 100.";
   }
 
   return errors;
@@ -155,32 +155,32 @@ function validateCreative(form: CreativeForm): Errors<CreativeForm> {
   const errors: Errors<CreativeForm> = {};
 
   if (!absoluteHttp(form.src.trim())) {
-    errors.src = "An absolute http(s) URL pointing at the mp4 file.";
+    errors.src = "Абсолютный http(s) URL на файл mp4.";
   }
 
   const duration = Number(form.durationSec.trim());
   if (!(duration > 0)) {
-    errors.durationSec = "Duration has to be more than zero seconds.";
+    errors.durationSec = "Длительность должна быть больше нуля секунд.";
   }
 
   const skipRaw = form.skipAfterSec.trim();
   if (skipRaw !== "") {
     const skip = Number(skipRaw);
     if (!Number.isFinite(skip) || skip < 0) {
-      errors.skipAfterSec = "Seconds from the start, or empty for an unskippable spot.";
+      errors.skipAfterSec = "Секунды от начала или пусто для неотключаемого ролика.";
     } else if (duration > 0 && skip > duration) {
-      errors.skipAfterSec = `The creative is ${duration}s long — a skip at ${skip}s never arrives.`;
+      errors.skipAfterSec = `Длина креатива — ${duration} с, пропуск на ${skip} с никогда не наступит.`;
     }
   }
 
   const click = form.clickUrl.trim();
   if (click !== "" && !absoluteHttp(click)) {
-    errors.clickUrl = "An absolute http(s) URL, or leave it empty for a non-clickable spot.";
+    errors.clickUrl = "Абсолютный http(s) URL или оставьте пустым для некликабельного ролика.";
   }
 
   const age = form.ageRating.trim();
   if (age !== "" && (!Number.isInteger(Number(age)) || Number(age) < 0 || Number(age) > 21)) {
-    errors.ageRating = "An age marker such as 6, 12, 16 or 18.";
+    errors.ageRating = "Возрастная маркировка, например 6, 12, 16 или 18.";
   }
 
   return errors;
@@ -374,21 +374,21 @@ export default function CampaignDrawer({
         data-wide="true"
         role="dialog"
         aria-modal="true"
-        aria-label={editing ? `Campaign ${editing.name}` : "New campaign"}
+        aria-label={editing ? `Кампания ${editing.name}` : "Новая кампания"}
         onClick={(e) => e.stopPropagation()}
       >
         <header className={styles.drawerHead}>
           <div>
-            <h3>{editing ? editing.name : "New campaign"}</h3>
+            <h3>{editing ? editing.name : "Новая кампания"}</h3>
             <p>
               {editing
-                ? `#${editing.id} · ${editing.creativeCount} creative${
-                    editing.creativeCount === 1 ? "" : "s"
+                ? `#${editing.id} · креативов: ${editing.creativeCount}${
+                    editing.creativeCount === 1 ? "" : ""
                   }`
-                : "Fill the flight in, then add creatives to it."}
+                : "Заполните параметры показа, затем добавьте креативы."}
             </p>
           </div>
-          <button type="button" className={styles.iconBtn} onClick={onClose} aria-label="Close">
+          <button type="button" className={styles.iconBtn} onClick={onClose} aria-label="Закрыть">
             <X size={16} />
           </button>
         </header>
@@ -398,7 +398,7 @@ export default function CampaignDrawer({
         <form className={styles.drawerForm} onSubmit={submitCampaign}>
           <div className={styles.formGrid}>
             <label className={styles.field} data-span="2">
-              <span className={styles.fieldLabel}>Campaign name</span>
+              <span className={styles.fieldLabel}>Название кампании</span>
               <input
                 className={styles.input}
                 value={form.name}
@@ -409,7 +409,7 @@ export default function CampaignDrawer({
             </label>
 
             <label className={styles.field}>
-              <span className={styles.fieldLabel}>Advertiser (legal name)</span>
+              <span className={styles.fieldLabel}>Рекламодатель (юр. название)</span>
               <input
                 className={styles.input}
                 value={form.advertiser}
@@ -417,13 +417,13 @@ export default function CampaignDrawer({
                 aria-invalid={Boolean(errors.advertiser)}
               />
               <small className={styles.fieldHint}>
-                Shown to the viewer next to the «Реклама» label, as the law requires.
+                Показывается зрителю рядом с пометкой «Реклама», как требует закон.
               </small>
               <FieldError message={errors.advertiser} />
             </label>
 
             <label className={styles.field}>
-              <span className={styles.fieldLabel}>ИНН of the advertiser</span>
+              <span className={styles.fieldLabel}>ИНН рекламодателя</span>
               <input
                 className={styles.input}
                 value={form.advertiserInn}
@@ -432,13 +432,13 @@ export default function CampaignDrawer({
                 aria-invalid={Boolean(errors.advertiserInn)}
               />
               <small className={styles.fieldHint}>
-                Identifies the advertiser in ОРД reporting — 10 digits, or 12 for a sole trader.
+                Идентифицирует рекламодателя в отчётности ОРД — 10 цифр или 12 для ИП.
               </small>
               <FieldError message={errors.advertiserInn} />
             </label>
 
             <label className={styles.field}>
-              <span className={styles.fieldLabel}>Status</span>
+              <span className={styles.fieldLabel}>Статус</span>
               <select
                 className={styles.select}
                 value={form.status}
@@ -451,12 +451,12 @@ export default function CampaignDrawer({
                 ))}
               </select>
               <small className={styles.fieldHint}>
-                Only ACTIVE campaigns inside their flight window are ever selected.
+                Выбираются только кампании со статусом ACTIVE в пределах периода показа.
               </small>
             </label>
 
             <label className={styles.field}>
-              <span className={styles.fieldLabel}>Priority</span>
+              <span className={styles.fieldLabel}>Приоритет</span>
               <input
                 className={styles.input}
                 type="number"
@@ -466,23 +466,23 @@ export default function CampaignDrawer({
                 onChange={(e) => patch({ priority: e.target.value })}
                 aria-invalid={Boolean(errors.priority)}
               />
-              <small className={styles.fieldHint}>0–100; higher wins when two campaigns fit.</small>
+              <small className={styles.fieldHint}>0–100; при совпадении двух кампаний побеждает более высокий.</small>
               <FieldError message={errors.priority} />
             </label>
 
             <label className={styles.field}>
-              <span className={styles.fieldLabel}>Flight starts</span>
+              <span className={styles.fieldLabel}>Начало показа</span>
               <input
                 className={styles.input}
                 type="datetime-local"
                 value={form.startsAt}
                 onChange={(e) => patch({ startsAt: e.target.value })}
               />
-              <small className={styles.fieldHint}>Empty means no start bound.</small>
+              <small className={styles.fieldHint}>Пусто — без даты начала.</small>
             </label>
 
             <label className={styles.field}>
-              <span className={styles.fieldLabel}>Flight ends</span>
+              <span className={styles.fieldLabel}>Окончание показа</span>
               <input
                 className={styles.input}
                 type="datetime-local"
@@ -490,12 +490,12 @@ export default function CampaignDrawer({
                 onChange={(e) => patch({ endsAt: e.target.value })}
                 aria-invalid={Boolean(errors.endsAt)}
               />
-              <small className={styles.fieldHint}>Empty means it runs until paused.</small>
+              <small className={styles.fieldHint}>Пусто — показывается до приостановки.</small>
               <FieldError message={errors.endsAt} />
             </label>
 
             <label className={styles.field}>
-              <span className={styles.fieldLabel}>Daily impression cap</span>
+              <span className={styles.fieldLabel}>Лимит показов в день</span>
               <input
                 className={styles.input}
                 type="number"
@@ -504,7 +504,7 @@ export default function CampaignDrawer({
                 onChange={(e) => patch({ dailyImpressionCap: e.target.value })}
                 aria-invalid={Boolean(errors.dailyImpressionCap)}
               />
-              <small className={styles.fieldHint}>0 = uncapped.</small>
+              <small className={styles.fieldHint}>0 = без лимита.</small>
               <FieldError message={errors.dailyImpressionCap} />
             </label>
           </div>
@@ -512,10 +512,10 @@ export default function CampaignDrawer({
           <div className={styles.formActions}>
             <button type="submit" className={styles.btnPrimary} disabled={busy}>
               {busy ? <Loader2 size={15} className={styles.spin} /> : <Check size={15} />}
-              {editing ? "Save campaign" : "Create campaign"}
+              {editing ? "Сохранить кампанию" : "Создать кампанию"}
             </button>
             <button type="button" className={styles.btnGhost} onClick={onClose}>
-              Cancel
+              Отмена
             </button>
           </div>
         </form>
@@ -523,7 +523,7 @@ export default function CampaignDrawer({
         <section className={styles.creativeBlock}>
           <div className={styles.listHead}>
             <h4>
-              Creatives
+              Креативы
               {unmarked > 0 ? (
                 <span className={styles.ordWarn}>
                   <ShieldAlert size={13} /> {unmarked} без ОРД
@@ -536,7 +536,7 @@ export default function CampaignDrawer({
                 className={styles.btnGhost}
                 onClick={() => openCreative("new")}
               >
-                <Plus size={15} /> Add creative
+                <Plus size={15} /> Добавить креатив
               </button>
             )}
             {loadingCreatives ? <Loader2 size={14} className={styles.spin} /> : null}
@@ -544,11 +544,11 @@ export default function CampaignDrawer({
 
           {campaignId === null ? (
             <p className={styles.geoHint}>
-              Creatives attach to a saved campaign. Create this one first and reopen it.
+              Креативы добавляются к сохранённой кампании. Сначала создайте её и откройте снова.
             </p>
           ) : list.length === 0 && !loadingCreatives ? (
             <p className={styles.geoHint}>
-              No creatives yet — this campaign cannot be selected for a break until it has one.
+              Креативов пока нет — кампания не попадёт в рекламную паузу, пока не появится хотя бы один.
             </p>
           ) : (
             <ul className={styles.creativeList}>
@@ -559,7 +559,7 @@ export default function CampaignDrawer({
                       {creative.durationSec}s ·{" "}
                       {creative.skipAfterSec === null
                         ? "неотключаемый"
-                        : `skip after ${creative.skipAfterSec}s`}
+                        : `пропуск через ${creative.skipAfterSec} с`}
                     </b>
                     <span className={styles.creativeSrc}>{creative.src}</span>
                     <div className={styles.tagRow}>
@@ -577,7 +577,7 @@ export default function CampaignDrawer({
                         <span data-tone="warn">дисклеймер</span>
                       ) : null}
                       <span data-tone={creative.active ? "ok" : undefined}>
-                        {creative.active ? "active" : "paused"}
+                        {creative.active ? "активен" : "приостановлен"}
                       </span>
                     </div>
                   </div>
@@ -586,7 +586,7 @@ export default function CampaignDrawer({
                       type="button"
                       className={styles.iconBtn}
                       onClick={() => openCreative(creative)}
-                      aria-label={`Edit creative ${creative.id}`}
+                      aria-label={`Изменить креатив ${creative.id}`}
                     >
                       <Pencil size={15} />
                     </button>
@@ -596,7 +596,7 @@ export default function CampaignDrawer({
                       data-tone="bad"
                       disabled={removingId === creative.id}
                       onClick={() => removeCreative(creative.id)}
-                      aria-label={`Remove creative ${creative.id}`}
+                      aria-label={`Удалить креатив ${creative.id}`}
                     >
                       {removingId === creative.id ? (
                         <Loader2 size={15} className={styles.spin} />
@@ -612,10 +612,10 @@ export default function CampaignDrawer({
 
           {editingCreative !== null ? (
             <form className={styles.drawerForm} onSubmit={submitCreative}>
-              <h4>{editingCreative === "new" ? "New creative" : `Creative #${editingCreative.id}`}</h4>
+              <h4>{editingCreative === "new" ? "Новый креатив" : `Креатив #${editingCreative.id}`}</h4>
               <div className={styles.formGrid}>
                 <label className={styles.field} data-span="2">
-                  <span className={styles.fieldLabel}>Video URL (mp4)</span>
+                  <span className={styles.fieldLabel}>URL видео (mp4)</span>
                   <input
                     className={styles.input}
                     value={creativeForm.src}
@@ -627,7 +627,7 @@ export default function CampaignDrawer({
                 </label>
 
                 <label className={styles.field}>
-                  <span className={styles.fieldLabel}>Duration, seconds</span>
+                  <span className={styles.fieldLabel}>Длительность, секунды</span>
                   <input
                     className={styles.input}
                     type="number"
@@ -640,26 +640,26 @@ export default function CampaignDrawer({
                 </label>
 
                 <label className={styles.field}>
-                  <span className={styles.fieldLabel}>Skip allowed after, seconds</span>
+                  <span className={styles.fieldLabel}>Пропуск доступен через, секунды</span>
                   <input
                     className={styles.input}
                     type="number"
                     min={0}
                     value={creativeForm.skipAfterSec}
-                    placeholder="empty = unskippable"
+                    placeholder="пусто = без пропуска"
                     onChange={(e) => patchCreative({ skipAfterSec: e.target.value })}
                     aria-invalid={Boolean(creativeErrors.skipAfterSec)}
                   />
-                  <small className={styles.fieldHint}>Leave empty to make the spot unskippable.</small>
+                  <small className={styles.fieldHint}>Оставьте пустым, чтобы ролик нельзя было пропустить.</small>
                   <FieldError message={creativeErrors.skipAfterSec} />
                 </label>
 
                 <label className={styles.field} data-span="2">
-                  <span className={styles.fieldLabel}>Click-through URL</span>
+                  <span className={styles.fieldLabel}>URL перехода по клику</span>
                   <input
                     className={styles.input}
                     value={creativeForm.clickUrl}
-                    placeholder="https://… (optional)"
+                    placeholder="https://… (необязательно)"
                     onChange={(e) => patchCreative({ clickUrl: e.target.value })}
                     aria-invalid={Boolean(creativeErrors.clickUrl)}
                   />
@@ -675,8 +675,8 @@ export default function CampaignDrawer({
                     onChange={(e) => patchCreative({ ordToken: e.target.value })}
                   />
                   <small className={styles.fieldHint}>
-                    The marking token the ОРД issued for this creative; every impression is
-                    reported against it.
+                    Токен маркировки, выданный ОРД для этого креатива; по нему
+                    отчитывается каждый показ.
                   </small>
                   {creativeForm.ordToken.trim() === "" ? (
                     <em className={styles.fieldError}>
@@ -695,8 +695,8 @@ export default function CampaignDrawer({
                     onChange={(e) => patchCreative({ legalDisclaimer: e.target.value })}
                   />
                   <small className={styles.fieldHint}>
-                    Mandatory legal warning for gambling, betting and financial advertising; shown
-                    over the spot verbatim.
+                    Обязательное предупреждение для рекламы азартных игр, ставок и финансовых услуг;
+                    показывается поверх ролика дословно.
                   </small>
                 </label>
 
@@ -713,7 +713,7 @@ export default function CampaignDrawer({
                     aria-invalid={Boolean(creativeErrors.ageRating)}
                   />
                   <small className={styles.fieldHint}>
-                    Age marker rendered on the spot; empty when the creative carries none.
+                    Возрастная маркировка на ролике; пусто, если у креатива её нет.
                   </small>
                   <FieldError message={creativeErrors.ageRating} />
                 </label>
@@ -724,21 +724,21 @@ export default function CampaignDrawer({
                     checked={creativeForm.active}
                     onChange={(e) => patchCreative({ active: e.target.checked })}
                   />
-                  <span className={styles.fieldLabel}>Eligible for delivery</span>
+                  <span className={styles.fieldLabel}>Доступен для показа</span>
                 </label>
               </div>
 
               <div className={styles.formActions}>
                 <button type="submit" className={styles.btnPrimary} disabled={creativeBusy}>
                   {creativeBusy ? <Loader2 size={15} className={styles.spin} /> : <Check size={15} />}
-                  Save creative
+                  Сохранить креатив
                 </button>
                 <button
                   type="button"
                   className={styles.btnGhost}
                   onClick={() => setEditingCreative(null)}
                 >
-                  Cancel
+                  Отмена
                 </button>
               </div>
             </form>

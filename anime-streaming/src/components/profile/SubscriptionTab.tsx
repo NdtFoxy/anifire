@@ -45,11 +45,11 @@ const STATUS: Record<
   SubscriptionStatus,
   { label: string; pill: "on" | "warn" | "off" }
 > = {
-  NONE: { label: "Free", pill: "off" },
-  PENDING: { label: "Pending", pill: "warn" },
-  ACTIVE: { label: "Active", pill: "on" },
-  CANCELED: { label: "Canceled", pill: "warn" },
-  EXPIRED: { label: "Expired", pill: "off" },
+  NONE: { label: "Бесплатно", pill: "off" },
+  PENDING: { label: "Ожидает оплаты", pill: "warn" },
+  ACTIVE: { label: "Активна", pill: "on" },
+  CANCELED: { label: "Отменена", pill: "warn" },
+  EXPIRED: { label: "Истекла", pill: "off" },
 };
 
 /**
@@ -64,13 +64,13 @@ function planLabel(plan: string): string {
 /** How the current period reads, given status and the cancel flag. */
 function periodLine(sub: Subscription): string {
   const date = sub.currentPeriodEnd;
-  if (sub.status === "EXPIRED") return `Expired on ${fullDate(date)}`;
-  if (!date) return sub.status === "ACTIVE" ? "Never expires" : "—";
+  if (sub.status === "EXPIRED") return `Истекла ${fullDate(date)}`;
+  if (!date) return sub.status === "ACTIVE" ? "Бессрочно" : "—";
   if (sub.cancelAtPeriodEnd || sub.status === "CANCELED") {
-    return `Access ends on ${fullDate(date)}`;
+    return `Доступ до ${fullDate(date)}`;
   }
-  if (sub.status === "PENDING") return `Starts once the payment clears`;
-  return `Renews on ${fullDate(date)}`;
+  if (sub.status === "PENDING") return `Начнётся после подтверждения оплаты`;
+  return `Продление ${fullDate(date)}`;
 }
 
 export default function SubscriptionTab() {
@@ -87,7 +87,7 @@ export default function SubscriptionTab() {
     // fetchSubscription resolves to null instead of throwing; turn that back
     // into a failure so the error state and its retry actually appear.
     const value = await fetchSubscription();
-    if (!value) throw new Error("We could not load your subscription.");
+    if (!value) throw new Error("Не удалось загрузить подписку.");
     return value;
   });
 
@@ -156,7 +156,7 @@ export default function SubscriptionTab() {
     setCancelling(false);
     if (!ok) {
       setCancelError(
-        "We could not cancel the plan just now. Nothing changed — please try again."
+        "Сейчас не удалось отменить подписку. Ничего не изменилось — попробуйте ещё раз."
       );
       return;
     }
@@ -172,10 +172,9 @@ export default function SubscriptionTab() {
       <aside className={styles.checkCard} role="status">
         <Loader2 size={18} className={`${styles.checkIcon} ${styles.spin}`} />
         <div>
-          <h3>Payment received — checking…</h3>
+          <h3>Оплата получена — проверяем…</h3>
           <p>
-            The provider confirms the charge to us separately, which usually
-            takes a few seconds.
+            Платёжный сервис подтверждает списание отдельно — обычно это занимает несколько секунд.
           </p>
         </div>
       </aside>
@@ -183,19 +182,17 @@ export default function SubscriptionTab() {
       <aside className={styles.checkCard} role="status">
         <Check size={18} className={styles.checkIcon} />
         <div>
-          <h3>Your plan is active.</h3>
-          <p>Ads are off everywhere you are signed in.</p>
+          <h3>Подписка активна.</h3>
+          <p>Реклама отключена на всех устройствах, где вы вошли.</p>
         </div>
       </aside>
     ) : poll === "unknown" ? (
       <aside className={styles.checkCard} role="status">
         <Clock size={18} className={styles.checkIcon} />
         <div>
-          <h3>Payment received, confirmation still pending.</h3>
+          <h3>Оплата получена, подтверждение ещё не пришло.</h3>
           <p>
-            We stopped checking after {POLL_ATTEMPTS} attempts. The plan
-            activates as soon as the provider notifies us — usually within a few
-            minutes. Nothing is lost; reload this tab to look again.
+            Мы прекратили проверку. Попыток: {POLL_ATTEMPTS} . Подписка активируется, как только платёжный сервис нас уведомит — обычно в течение нескольких минут. Ничего не потеряно: обновите вкладку, чтобы проверить снова.
           </p>
           <button
             type="button"
@@ -208,7 +205,7 @@ export default function SubscriptionTab() {
             ) : (
               <Clock size={15} />
             )}
-            Check again
+            Проверить снова
           </button>
         </div>
       </aside>
@@ -228,7 +225,7 @@ export default function SubscriptionTab() {
       <div className={styles.subscription}>
         {returnBanner}
         <ErrorState
-          message={error ?? "We could not load your subscription."}
+          message={error ?? "Не удалось загрузить подписку."}
           onRetry={reload}
           retrying={loading}
         />
@@ -240,21 +237,19 @@ export default function SubscriptionTab() {
     return (
       <div className={styles.subscription}>
         {returnBanner}
-        <EmptyState icon={<Sparkles size={22} />} title="You are on the free plan">
+        <EmptyState icon={<Sparkles size={22} />} title="У вас бесплатный тариф">
           <p>
-            The whole catalogue, your list and your progress stay free. A paid
-            plan removes the sponsor breaks before every episode.
+            Весь каталог, ваш список и прогресс остаются бесплатными. Платная подписка убирает рекламные вставки перед каждой серией.
           </p>
           <Link href="/pricing" className={styles.primaryLink} data-tap>
-            Go ads-free
+            Отключить рекламу
           </Link>
         </EmptyState>
 
         <aside className={styles.noteCard}>
           <ShieldCheck size={17} className={styles.noteIcon} />
           <p>
-            Your entitlement comes straight from the server on every load —
-            nothing here is stored in the browser.
+            Статус подписки загружается с сервера при каждом открытии — в браузере ничего не хранится.
           </p>
         </aside>
       </div>
@@ -278,7 +273,7 @@ export default function SubscriptionTab() {
           </span>
           <div>
             <h2 className={styles.planName}>
-              {sub.plan ? `${planLabel(sub.plan)} · Ads-free` : "Ads-free"}
+              {sub.plan ? `${planLabel(sub.plan)} · Без рекламы` : "Без рекламы"}
             </h2>
             <p className={styles.planState}>{periodLine(sub)}</p>
           </div>
@@ -297,23 +292,23 @@ export default function SubscriptionTab() {
 
         <dl className={styles.planMeta}>
           <div>
-            <dt className={styles.planMetaKey}>Plan</dt>
+            <dt className={styles.planMetaKey}>Тариф</dt>
             <dd className={styles.planMetaVal}>
               {sub.plan ? planLabel(sub.plan) : "—"}
             </dd>
           </div>
           <div>
             <dt className={styles.planMetaKey}>
-              {lapsing ? "Access until" : "Current period"}
+              {lapsing ? "Доступ до" : "Текущий период"}
             </dt>
             <dd className={styles.planMetaVal}>
               {sub.currentPeriodEnd ? fullDate(sub.currentPeriodEnd) : "—"}
             </dd>
           </div>
           <div>
-            <dt className={styles.planMetaKey}>Ads</dt>
+            <dt className={styles.planMetaKey}>Реклама</dt>
             <dd className={styles.planMetaVal}>
-              {sub.adsFree ? "Removed" : "Shown"}
+              {sub.adsFree ? "Отключена" : "Показывается"}
             </dd>
           </div>
         </dl>
@@ -321,23 +316,22 @@ export default function SubscriptionTab() {
         <ul className={styles.benefits}>
           <li className={sub.adsFree ? styles.benefitOn : styles.benefitOff}>
             {sub.adsFree ? <Check size={15} /> : <Minus size={15} />}
-            Ad-free playback
+            Просмотр без рекламы
             <span className={styles.benefitNote}>
-              Enforced server-side — the backend decides per request, the player
-              only reflects it.
+              Контролируется на сервере — решение принимается при каждом запросе, плеер лишь отображает его.
             </span>
           </li>
           <li className={sub.adsFree ? styles.benefitOn : styles.benefitOff}>
             {sub.adsFree ? <Check size={15} /> : <Minus size={15} />}
-            Every device you sign in on
+            На всех устройствах, где вы вошли
             <span className={styles.benefitNote}>
-              The entitlement lives on the account, not on this browser.
+              Подписка привязана к аккаунту, а не к этому браузеру.
             </span>
           </li>
           <li className={styles.benefitOn}>
             <Check size={15} />
-            Full catalog, bookmarks and watch history
-            <span className={styles.benefitNote}>Included on every plan.</span>
+            Весь каталог, закладки и история просмотров
+            <span className={styles.benefitNote}>Входит в любой тариф.</span>
           </li>
         </ul>
 
@@ -345,11 +339,11 @@ export default function SubscriptionTab() {
           confirming ? (
             <div className={styles.confirmBox}>
               <p className={styles.confirmText}>
-                Cancel the plan? You keep ads-free access
+                Отменить подписку? Просмотр без рекламы сохранится
                 {sub.currentPeriodEnd
-                  ? ` until ${fullDate(sub.currentPeriodEnd)}`
+                  ? ` до ${fullDate(sub.currentPeriodEnd)}`
                   : ""}
-                , and you will not be charged again.
+                , и больше списаний не будет.
               </p>
               <div className={styles.confirmRow}>
                 <button
@@ -358,7 +352,7 @@ export default function SubscriptionTab() {
                   onClick={() => setConfirming(false)}
                   disabled={cancelling}
                 >
-                  Keep my plan
+                  Оставить подписку
                 </button>
                 <button
                   type="button"
@@ -369,7 +363,7 @@ export default function SubscriptionTab() {
                   {cancelling ? (
                     <Loader2 size={15} className={styles.spin} />
                   ) : null}
-                  Yes, cancel
+                  Да, отменить
                 </button>
               </div>
             </div>
@@ -380,17 +374,17 @@ export default function SubscriptionTab() {
                 className={styles.dangerBtn}
                 onClick={() => setConfirming(true)}
               >
-                Cancel subscription
+                Отменить подписку
               </button>
               <Link href="/pricing" className={styles.primaryLink} data-tap>
-                See all plans
+                Все тарифы
               </Link>
             </div>
           )
         ) : (
           <div className={styles.subActions}>
             <Link href="/pricing" className={styles.primaryLink} data-tap>
-              {sub.adsFree ? "See all plans" : "Go ads-free"}
+              {sub.adsFree ? "Все тарифы" : "Отключить рекламу"}
             </Link>
           </div>
         )}
@@ -407,11 +401,11 @@ export default function SubscriptionTab() {
         <aside className={styles.noteCard} data-rise>
           <Clock size={17} className={styles.noteIcon} />
           <p>
-            Cancelled. Ads-free access stays on
+            Подписка отменена. Просмотр без рекламы доступен
             {sub.currentPeriodEnd
-              ? ` until ${fullDate(sub.currentPeriodEnd)}`
-              : " until the end of the paid period"}
-            , then the plan lapses. There are no further charges.
+              ? ` до ${fullDate(sub.currentPeriodEnd)}`
+              : " до конца оплаченного периода"}
+            , затем подписка закончится. Новых списаний не будет.
           </p>
         </aside>
       ) : null}
@@ -420,9 +414,7 @@ export default function SubscriptionTab() {
         <aside className={styles.noteCard} data-rise>
           <Clock size={17} className={styles.noteIcon} />
           <p>
-            The payment has not been confirmed yet. Nothing else is needed from
-            you — the plan switches on by itself once the provider reports the
-            charge.
+            Оплата ещё не подтверждена. От вас ничего больше не требуется — подписка включится автоматически, как только платёжный сервис сообщит о списании.
           </p>
         </aside>
       ) : null}
@@ -430,8 +422,7 @@ export default function SubscriptionTab() {
       <aside className={styles.noteCard} data-rise>
         <ShieldCheck size={17} className={styles.noteIcon} />
         <p>
-          Your entitlement comes straight from the server on every load —
-          nothing here is stored in the browser.
+          Статус подписки загружается с сервера при каждом открытии — в браузере ничего не хранится.
         </p>
       </aside>
     </div>

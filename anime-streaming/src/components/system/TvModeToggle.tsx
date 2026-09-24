@@ -14,9 +14,9 @@ import styles from "./TvModeToggle.module.css";
  */
 
 const OPTIONS: { key: string; label: string; value: boolean | null }[] = [
-  { key: "auto", label: "Auto", value: null },
-  { key: "on", label: "On", value: true },
-  { key: "off", label: "Off", value: false },
+  { key: "auto", label: "Авто", value: null },
+  { key: "on", label: "Вкл", value: true },
+  { key: "off", label: "Выкл", value: false },
 ];
 
 /**
@@ -33,7 +33,7 @@ export default function TvModeToggle() {
   return (
     <div className={styles.wrap}>
       <span className={styles.title} id="tv-mode-label">
-        TV mode
+        Режим ТВ
       </span>
       <div className={styles.group} role="group" aria-labelledby="tv-mode-label">
         {OPTIONS.map((opt) => (
@@ -51,11 +51,11 @@ export default function TvModeToggle() {
       <span className={styles.hint}>
         {tvOverride === null
           ? tv
-            ? "Detected a TV — couch layout is on."
-            : "Following device detection."
+            ? "Обнаружен телевизор — включён режим для просмотра с дивана."
+            : "Определяется автоматически по устройству."
           : tvOverride
-            ? "Forced on: bigger targets, remote navigation."
-            : "Forced off, even on a TV."}
+            ? "Включён принудительно: крупные элементы, управление с пульта."
+            : "Выключен принудительно, даже на телевизоре."}
       </span>
     </div>
   );

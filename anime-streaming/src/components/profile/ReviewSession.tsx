@@ -85,7 +85,7 @@ export default function ReviewSession({
             className={styles.reviewReveal}
             onClick={() => setTurn((cur) => ({ ...cur, revealed: true }))}
           >
-            Show the answer
+            Показать ответ
           </button>
         </>
       ) : (
@@ -93,15 +93,15 @@ export default function ReviewSession({
           <p className={styles.reviewAnswer}>
             {card.answer}
             {card.reading && card.reading !== card.answer ? <em> · {card.reading}</em> : null}
-            {card.surface !== card.answer ? <em> · seen as {card.surface}</em> : null}
+            {card.surface !== card.answer ? <em> · в тексте: {card.surface}</em> : null}
             {picked ? (
               picked === card.answer ? (
                 <span data-tone="ok">
-                  <Check size={14} /> correct
+                  <Check size={14} /> верно
                 </span>
               ) : (
                 <span data-tone="bad">
-                  <X size={14} /> you picked {picked}
+                  <X size={14} /> ваш ответ: {picked}
                 </span>
               )
             ) : null}
@@ -114,22 +114,22 @@ export default function ReviewSession({
               className={styles.reviewScene}
               href={`/watch/${card.animeKey}?t=${card.timeSec}${card.episode ? `&ep=${card.episode}` : ""}`}
             >
-              <RotateCcw size={14} /> Watch the scene again
+              <RotateCcw size={14} /> Пересмотреть сцену
             </a>
           ) : null}
 
           <div className={styles.reviewGrades}>
             <button type="button" data-grade="0" onClick={() => grade(0)}>
-              Again
+              Снова
             </button>
             <button type="button" data-grade="1" onClick={() => grade(1)}>
-              Hard
+              Трудно
             </button>
             <button type="button" data-grade="2" onClick={() => grade(2)}>
-              Good
+              Хорошо
             </button>
             <button type="button" data-grade="3" onClick={() => grade(3)}>
-              Easy
+              Легко
             </button>
           </div>
         </>

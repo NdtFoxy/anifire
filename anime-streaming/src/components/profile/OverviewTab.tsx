@@ -42,11 +42,11 @@ export default function OverviewTab({
   const [draft, setDraft] = useState({ bio: "", location: "", birthday: "" });
 
   const stats = [
-    { Icon: Eye, label: "Profile views", value: profile.profileViews },
-    { Icon: Heart, label: "Likes", value: profile.likes },
-    { Icon: UserPlus, label: "Friends", value: profile.friends },
-    { Icon: MessageSquare, label: "Posts", value: profile.posts },
-    { Icon: MessageCircle, label: "Comments", value: profile.commentsCount },
+    { Icon: Eye, label: "Просмотры профиля", value: profile.profileViews },
+    { Icon: Heart, label: "Лайки", value: profile.likes },
+    { Icon: UserPlus, label: "Друзья", value: profile.friends },
+    { Icon: MessageSquare, label: "Посты", value: profile.posts },
+    { Icon: MessageCircle, label: "Комментарии", value: profile.commentsCount },
   ];
 
   async function saveInfo() {
@@ -62,7 +62,7 @@ export default function OverviewTab({
       );
       setEditing(false);
     } catch (err) {
-      setSaveError(err instanceof Error ? err.message : "Could not save.");
+      setSaveError(err instanceof Error ? err.message : "Не удалось сохранить.");
     } finally {
       setSaving(false);
     }
@@ -82,9 +82,9 @@ export default function OverviewTab({
 
       <section className={styles.section} data-rise>
         <div className={styles.sectionHead}>
-          <h2 className={styles.sectionTitle}>Achievements</h2>
+          <h2 className={styles.sectionTitle}>Достижения</h2>
           <span className={styles.sectionMeta}>
-            {unlocked} of {awards.length} unlocked
+            {unlocked} из {awards.length} открыто
           </span>
         </div>
         <ul className={styles.awardGrid}>
@@ -93,11 +93,11 @@ export default function OverviewTab({
               key={a.id}
               className={`${styles.award} ${a.unlocked ? styles.awardOn : styles.awardOff}`}
               tabIndex={0}
-              title={a.unlocked ? a.description : `Locked — ${a.requirement}`}
+              title={a.unlocked ? a.description : `Закрыто — ${a.requirement}`}
               aria-label={
                 a.unlocked
                   ? `${a.label}: ${a.description}`
-                  : `${a.label}: locked. ${a.requirement}`
+                  : `${a.label}: закрыто. ${a.requirement}`
               }
             >
               <span
@@ -134,7 +134,7 @@ export default function OverviewTab({
 
       <section className={styles.section} data-rise>
         <div className={styles.sectionHead}>
-          <h2 className={styles.sectionTitle}>Personal info</h2>
+          <h2 className={styles.sectionTitle}>Личная информация</h2>
           {editing ? (
             <div className={styles.sectionActions}>
               <button
@@ -144,14 +144,14 @@ export default function OverviewTab({
                 disabled={saving}
               >
                 {saving ? <Loader2 size={14} className={styles.spin} /> : null}
-                Save
+                Сохранить
               </button>
               <button
                 className={styles.ghostBtn}
                 type="button"
                 onClick={() => setEditing(false)}
                 disabled={saving}
-                aria-label="Cancel editing"
+                aria-label="Отменить редактирование"
               >
                 <X size={15} />
               </button>
@@ -169,7 +169,7 @@ export default function OverviewTab({
                 setSaveError(null);
                 setEditing(true);
               }}
-              aria-label="Edit personal info"
+              aria-label="Изменить личную информацию"
             >
               <Pencil size={15} />
             </button>
@@ -181,7 +181,7 @@ export default function OverviewTab({
         {editing ? (
           <div className={styles.infoEdit}>
             <label className={styles.infoField}>
-              <span>Bio</span>
+              <span>О себе</span>
               <textarea
                 className={styles.infoArea}
                 rows={3}
@@ -190,7 +190,7 @@ export default function OverviewTab({
               />
             </label>
             <label className={styles.infoField}>
-              <span>Location</span>
+              <span>Местоположение</span>
               <input
                 className={styles.infoInput}
                 value={draft.location}
@@ -198,7 +198,7 @@ export default function OverviewTab({
               />
             </label>
             <label className={styles.infoField}>
-              <span>Birthday</span>
+              <span>День рождения</span>
               <input
                 type="date"
                 className={styles.infoInput}
@@ -210,27 +210,27 @@ export default function OverviewTab({
         ) : (
           <dl className={styles.infoList}>
             <p className={styles.bio}>
-              {profile.bio || "No bio yet — add one with the pencil above."}
+              {profile.bio || "Пока ничего о себе — добавьте, нажав на карандаш выше."}
             </p>
             <div className={styles.infoRow}>
-              <dt>Location</dt>
+              <dt>Местоположение</dt>
               <dd>{profile.location || "—"}</dd>
             </div>
             <div className={styles.infoRow}>
-              <dt>Birthday</dt>
+              <dt>День рождения</dt>
               <dd>{profile.birthday || "—"}</dd>
             </div>
             <div className={styles.infoRow}>
-              <dt>Email</dt>
+              <dt>Эл. почта</dt>
               <dd>
                 {profile.email}
                 {profile.emailVerified ? null : (
-                  <span className={styles.unverified}>unverified</span>
+                  <span className={styles.unverified}>не подтверждена</span>
                 )}
               </dd>
             </div>
             <div className={styles.infoRow}>
-              <dt>Joined</dt>
+              <dt>На сайте с</dt>
               <dd>{monthYear(profile.createdAt)}</dd>
             </div>
           </dl>
@@ -239,10 +239,10 @@ export default function OverviewTab({
 
       <section className={styles.section} data-rise>
         <div className={styles.sectionHead}>
-          <h2 className={styles.sectionTitle}>Your recent comments</h2>
+          <h2 className={styles.sectionTitle}>Ваши последние комментарии</h2>
           {comments.data?.length ? (
             <span className={styles.sectionMeta}>
-              {comments.data.length} shown
+              показано: {comments.data.length}
             </span>
           ) : null}
         </div>
@@ -251,7 +251,7 @@ export default function OverviewTab({
           <Skeleton lines={3} height={44} />
         ) : comments.error ? (
           <ErrorState
-            message={`Could not load your comments. ${comments.error}`}
+            message={`Не удалось загрузить комментарии. ${comments.error}`}
             onRetry={comments.reload}
           />
         ) : comments.data && comments.data.length > 0 ? (
@@ -276,14 +276,14 @@ export default function OverviewTab({
         ) : (
           <EmptyState
             icon={<MessageCircle size={22} />}
-            title="You haven't commented yet"
+            title="Вы ещё не оставляли комментариев"
           >
             <p>
-              Open any title and leave a thought — your comments show up here
-              with a link back to the anime.
+              Откройте любой тайтл и поделитесь мнением — ваши комментарии появятся здесь
+              со ссылкой на аниме.
             </p>
             <Link href="/stream" className={styles.primaryLink}>
-              Browse the catalog
+              Перейти в каталог
             </Link>
           </EmptyState>
         )}

@@ -47,8 +47,8 @@ function demoTracks(): SubtitleTrack[] {
 
 function demoChapters(): Chapter[] {
   return [
-    { start: 8, end: 48, kind: "intro", label: "Intro" },
-    { start: 540, end: 580, kind: "outro", label: "Outro" },
+    { start: 8, end: 48, kind: "intro", label: "Опенинг" },
+    { start: 540, end: 580, kind: "outro", label: "Эндинг" },
   ];
 }
 
@@ -74,8 +74,8 @@ export function buildPlayerSource(
     selfHref: `${base}?ep=${episode}`,
     title: movie.title,
     subtitle: movie.genre,
-    episodeLabel: `Episode ${episode}`,
-    episodeTitle: "Heroic incident",
+    episodeLabel: `Серия ${episode}`,
+    episodeTitle: "Героический инцидент",
     src: SAMPLE_VIDEO,
     qualities: demoQualities(),
     poster: poster || movie.heroImageUrl,
@@ -114,10 +114,10 @@ export function buildAniLibertySource(
 
   const chapters: Chapter[] = [];
   if (ep.opening?.start != null && ep.opening?.stop != null) {
-    chapters.push({ start: ep.opening.start, end: ep.opening.stop, kind: "intro", label: "Intro" });
+    chapters.push({ start: ep.opening.start, end: ep.opening.stop, kind: "intro", label: "Опенинг" });
   }
   if (ep.ending?.start != null && ep.ending?.stop != null) {
-    chapters.push({ start: ep.ending.start, end: ep.ending.stop, kind: "outro", label: "Outro" });
+    chapters.push({ start: ep.ending.start, end: ep.ending.stop, kind: "outro", label: "Эндинг" });
   }
 
   return {
@@ -125,7 +125,7 @@ export function buildAniLibertySource(
     selfHref: `${base}?ep=${ep.ordinal}`,
     title: release.title,
     subtitle: release.subtitle ?? undefined,
-    episodeLabel: `Episode ${ep.ordinal}`,
+    episodeLabel: `Серия ${ep.ordinal}`,
     episodeTitle: ep.name ?? undefined,
     src: ep.hls[0].src,
     qualities: ep.hls,

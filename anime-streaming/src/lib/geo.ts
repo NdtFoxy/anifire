@@ -36,7 +36,7 @@ export interface GeoAuditEntry {
 
 export async function fetchGeo(): Promise<GeoOverview> {
   const res = await authFetch(GEO);
-  if (!res.ok) throw new Error("Could not load geo rules.");
+  if (!res.ok) throw new Error("Не удалось загрузить геоправила.");
   const body = await res.json();
   return { ...body, blocked: Array.from(body.blocked ?? []) } as GeoOverview;
 }
@@ -51,7 +51,7 @@ export async function setGeoRule(
     body: JSON.stringify({ country, blocked, note: note ?? null }),
   });
   const body = await res.json();
-  if (!res.ok) throw new Error(body?.message ?? "Could not save that rule.");
+  if (!res.ok) throw new Error(body?.message ?? "Не удалось сохранить правило.");
   return body as GeoRule;
 }
 

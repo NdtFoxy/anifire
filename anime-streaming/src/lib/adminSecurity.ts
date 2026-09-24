@@ -35,6 +35,6 @@ export interface SecurityOverview {
 
 export async function fetchSecurity(): Promise<SecurityOverview> {
   const res = await authFetch(`${API_BASE}/api/v1/admin/security`);
-  if (!res.ok) throw new Error("Could not load the signal feed.");
+  if (!res.ok) throw new Error("Не удалось загрузить ленту сигналов.");
   return (await res.json()) as SecurityOverview;
 }

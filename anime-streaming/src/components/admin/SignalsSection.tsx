@@ -56,7 +56,7 @@ export default function SignalsSection({
           setError(null);
         })
         .catch((err: unknown) => {
-          setError(err instanceof Error ? err.message : "Could not load the feed.");
+          setError(err instanceof Error ? err.message : "Не удалось загрузить ленту.");
         }),
     []
   );
@@ -77,33 +77,33 @@ export default function SignalsSection({
       <header className={styles.sectionHead}>
         <div>
           <h2>
-            <ShieldAlert size={20} /> Signals
+            <ShieldAlert size={20} /> Сигналы
           </h2>
           <p>
-            Suspicious patterns and server errors, straight from the data. Nothing here is
-            acted on automatically — it is a queue for you to judge.
+            Подозрительные закономерности и ошибки сервера — прямо из данных. Здесь ничего
+            не применяется автоматически: это очередь для вашего решения.
           </p>
         </div>
         <div className={styles.geoStats}>
           <span data-tone="bad">
-            <b>{counts.high}</b> high
+            <b>{counts.high}</b> высокий
           </span>
           <span data-tone="warn">
-            <b>{counts.medium}</b> medium
+            <b>{counts.medium}</b> средний
           </span>
           <span>
-            <b>{counts.low}</b> low
+            <b>{counts.low}</b> низкий
           </span>
           <button type="button" className={styles.btnGhost} onClick={load} disabled={loading}>
             {loading ? <Loader2 size={15} className={styles.spin} /> : <RefreshCw size={15} />}
-            Refresh
+            Обновить
           </button>
         </div>
       </header>
 
       {error ? <div className={styles.notice}>{error}</div> : null}
 
-      <div className={styles.periodChips} role="group" aria-label="Severity filter">
+      <div className={styles.periodChips} role="group" aria-label="Фильтр по важности">
         {(["all", "high", "medium", "low"] as const).map((value) => (
           <button
             key={value}
@@ -111,16 +111,16 @@ export default function SignalsSection({
             data-on={filter === value}
             onClick={() => setFilter(value)}
           >
-            {value === "all" ? "Everything" : value}
+            {value === "all" ? "Все" : value}
           </button>
         ))}
       </div>
 
       <section className={styles.card}>
-        <h3>Abuse & security</h3>
+        <h3>Злоупотребления и безопасность</h3>
         {signals.length === 0 ? (
           <p className={styles.geoHint}>
-            {loading ? "Scanning…" : "Nothing suspicious in the current data."}
+            {loading ? "Проверка…" : "В текущих данных ничего подозрительного."}
           </p>
         ) : (
           <ul className={styles.signalList}>
@@ -142,7 +142,7 @@ export default function SignalsSection({
                       className={styles.btnGhost}
                       onClick={() => onInspectUser(signal.userId!)}
                     >
-                      Inspect
+                      Проверить
                     </button>
                   ) : null}
                 </li>
@@ -154,7 +154,7 @@ export default function SignalsSection({
 
       <section className={styles.card}>
         <h3>
-          <Bug size={16} /> Recent server errors
+          <Bug size={16} /> Недавние ошибки сервера
         </h3>
         {data && data.errors.length > 0 ? (
           <ul className={styles.plainList}>
@@ -171,9 +171,9 @@ export default function SignalsSection({
           </ul>
         ) : (
           <p className={styles.geoHint}>
-            No server errors recorded since the last restart. This buffer holds the most
-            recent 100 and is intentionally memory-only, so a database outage cannot hide
-            itself.
+            С последнего перезапуска ошибок сервера не зафиксировано. Буфер хранит
+            последние 100 записей и намеренно держится только в памяти, чтобы сбой базы данных
+            не мог скрыть сам себя.
           </p>
         )}
       </section>

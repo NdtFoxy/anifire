@@ -122,7 +122,7 @@ export default function SocialButtons({
           if (!mounted.current) return;
           setPending(null);
           if (!response.credential) {
-            onError?.("Google sign-in was cancelled.");
+            onError?.("Вход через Google отменён.");
             return;
           }
           onCredential("google", response.credential, nonce);
@@ -132,7 +132,7 @@ export default function SocialButtons({
     } catch {
       if (!mounted.current) return;
       setPending(null);
-      onError?.("Google sign-in is unavailable right now.");
+      onError?.("Вход через Google сейчас недоступен.");
     }
   }, [onCredential, onError]);
 
@@ -149,11 +149,11 @@ export default function SocialButtons({
             disabled={disabled || !enabled || pending !== null || id !== "google"}
             aria-label={
               enabled && id === "google"
-                ? `Continue with ${label}`
-                : `${label} sign-in is not configured on this server`
+                ? `Продолжить с ${label}`
+                : `Вход через ${label} не настроен на этом сервере`
             }
             title={
-              enabled && id === "google" ? undefined : `${label} sign-in is not enabled here`
+              enabled && id === "google" ? undefined : `Вход через ${label} здесь недоступен`
             }
           >
             {pending === id ? <Loader2 size={18} className={styles.spinInline} /> : <Icon />}

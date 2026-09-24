@@ -14,7 +14,7 @@ test("register, reach the catalogue and profile, then sign back in", async ({ pa
   await page.locator("#name").fill(name);
   await page.locator("#email").fill(email);
   await page.locator("#password").fill(password);
-  await page.getByRole("button", { name: "Create account" }).click();
+  await page.getByRole("button", { name: "Создать аккаунт" }).click();
 
   await expect(page).toHaveURL(/\/stream$/, { timeout: 20_000 });
 
@@ -28,7 +28,7 @@ test("register, reach the catalogue and profile, then sign back in", async ({ pa
 
   await page.locator("#email").fill(email);
   await page.locator("#password").fill(password);
-  await page.getByRole("button", { name: "Sign in" }).click();
+  await page.getByRole("button", { name: "Войти", exact: true }).click();
   await expect(page).not.toHaveURL(/\/login/, { timeout: 20_000 });
 
   await page.goto("/profile");

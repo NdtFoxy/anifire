@@ -54,7 +54,7 @@ export default function CommentsPanel({
       setNotice(null);
       await load();
     } catch (err) {
-      setNotice(err instanceof Error ? err.message : "Failed to add comment.");
+      setNotice(err instanceof Error ? err.message : "Не удалось добавить комментарий.");
     }
   }
 
@@ -66,7 +66,7 @@ export default function CommentsPanel({
       setEditingText("");
       await load();
     } catch (err) {
-      setNotice(err instanceof Error ? err.message : "Failed to update comment.");
+      setNotice(err instanceof Error ? err.message : "Не удалось обновить комментарий.");
     }
   }
 
@@ -75,7 +75,7 @@ export default function CommentsPanel({
       await deleteComment(id);
       await load();
     } catch (err) {
-      setNotice(err instanceof Error ? err.message : "Failed to delete comment.");
+      setNotice(err instanceof Error ? err.message : "Не удалось удалить комментарий.");
     }
   }
 
@@ -85,7 +85,7 @@ export default function CommentsPanel({
     try {
       const review = await fetchAiReview(animeTitle, animeSynopsis);
       if (review) setText(review);
-      else setNotice("Local AI is unavailable (is Ollama running?).");
+      else setNotice("Локальный ИИ недоступен (Ollama запущена?).");
     } finally {
       setAiBusy(false);
     }
@@ -95,9 +95,9 @@ export default function CommentsPanel({
     <section className={styles.comments}>
       <div className={styles.commentsHead}>
         <h2>
-          <MessageCircle size={20} /> Comments
+          <MessageCircle size={20} /> Комментарии
         </h2>
-        <span>{comments.length} total</span>
+        <span>{comments.length} всего</span>
       </div>
 
       {notice ? <div className={styles.commentNotice}>{notice}</div> : null}
@@ -110,8 +110,8 @@ export default function CommentsPanel({
             rows={3}
             placeholder={
               user.role === "ADMIN"
-                ? "Write a comment — it'll be tagged as Admin…"
-                : "Write your comment…"
+                ? "Напишите комментарий — он будет отмечен как от администратора…"
+                : "Напишите комментарий…"
             }
           />
           <div className={styles.commentFormRow}>
@@ -120,16 +120,16 @@ export default function CommentsPanel({
               className={styles.aiReviewBtn}
               onClick={generateAiReview}
               disabled={aiBusy}
-              title="Let the local AI draft a review/score for you"
+              title="Локальный ИИ напишет черновик отзыва и оценку за вас"
             >
-              <Sparkles size={14} /> {aiBusy ? "Generating…" : "AI review"}
+              <Sparkles size={14} /> {aiBusy ? "Генерация…" : "Отзыв от ИИ"}
             </button>
-            <button type="submit">Add comment</button>
+            <button type="submit">Добавить комментарий</button>
           </div>
         </form>
       ) : (
         <p className={styles.commentLogin}>
-          <Link href="/login">Sign in</Link> to add a comment.
+          <Link href="/login">Войдите</Link>, чтобы оставить комментарий.
         </p>
       )}
 
@@ -144,11 +144,11 @@ export default function CommentsPanel({
                 <span className={styles.commentAuthor}>
                   {comment.authorName ||
                     (comment.creatorUserId
-                      ? `User #${comment.creatorUserId}`
+                      ? `Пользователь #${comment.creatorUserId}`
                       : "Anifire")}
                   {comment.authorRole === "ADMIN" ? (
                     <span className={styles.adminTag}>
-                      <Shield size={11} /> Admin
+                      <Shield size={11} /> Админ
                     </span>
                   ) : null}
                 </span>
@@ -167,7 +167,7 @@ export default function CommentsPanel({
                 <div className={styles.commentActions}>
                   {editing ? (
                     <button type="button" onClick={() => saveEdit(comment.id)}>
-                      <Save size={14} /> Save
+                      <Save size={14} /> Сохранить
                     </button>
                   ) : (
                     <button
@@ -177,11 +177,11 @@ export default function CommentsPanel({
                         setEditingText(comment.description);
                       }}
                     >
-                      <Edit3 size={14} /> Edit
+                      <Edit3 size={14} /> Изменить
                     </button>
                   )}
                   <button type="button" onClick={() => remove(comment.id)}>
-                    <Trash2 size={14} /> Delete
+                    <Trash2 size={14} /> Удалить
                   </button>
                 </div>
               ) : null}

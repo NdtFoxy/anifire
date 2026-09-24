@@ -130,13 +130,13 @@ export async function fetchUsers(input: UserQuery): Promise<UserPage> {
   params.set("size", String(input.size ?? 20));
 
   const res = await authFetch(`${USERS}?${params}`);
-  if (!res.ok) throw new Error("Could not load users.");
+  if (!res.ok) throw new Error("Не удалось загрузить пользователей.");
   return (await res.json()) as UserPage;
 }
 
 export async function fetchUserDetail(id: number): Promise<AdminUserDetail> {
   const res = await authFetch(`${USERS}/${id}`);
-  if (!res.ok) throw new Error("Could not load that account.");
+  if (!res.ok) throw new Error("Не удалось загрузить этот аккаунт.");
   return (await res.json()) as AdminUserDetail;
 }
 

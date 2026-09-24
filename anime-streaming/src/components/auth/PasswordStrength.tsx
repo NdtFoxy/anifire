@@ -23,15 +23,15 @@ const SEQUENCES = /(0123|1234|2345|3456|4567|5678|6789|abcd|bcde|qwer|asdf|zxcv)
 const REPEATS = /(.)\1{2,}/;
 const COMMON = /(password|anime|qwerty|letmein|welcome|admin|naruto|dragon|monkey)/i;
 
-const LABELS = ["Too short", "Weak", "Fair", "Good", "Strong"] as const;
+const LABELS = ["Слишком короткий", "Слабый", "Средний", "Хороший", "Надёжный"] as const;
 
 export function passwordRules(value: string): PasswordRule[] {
   return [
-    { label: "At least 12 characters", ok: value.length >= 12 },
-    { label: "Upper and lower case", ok: /[a-z]/.test(value) && /[A-Z]/.test(value) },
-    { label: "A number or symbol", ok: /[\d\W_]/.test(value) },
+    { label: "Не менее 12 символов", ok: value.length >= 12 },
+    { label: "Заглавные и строчные буквы", ok: /[a-z]/.test(value) && /[A-Z]/.test(value) },
+    { label: "Цифра или символ", ok: /[\d\W_]/.test(value) },
     {
-      label: "No obvious pattern",
+      label: "Без очевидных последовательностей",
       ok: value.length > 0 && !SEQUENCES.test(value) && !REPEATS.test(value) && !COMMON.test(value),
     },
   ];
@@ -60,7 +60,7 @@ export default function PasswordStrength({ value }: { value: string }) {
         ))}
       </div>
       <span className={styles.strengthLabel} data-score={score}>
-        {value ? LABELS[score] : "Password strength"}
+        {value ? LABELS[score] : "Надёжность пароля"}
       </span>
 
       <ul className={styles.rules}>

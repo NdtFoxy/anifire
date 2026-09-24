@@ -199,7 +199,7 @@ export default function StreamNav() {
   return (
     <div className={styles.navRoot}>
       <a href="#main" className="skipLink">
-        Skip to content
+        Перейти к содержимому
       </a>
 
       <header className={`${styles.nav} ${scrolled || open ? styles.navSolid : ""}`}>
@@ -213,7 +213,7 @@ export default function StreamNav() {
               </span>
               <span className={styles.logoText}>Anifire</span>
             </Link>
-            <nav className={styles.navLinks} aria-label="Sections">
+            <nav className={styles.navLinks} aria-label="Разделы">
               {NAV_ITEMS.map((item) => {
                 const target = navHref(item.href);
                 // A query-only destination (?view=genres) cannot be told apart
@@ -238,7 +238,7 @@ export default function StreamNav() {
                   className={styles.navLink}
                   aria-current={pathname.startsWith("/admin") ? "page" : undefined}
                 >
-                  Admin
+                  Админка
                 </Link>
               ) : null}
             </nav>
@@ -256,7 +256,7 @@ export default function StreamNav() {
               <button
                 className={styles.iconBtn}
                 type="button"
-                aria-label={searchOpen ? "Submit search" : "Search"}
+                aria-label={searchOpen ? "Найти" : "Search"}
                 aria-expanded={searchOpen}
                 onClick={() => {
                   if (searchOpen && searchQuery.trim()) submitSearch();
@@ -268,7 +268,7 @@ export default function StreamNav() {
               <input
                 ref={searchRef}
                 className={styles.searchInput}
-                placeholder="Search anime…"
+                placeholder="Поиск аниме…"
                 value={searchQuery}
                 // Collapsed the field is 0px wide; keeping it tabbable would
                 // trap keyboard and remote users on an invisible control.
@@ -279,14 +279,14 @@ export default function StreamNav() {
                   e.stopPropagation();
                   setSearchOpen(false);
                 }}
-                aria-label="Search anime"
+                aria-label="Поиск аниме"
               />
             </form>
 
             <button
               className={`${styles.iconBtn} ${styles.mobileBtn}`}
               type="button"
-              aria-label="More"
+              aria-label="Ещё"
               aria-expanded={open}
               aria-controls="nav-drawer"
               onClick={() => setOpen((v) => !v)}
@@ -299,7 +299,7 @@ export default function StreamNav() {
                 ref={avatarRef}
                 type="button"
                 className={styles.avatar}
-                aria-label="Profile menu"
+                aria-label="Меню профиля"
                 aria-haspopup="menu"
                 aria-expanded={menuOpen}
                 onClick={() => setMenuOpen((v) => !v)}
@@ -322,7 +322,7 @@ export default function StreamNav() {
                     role="menuitem"
                     onClick={() => setMenuOpen(false)}
                   >
-                    <UserIcon size={16} /> Profile
+                    <UserIcon size={16} /> Профиль
                   </Link>
                   <Link
                     href="/profile?tab=subscription"
@@ -330,7 +330,7 @@ export default function StreamNav() {
                     role="menuitem"
                     onClick={() => setMenuOpen(false)}
                   >
-                    <CreditCard size={16} /> Subscription
+                    <CreditCard size={16} /> Подписка
                   </Link>
                   {user?.role === "ADMIN" ? (
                     <Link
@@ -339,7 +339,7 @@ export default function StreamNav() {
                       role="menuitem"
                       onClick={() => setMenuOpen(false)}
                     >
-                      <Shield size={16} /> Admin
+                      <Shield size={16} /> Админка
                     </Link>
                   ) : null}
                   {user ? (
@@ -349,7 +349,7 @@ export default function StreamNav() {
                       role="menuitem"
                       onClick={handleLogout}
                     >
-                      <LogOut size={16} /> Log out
+                      <LogOut size={16} /> Выйти
                     </button>
                   ) : (
                     <Link
@@ -358,7 +358,7 @@ export default function StreamNav() {
                       role="menuitem"
                       onClick={() => setMenuOpen(false)}
                     >
-                      <LogOut size={16} /> Sign in
+                      <LogOut size={16} /> Войти
                     </Link>
                   )}
                   <TvModeToggle />
@@ -390,7 +390,7 @@ export default function StreamNav() {
           )}
           {user?.role === "ADMIN" ? (
             <Link href="/admin" className={styles.mobileLink} onClick={() => setOpen(false)}>
-              Admin
+              Админка
               <ChevronRight size={18} />
             </Link>
           ) : null}
@@ -399,7 +399,7 @@ export default function StreamNav() {
             className={styles.mobileLink}
             onClick={() => setOpen(false)}
           >
-            Subscription
+            Подписка
             <ChevronRight size={18} />
           </Link>
           {user ? (
@@ -411,12 +411,12 @@ export default function StreamNav() {
                 handleLogout();
               }}
             >
-              Log out
+              Выйти
               <LogOut size={18} />
             </button>
           ) : (
             <Link href="/login" className={styles.mobileLink} onClick={() => setOpen(false)}>
-              Sign in
+              Войти
               <ChevronRight size={18} />
             </Link>
           )}

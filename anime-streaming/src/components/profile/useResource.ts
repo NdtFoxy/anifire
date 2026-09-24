@@ -55,7 +55,7 @@ export function useResource<T>(load: () => Promise<T>): Resource<T> {
         setSettled((prev) => ({
           attempt,
           data: prev.data,
-          error: err instanceof Error ? err.message : "Something went wrong.",
+          error: err instanceof Error ? err.message : "Что-то пошло не так.",
         }));
       }
     );

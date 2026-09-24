@@ -12,7 +12,7 @@ import type {
 import SubtitleLine from "./SubtitleLine";
 import styles from "./player.module.css";
 
-const SAMPLE_PRIMARY = "This is how the primary subtitle track looks.";
+const SAMPLE_PRIMARY = "Так выглядит основная дорожка субтитров.";
 const SAMPLE_SECONDARY = "Kore ga nibanme no jimaku desu.";
 const PREVIEW_BASIS = 760; // px — keeps preview sizes close to a real screen
 
@@ -20,10 +20,10 @@ type Pane = "root" | "subs" | "primaryStyle" | "secondaryStyle" | "quality" | "s
 
 const SPEEDS = [0.5, 0.75, 1, 1.25, 1.5, 2];
 const UPSCALES: { mode: UpscaleMode; label: string }[] = [
-  { mode: "off", label: "Off" },
-  { mode: "sharp", label: "Sharpen" },
-  { mode: "ai-2x", label: "AI ×2" },
-  { mode: "ai-4k", label: "AI 4K" },
+  { mode: "off", label: "Выкл." },
+  { mode: "sharp", label: "Резкость" },
+  { mode: "ai-2x", label: "ИИ ×2" },
+  { mode: "ai-4k", label: "ИИ 4K" },
 ];
 
 export default function SettingsMenu({
@@ -54,65 +54,65 @@ export default function SettingsMenu({
   const [pane, setPane] = useState<Pane>("root");
 
   const trackLabel = (id: string | null) =>
-    id ? tracks.find((t) => t.id === id)?.label ?? "—" : "Off";
+    id ? tracks.find((t) => t.id === id)?.label ?? "—" : "Выкл.";
 
   const activeTracks = [settings.selection.primary, settings.selection.secondary]
     .filter((id) => id && tracks.some((t) => t.id === id)).length;
   const subsValue =
     tracks.length === 0
-      ? "None"
+      ? "Нет"
       : activeTracks === 0
-        ? "Off"
-        : `${activeTracks} ${activeTracks === 1 ? "track" : "tracks"}`;
+        ? "Выкл."
+        : `Дорожек: ${activeTracks}`;
 
   return (
     <div className={styles.menu} role="menu" onClick={(e) => e.stopPropagation()}>
       {pane === "root" && (
         <ul className={styles.menuList}>
-          <MenuRow label="Subtitles" value={subsValue} onClick={() => setPane("subs")} />
-          <MenuRow label="Quality" value={settings.quality} onClick={() => setPane("quality")} />
+          <MenuRow label="Субтитры" value={subsValue} onClick={() => setPane("subs")} />
+          <MenuRow label="Качество" value={settings.quality} onClick={() => setPane("quality")} />
           <MenuRow
-            label="Speed"
-            value={settings.playbackRate === 1 ? "Normal" : `${settings.playbackRate}×`}
+            label="Скорость"
+            value={settings.playbackRate === 1 ? "Обычная" : `${settings.playbackRate}×`}
             onClick={() => setPane("speed")}
           />
           <MenuRow
             label={
               <span className={styles.menuAi}>
-                <Sparkles size={14} /> Upscale
+                <Sparkles size={14} /> Апскейл
               </span>
             }
-            value={UPSCALES.find((u) => u.mode === settings.upscale)?.label ?? "Off"}
+            value={UPSCALES.find((u) => u.mode === settings.upscale)?.label ?? "Выкл."}
             onClick={() => setPane("upscale")}
           />
           <li className={styles.menuFooter}>
             <button type="button" className={styles.menuReset} onClick={onReset}>
-              Reset settings
+              Сбросить настройки
             </button>
           </li>
         </ul>
       )}
 
       {pane === "subs" && (
-        <Pane title="Subtitles" onBack={() => setPane("root")}>
+        <Pane title="Субтитры" onBack={() => setPane("root")}>
           <SubtitlePreview
             primary={settings.selection.primary ? settings.primaryStyle : null}
             secondary={settings.selection.secondary ? settings.secondaryStyle : null}
           />
-          <p className={styles.menuHint}>You can show two tracks at once.</p>
+          <p className={styles.menuHint}>Можно показывать две дорожки одновременно.</p>
           <SelectRow
-            label="Primary (bottom)"
+            label="Основные (снизу)"
             value={trackLabel(settings.selection.primary)}
-            options={[{ id: null, label: "Off" }, ...tracks]}
+            options={[{ id: null, label: "Выкл." }, ...tracks]}
             selected={settings.selection.primary}
             onSelect={(id) =>
               onUpdate({ selection: { ...settings.selection, primary: id } })
             }
           />
           <SelectRow
-            label="Secondary (top)"
+            label="Дополнительные (сверху)"
             value={trackLabel(settings.selection.secondary)}
-            options={[{ id: null, label: "Off" }, ...tracks]}
+            options={[{ id: null, label: "Выкл." }, ...tracks]}
             selected={settings.selection.secondary}
             onSelect={(id) =>
               onUpdate({ selection: { ...settings.selection, secondary: id } })
@@ -125,10 +125,10 @@ export default function SettingsMenu({
               onRequest={onRequestLanguage}
             />
           ) : null}
-          <MenuRow label="Primary style" value="" onClick={() => setPane("primaryStyle")} />
-          <MenuRow label="Secondary style" value="" onClick={() => setPane("secondaryStyle")} />
+          <MenuRow label="Стиль основных" value="" onClick={() => setPane("primaryStyle")} />
+          <MenuRow label="Стиль дополнительных" value="" onClick={() => setPane("secondaryStyle")} />
           <SliderRow
-            label="Vertical position"
+            label="Положение по вертикали"
             min={0}
             max={40}
             step={1}
@@ -141,7 +141,7 @@ export default function SettingsMenu({
 
       {pane === "primaryStyle" && (
         <StyleEditor
-          title="Primary style"
+          title="Стиль основных"
           style={settings.primaryStyle}
           onChange={onUpdatePrimaryStyle}
           onBack={() => setPane("subs")}
@@ -149,7 +149,7 @@ export default function SettingsMenu({
       )}
       {pane === "secondaryStyle" && (
         <StyleEditor
-          title="Secondary style"
+          title="Стиль дополнительных"
           style={settings.secondaryStyle}
           onChange={onUpdateSecondaryStyle}
           onBack={() => setPane("subs")}
@@ -157,7 +157,7 @@ export default function SettingsMenu({
       )}
 
       {pane === "quality" && (
-        <Pane title="Quality" onBack={() => setPane("root")}>
+        <Pane title="Качество" onBack={() => setPane("root")}>
           {qualities.map((q) => (
             <CheckRow
               key={q}
@@ -170,11 +170,11 @@ export default function SettingsMenu({
       )}
 
       {pane === "speed" && (
-        <Pane title="Speed" onBack={() => setPane("root")}>
+        <Pane title="Скорость" onBack={() => setPane("root")}>
           {SPEEDS.map((s) => (
             <CheckRow
               key={s}
-              label={s === 1 ? "Normal" : `${s}×`}
+              label={s === 1 ? "Обычная" : `${s}×`}
               checked={settings.playbackRate === s}
               onClick={() => onUpdate({ playbackRate: s })}
             />
@@ -183,9 +183,9 @@ export default function SettingsMenu({
       )}
 
       {pane === "upscale" && (
-        <Pane title="Upscale" onBack={() => setPane("root")}>
+        <Pane title="Апскейл" onBack={() => setPane("root")}>
           <p className={styles.menuHint}>
-            Client-side sharpening. AI modes are experimental.
+            Повышение резкости на устройстве. Режимы ИИ — экспериментальные.
           </p>
           {UPSCALES.map((u) => {
             const status = upscaleStatus(u.mode);
@@ -203,7 +203,7 @@ export default function SettingsMenu({
                   <span className={styles.menuItemLabel}>
                     {u.label}
                     {!status.available && u.mode.startsWith("ai") ? (
-                      <span className={styles.soon}>soon</span>
+                      <span className={styles.soon}>скоро</span>
                     ) : null}
                   </span>
                   <span className={styles.menuItemNote}>{status.note}</span>
@@ -253,11 +253,10 @@ function TranslateBox({
   return (
     <div className={styles.translateBox}>
       <span className={styles.translateHead}>
-        <Languages size={14} /> AI translation (local)
+        <Languages size={14} /> ИИ-перевод (локально)
       </span>
       <p className={styles.menuHint}>
-        Generate a track in any language. First time takes a minute or two, then
-        it&apos;s instant.
+        Создайте дорожку на любом языке. В первый раз это займёт пару минут, дальше — мгновенно.
       </p>
       <div className={styles.langChips}>
         {PRESET_LANGS.map((l) => {
@@ -283,7 +282,7 @@ function TranslateBox({
       <div className={styles.langCustom}>
         <input
           className={styles.langInput}
-          placeholder="Custom language (e.g. Tagalog)…"
+          placeholder="Другой язык (например, тагальский)…"
           value={custom}
           disabled={anyBusy}
           onChange={(e) => setCustom(e.target.value)}
@@ -295,11 +294,11 @@ function TranslateBox({
           disabled={anyBusy || !custom.trim()}
           onClick={submitCustom}
         >
-          {anyBusy ? <Loader2 size={14} className={styles.spin} /> : "Translate"}
+          {anyBusy ? <Loader2 size={14} className={styles.spin} /> : "Перевести"}
         </button>
       </div>
       {anyBusy ? (
-        <p className={styles.menuHint}>Translating: {translatingLang}…</p>
+        <p className={styles.menuHint}>Перевод: {translatingLang}…</p>
       ) : null}
     </div>
   );
@@ -467,7 +466,7 @@ function SubtitlePreview({
 }) {
   return (
     <div className={styles.subPreview}>
-      <span className={styles.subPreviewTag}>Preview</span>
+      <span className={styles.subPreviewTag}>Предпросмотр</span>
       {secondary ? (
         <SubtitleLine
           text={SAMPLE_SECONDARY}
@@ -485,7 +484,7 @@ function SubtitlePreview({
         />
       ) : null}
       {!primary && !secondary ? (
-        <span className={styles.subPreviewEmpty}>Subtitles off</span>
+        <span className={styles.subPreviewEmpty}>Субтитры выключены</span>
       ) : null}
     </div>
   );
@@ -506,7 +505,7 @@ function StyleEditor({
     <Pane title={title} onBack={onBack}>
       <SubtitlePreview primary={style} secondary={null} />
       <SliderRow
-        label="Size"
+        label="Размер"
         min={16}
         max={56}
         step={1}
@@ -515,7 +514,7 @@ function StyleEditor({
         onChange={(v) => onChange({ fontSize: v })}
       />
       <SliderRow
-        label="Text background"
+        label="Фон текста"
         min={0}
         max={100}
         step={5}
@@ -524,7 +523,7 @@ function StyleEditor({
         onChange={(v) => onChange({ background: v / 100 })}
       />
       <div className={styles.swatchRow}>
-        <span className={styles.sliderHead}>Color</span>
+        <span className={styles.sliderHead}>Цвет</span>
         <div className={styles.swatches}>
           {COLORS.map((c) => (
             <button
@@ -539,7 +538,7 @@ function StyleEditor({
         </div>
       </div>
       <div className={styles.segRow}>
-        <span className={styles.sliderHead}>Weight</span>
+        <span className={styles.sliderHead}>Насыщенность</span>
         <div className={styles.seg}>
           {WEIGHTS.map((w) => (
             <button
@@ -554,7 +553,7 @@ function StyleEditor({
         </div>
       </div>
       <div className={styles.segRow}>
-        <span className={styles.sliderHead}>Edge</span>
+        <span className={styles.sliderHead}>Контур</span>
         <div className={styles.seg}>
           {(["none", "outline", "shadow"] as const).map((e) => (
             <button
@@ -563,7 +562,7 @@ function StyleEditor({
               className={`${styles.segBtn} ${style.edge === e ? styles.segOn : ""}`}
               onClick={() => onChange({ edge: e })}
             >
-              {e === "none" ? "None" : e === "outline" ? "Outline" : "Shadow"}
+              {e === "none" ? "Нет" : e === "outline" ? "Обводка" : "Тень"}
             </button>
           ))}
         </div>

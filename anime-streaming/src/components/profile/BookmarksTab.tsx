@@ -25,7 +25,7 @@ export default function BookmarksTab() {
   if (catalog.error) {
     return (
       <ErrorState
-        message={`Could not load the catalog. ${catalog.error}`}
+        message={`Не удалось загрузить каталог. ${catalog.error}`}
         onRetry={catalog.reload}
       />
     );
@@ -33,13 +33,13 @@ export default function BookmarksTab() {
 
   if (items.length === 0) {
     return (
-      <EmptyState icon={<Bookmark size={22} />} title="No bookmarks yet">
+      <EmptyState icon={<Bookmark size={22} />} title="Закладок пока нет">
         <p>
-          Hit the bookmark button on any title and it will wait for you right
-          here.
+          Нажмите кнопку закладки на любом тайтле — и он будет ждать вас
+          здесь.
         </p>
         <Link href="/stream" className={styles.primaryLink}>
-          Find something to watch
+          Найти, что посмотреть
         </Link>
       </EmptyState>
     );
@@ -48,8 +48,8 @@ export default function BookmarksTab() {
   return (
     <>
       <div className={styles.sectionHead} data-rise>
-        <h2 className={styles.sectionTitle}>Bookmarks</h2>
-        <span className={styles.sectionMeta}>{items.length} saved</span>
+        <h2 className={styles.sectionTitle}>Закладки</h2>
+        <span className={styles.sectionMeta}>{items.length} сохранено</span>
       </div>
       <ul className={styles.posterGrid} data-rise>
         {items.map((m) => (
@@ -70,7 +70,7 @@ export default function BookmarksTab() {
               type="button"
               className={styles.posterRemove}
               onClick={() => toggleList(m.id)}
-              aria-label={`Remove ${m.title} from bookmarks`}
+              aria-label={`Удалить «${m.title}» из закладок`}
             >
               <Trash2 size={14} />
             </button>

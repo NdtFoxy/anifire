@@ -49,12 +49,12 @@ import styles from "./admin.module.css";
  */
 
 const SECTIONS = [
-  { key: "overview", label: "Dashboard", Icon: LayoutDashboard },
-  { key: "catalog", label: "Catalogue", Icon: Film },
-  { key: "users", label: "Users", Icon: Users2 },
-  { key: "ads", label: "Advertising", Icon: Megaphone },
-  { key: "geo", label: "Regions", Icon: Globe2 },
-  { key: "signals", label: "Signals", Icon: ShieldAlert },
+  { key: "overview", label: "Обзор", Icon: LayoutDashboard },
+  { key: "catalog", label: "Каталог", Icon: Film },
+  { key: "users", label: "Пользователи", Icon: Users2 },
+  { key: "ads", label: "Реклама", Icon: Megaphone },
+  { key: "geo", label: "Регионы", Icon: Globe2 },
+  { key: "signals", label: "Сигналы", Icon: ShieldAlert },
 ] as const;
 
 type SectionKey = (typeof SECTIONS)[number]["key"];
@@ -120,7 +120,7 @@ function AdminConsole() {
 
   useEffect(() => {
     if (!isAdmin) return;
-    fetchAdminAnalytics().then(setAnalytics).catch(() => setNotice("Could not load analytics."));
+    fetchAdminAnalytics().then(setAnalytics).catch(() => setNotice("Не удалось загрузить аналитику."));
   }, [isAdmin]);
 
   async function handleAnimeSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -134,7 +134,7 @@ function AdminConsole() {
       setEditingId(null);
       await loadCatalog();
     } catch {
-      setNotice("Could not save that title.");
+      setNotice("Не удалось сохранить тайтл.");
     } finally {
       setBusy(false);
     }
@@ -149,22 +149,22 @@ function AdminConsole() {
       setCategoryName("");
       await loadCatalog();
     } catch {
-      setNotice("Could not create that category.");
+      setNotice("Не удалось создать категорию.");
     }
   }
 
 
   if (loading) {
-    return <div className={styles.boot}>Loading…</div>;
+    return <div className={styles.boot}>Загрузка…</div>;
   }
 
   if (!user) {
     return (
       <div className={styles.gate}>
-        <h1>Admin console</h1>
-        <p>Sign in with an administrator account to continue.</p>
+        <h1>Панель администратора</h1>
+        <p>Чтобы продолжить, войдите в аккаунт администратора.</p>
         <Link className={styles.btnPrimary} href="/login?next=%2Fadmin">
-          Sign in
+          Войти
         </Link>
       </div>
     );
@@ -173,10 +173,10 @@ function AdminConsole() {
   if (!isAdmin) {
     return (
       <div className={styles.gate}>
-        <h1>Admins only</h1>
-        <p>This account does not have console access.</p>
+        <h1>Только для администраторов</h1>
+        <p>У этого аккаунта нет доступа к панели.</p>
         <Link className={styles.btnGhost} href="/stream">
-          Back to the catalogue
+          Вернуться в каталог
         </Link>
       </div>
     );
@@ -194,13 +194,13 @@ function AdminConsole() {
             type="button"
             className={styles.collapse}
             onClick={() => setCollapsed((v) => !v)}
-            aria-label={collapsed ? "Expand navigation" : "Collapse navigation"}
+            aria-label={collapsed ? "Развернуть навигацию" : "Свернуть навигацию"}
           >
             {collapsed ? <PanelLeftOpen size={16} /> : <PanelLeftClose size={16} />}
           </button>
         </div>
 
-        <nav className={styles.nav} aria-label="Admin sections">
+        <nav className={styles.nav} aria-label="Разделы админки">
           {SECTIONS.map(({ key, label, Icon }) => (
             <button
               key={key}
@@ -218,11 +218,11 @@ function AdminConsole() {
         <div className={styles.sideFoot}>
           <Link href="/stream" className={styles.navItem}>
             <Film size={18} />
-            <span>Back to site</span>
+            <span>Вернуться на сайт</span>
           </Link>
           <button type="button" className={styles.navItem} onClick={() => logout()}>
             <LogOut size={18} />
-            <span>Sign out</span>
+            <span>Выйти</span>
           </button>
         </div>
       </aside>
@@ -231,12 +231,12 @@ function AdminConsole() {
         <header className={styles.topbar}>
           <div>
             <h1>{SECTIONS.find((s) => s.key === section)?.label}</h1>
-            <p>Signed in as {user.email}</p>
+            <p>Вы вошли как {user.email}</p>
           </div>
           <div className={styles.who}>
             <span className={styles.avatar}>{(user.displayName ?? user.email)[0]?.toUpperCase()}</span>
             <div>
-              <b>{user.displayName ?? "Administrator"}</b>
+              <b>{user.displayName ?? "Администратор"}</b>
               <small>ADMIN</small>
             </div>
           </div>
@@ -324,7 +324,7 @@ function AdminConsole() {
 
 export default function AdminPage() {
   return (
-    <Suspense fallback={<div className={styles.boot}>Loading…</div>}>
+    <Suspense fallback={<div className={styles.boot}>Загрузка…</div>}>
       <AdminConsole />
     </Suspense>
   );

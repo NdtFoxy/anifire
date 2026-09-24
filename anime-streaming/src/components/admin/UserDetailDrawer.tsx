@@ -32,10 +32,10 @@ const fmt = (iso: string | null | undefined) =>
   iso ? new Date(iso).toLocaleString() : "—";
 
 function duration(seconds: number): string {
-  if (!seconds) return "0m";
+  if (!seconds) return "0 мин";
   const h = Math.floor(seconds / 3600);
   const m = Math.round((seconds % 3600) / 60);
-  return h > 0 ? `${h}h ${m}m` : `${m}m`;
+  return h > 0 ? `${h} ч ${m} мин` : `${m} мин`;
 }
 
 /**
@@ -70,7 +70,7 @@ export default function UserDetailDrawer({
           setResult({
             userId,
             data: null,
-            error: err instanceof Error ? err.message : "Failed to load.",
+            error: err instanceof Error ? err.message : "Не удалось загрузить.",
           });
         }
       });
@@ -101,7 +101,7 @@ export default function UserDetailDrawer({
         className={styles.drawer}
         role="dialog"
         aria-modal="true"
-        aria-label="Account details"
+        aria-label="Сведения об аккаунте"
         onClick={(e) => e.stopPropagation()}
       >
         <header className={styles.drawerHead}>
@@ -115,7 +115,7 @@ export default function UserDetailDrawer({
                 className={styles.drawerAvatar}
               />
               <div>
-                <h3>{data.profile.displayName ?? "Unnamed account"}</h3>
+                <h3>{data.profile.displayName ?? "Аккаунт без имени"}</h3>
                 <p>
                   {data.profile.email} · #{data.profile.id}
                 </p>
@@ -125,9 +125,9 @@ export default function UserDetailDrawer({
               </span>
             </>
           ) : (
-            <h3>Loading…</h3>
+            <h3>Загрузка…</h3>
           )}
-          <button type="button" className={styles.iconBtn} onClick={onClose} aria-label="Close">
+          <button type="button" className={styles.iconBtn} onClick={onClose} aria-label="Закрыть">
             <X size={16} />
           </button>
         </header>
@@ -136,7 +136,7 @@ export default function UserDetailDrawer({
 
         {!data && !error ? (
           <p className={styles.geoHint}>
-            <Loader2 size={14} className={styles.spin} /> Loading the dossier…
+            <Loader2 size={14} className={styles.spin} /> Загружаем досье…
           </p>
         ) : null}
 
@@ -144,97 +144,97 @@ export default function UserDetailDrawer({
           <div className={styles.drawerBody}>
             <div className={styles.miniGrid}>
               <span>
-                <Clock size={14} /> Watched
+                <Clock size={14} /> Просмотрено
                 <b>{duration(data.engagement.watchedSeconds)}</b>
               </span>
               <span>
-                <Activity size={14} /> Views
+                <Activity size={14} /> Просмотры
                 <b>{data.engagement.views}</b>
               </span>
               <span>
-                <MessageCircle size={14} /> Comments
+                <MessageCircle size={14} /> Комментарии
                 <b>{data.engagement.comments}</b>
               </span>
               <span>
-                <Star size={14} /> Ratings
+                <Star size={14} /> Оценки
                 <b>
                   {data.engagement.ratings}
                   {data.engagement.averageScore
-                    ? ` · avg ${data.engagement.averageScore.toFixed(1)}`
+                    ? ` · в среднем ${data.engagement.averageScore.toFixed(1)}`
                     : ""}
                 </b>
               </span>
               <span>
-                <Bookmark size={14} /> Bookmarks
+                <Bookmark size={14} /> Закладки
                 <b>{data.engagement.bookmarks}</b>
               </span>
               <span>
-                <Users2 size={14} /> Friends
+                <Users2 size={14} /> Друзья
                 <b>{data.engagement.friends}</b>
               </span>
             </div>
 
             <section>
-              <h4>Timeline</h4>
+              <h4>Хронология</h4>
               <dl className={styles.defList}>
                 <div>
-                  <dt>Account created</dt>
+                  <dt>Аккаунт создан</dt>
                   <dd>{fmt(data.timeline.createdAt)}</dd>
                 </div>
                 <div>
-                  <dt>Password set</dt>
+                  <dt>Пароль задан</dt>
                   <dd>
                     {fmt(data.timeline.passwordChangedAt)}
-                    {data.security.passwordNeverChanged ? " · never changed" : ""}
+                    {data.security.passwordNeverChanged ? " · ни разу не менялся" : ""}
                   </dd>
                 </div>
                 <div>
-                  <dt>Last sign-in</dt>
+                  <dt>Последний вход</dt>
                   <dd>{fmt(data.timeline.lastLoginAt)}</dd>
                 </div>
                 <div>
-                  <dt>First episode</dt>
+                  <dt>Первая серия</dt>
                   <dd>{fmt(data.timeline.firstWatchAt)}</dd>
                 </div>
                 <div>
-                  <dt>Last activity</dt>
+                  <dt>Последняя активность</dt>
                   <dd>{fmt(data.timeline.lastActivityAt)}</dd>
                 </div>
                 <div>
                   <dt>
-                    <Globe2 size={13} /> Signed up from
+                    <Globe2 size={13} /> Страна регистрации
                   </dt>
-                  <dd>{data.profile.signupCountry ?? "unknown"}</dd>
+                  <dd>{data.profile.signupCountry ?? "неизвестно"}</dd>
                 </div>
               </dl>
             </section>
 
             <section>
               <h4>
-                <ShieldAlert size={14} /> Security
+                <ShieldAlert size={14} /> Безопасность
               </h4>
               <div className={styles.tagRow}>
                 <span data-tone={data.security.emailVerified ? "ok" : "warn"}>
-                  {data.security.emailVerified ? "email verified" : "email unverified"}
+                  {data.security.emailVerified ? "почта подтверждена" : "почта не подтверждена"}
                 </span>
                 <span data-tone={data.security.locked ? "bad" : "ok"}>
-                  {data.security.locked ? `locked until ${fmt(data.security.lockedUntil)}` : "not locked"}
+                  {data.security.locked ? `заблокирован до ${fmt(data.security.lockedUntil)}` : "не заблокирован"}
                 </span>
-                <span>{data.security.failedAttempts} failed attempts</span>
+                <span>Неудачных попыток: {data.security.failedAttempts}</span>
                 <span>
-                  <Monitor size={12} /> {data.security.activeSessions} active sessions
+                  <Monitor size={12} /> Активных сеансов: {data.security.activeSessions}
                 </span>
                 {data.engagement.adsFree ? (
-                  <span data-tone="ok">{data.engagement.plan ?? "ads-free"}</span>
+                  <span data-tone="ok">{data.engagement.plan ?? "без рекламы"}</span>
                 ) : (
-                  <span>free plan</span>
+                  <span>бесплатный тариф</span>
                 )}
               </div>
               {data.linkedAccounts.length > 0 ? (
                 <ul className={styles.plainList}>
                   {data.linkedAccounts.map((account) => (
                     <li key={account.provider}>
-                      <KeyRound size={13} /> {account.provider} linked {fmt(account.linkedAt)}
+                      <KeyRound size={13} /> {account.provider} привязан {fmt(account.linkedAt)}
                     </li>
                   ))}
                 </ul>
@@ -245,7 +245,7 @@ export default function UserDetailDrawer({
                     <li key={i}>
                       <Monitor size={13} />
                       <span title={session.userAgent ?? ""}>
-                        {(session.userAgent ?? "unknown device").slice(0, 48)}
+                        {(session.userAgent ?? "неизвестное устройство").slice(0, 48)}
                       </span>
                       <em>{session.ipAddress ?? "—"}</em>
                       <time>{fmt(session.createdAt)}</time>
@@ -257,10 +257,10 @@ export default function UserDetailDrawer({
 
             <section>
               <h4>
-                <Star size={14} /> Ratings given
+                <Star size={14} /> Выставленные оценки
               </h4>
               {data.ratings.length === 0 ? (
-                <p className={styles.geoHint}>This account has not scored anything yet.</p>
+                <p className={styles.geoHint}>Этот аккаунт пока ничего не оценивал.</p>
               ) : (
                 <ul className={styles.ratingList}>
                   {data.ratings.map((rating) => (
@@ -287,10 +287,10 @@ export default function UserDetailDrawer({
 
             <section>
               <h4>
-                <MessageCircle size={14} /> Recent comments
+                <MessageCircle size={14} /> Последние комментарии
               </h4>
               {data.recentComments.length === 0 ? (
-                <p className={styles.geoHint}>No comments.</p>
+                <p className={styles.geoHint}>Комментариев нет.</p>
               ) : (
                 <ul className={styles.plainList}>
                   {data.recentComments.map((comment) => (
@@ -306,16 +306,16 @@ export default function UserDetailDrawer({
 
             <section>
               <h4>
-                <Activity size={14} /> Recently watched
+                <Activity size={14} /> Недавно просмотренное
               </h4>
               {data.recentWatches.length === 0 ? (
-                <p className={styles.geoHint}>Nothing watched yet.</p>
+                <p className={styles.geoHint}>Пока ничего не просмотрено.</p>
               ) : (
                 <ul className={styles.plainList}>
                   {data.recentWatches.map((watch, i) => (
                     <li key={`${watch.animeKey}-${i}`}>
                       <b>{watch.animeTitle ?? watch.animeKey}</b>
-                      <span>episode {watch.episode}</span>
+                      <span>серия {watch.episode}</span>
                       <time>{fmt(watch.at)}</time>
                     </li>
                   ))}
