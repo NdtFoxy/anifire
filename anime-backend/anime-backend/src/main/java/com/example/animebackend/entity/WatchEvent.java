@@ -45,6 +45,10 @@ public class WatchEvent {
     /** "AniLiberty", "local-fallback", etc. */
     private String provider;
 
+    /** ISO country the view came from, when a trusted proxy reported one. */
+    @Column(length = 2)
+    private String country;
+
     @Column(nullable = false)
     @Builder.Default
     private Instant watchedAt = Instant.now();

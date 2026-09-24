@@ -1,5 +1,6 @@
 package com.example.animebackend.dto;
 
+import com.example.animebackend.ads.dto.AdDtos;
 import java.util.List;
 
 public record PlayerSourceResponse(
@@ -17,7 +18,19 @@ public record PlayerSourceResponse(
         String prevHref,
         String nextHref,
         String backHref,
-        String provider) {
+        String provider,
+        /**
+         * Pre-roll plan, decided server-side. {@code null} for an entitled viewer —
+         * the client never decides whether an ad airs, it only obeys this field.
+         */
+        AdDtos.AdPlan adPlan) {
+
+    /** Same payload with a plan attached; keeps the source builder ad-unaware. */
+    public PlayerSourceResponse withAdPlan(AdDtos.AdPlan plan) {
+        return new PlayerSourceResponse(
+                key, selfHref, title, subtitle, episodeLabel, episodeTitle, src, qualities, poster,
+                tracks, chapters, prevHref, nextHref, backHref, provider, plan);
+    }
 
     public record SubtitleTrackResponse(
             String id,

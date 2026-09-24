@@ -21,7 +21,7 @@ public class WatchEventService {
     }
 
     @Transactional
-    public void record(Long userId, WatchEventRequest req) {
+    public void record(Long userId, WatchEventRequest req, String country) {
         // Snapshot the viewer so history survives a later account deletion.
         String email = null;
         String name = null;
@@ -40,6 +40,7 @@ public class WatchEventService {
                         .animeTitle(req.animeTitle())
                         .episode(Math.max(1, req.episode()))
                         .provider(req.provider())
+                        .country(country)
                         .watchedAt(Instant.now())
                         .build());
     }

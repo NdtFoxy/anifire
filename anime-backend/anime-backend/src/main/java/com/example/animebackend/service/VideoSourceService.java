@@ -191,7 +191,10 @@ public class VideoSourceService {
                 prev == null ? null : base + "?ep=" + prev,
                 next == null ? null : base + "?ep=" + next,
                 "/anime/" + anime.getId(),
-                provider);
+                provider,
+                // Ads are attached by the controller, which knows the caller; the
+                // source builder deliberately has no opinion about entitlement.
+                null);
     }
 
     private static List<PlayerSourceResponse.QualityResponse> qualities(AniEpisode episode) {
