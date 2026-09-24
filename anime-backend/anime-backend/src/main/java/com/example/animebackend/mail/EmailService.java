@@ -66,7 +66,7 @@ public class EmailService {
                     .append("\" style=\"color:#ff4d5e;text-decoration:none;font-weight:600\">")
                     .append(esc(e.title())).append("</a> — серия ").append(e.episode()).append("</li>");
         }
-        String settings = frontendUrl + "/profile?tab=overview";
+        String settings = frontendUrl + "/stream?notifications=open";
         text.append("\nОтключить письма: ").append(settings).append('\n');
         String subject = episodes.size() == 1
                 ? "Новая серия: " + episodes.get(0).title()

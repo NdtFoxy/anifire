@@ -20,7 +20,7 @@ const PAGE_SIZE = 20;
 const SORTS = [
   { key: "createdAt", label: "Сначала новые" },
   { key: "lastLoginAt", label: "Последний визит" },
-  { key: "email", label: "Email" },
+  { key: "email", label: "Почта" },
   { key: "level", label: "Уровень" },
 ] as const;
 

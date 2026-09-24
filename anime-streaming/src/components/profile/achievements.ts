@@ -104,7 +104,7 @@ export function deriveAwards(profile: Profile): Award[] {
       id: "inferno",
       label: "Инферно",
       description: `Очков: ${points} — пламя ревёт.`,
-      requirement: "Earn 5,000 points",
+      requirement: "Заработайте 5 000 очков",
       Icon: Flame,
       color: EMBER,
       unlocked: points >= 5000,

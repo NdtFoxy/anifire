@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
@@ -18,6 +18,7 @@ import { useAuth } from "@/components/auth/AuthProvider";
 import { useDevice } from "@/components/system/DeviceProvider";
 import MobileTabBar from "@/components/system/MobileTabBar";
 import TvModeToggle from "@/components/system/TvModeToggle";
+import NotificationBell from "@/components/stream/NotificationBell";
 import { NAV_ITEMS } from "@/data/mockAnime";
 import styles from "@/app/stream/stream.module.css";
 
@@ -282,6 +283,12 @@ export default function StreamNav() {
                 aria-label="Поиск аниме"
               />
             </form>
+
+            {user ? (
+              <Suspense fallback={null}>
+                <NotificationBell />
+              </Suspense>
+            ) : null}
 
             <button
               className={`${styles.iconBtn} ${styles.mobileBtn}`}

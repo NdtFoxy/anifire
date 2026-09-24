@@ -63,7 +63,7 @@ export default function ForgotPasswordPage() {
           <form className={styles.form} onSubmit={handleSubmit}>
             <Field
               id="email"
-              label="Email"
+              label="Почта"
               type="email"
               icon={<Mail size={17} />}
               autoComplete="email"

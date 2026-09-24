@@ -10,6 +10,7 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.OptionalInt;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -41,27 +42,29 @@ public class VideoSourceService {
         return anilibertySource(anime, episode);
     }
 
+    /**
+     * Episodes the video source currently serves for this title; empty when the
+     * release cannot be resolved (network error, no match), so a flaky lookup is
+     * never mistaken for "zero episodes".
+     */
+    public OptionalInt publishedEpisodes(Anime anime) {
+        try {
+            AniRelease detail = fetchRelease(anime.getTitle());
+            if (detail == null || detail.episodes() == null) return OptionalInt.empty();
+            return OptionalInt.of(detail.episodes().size());
+        } catch (Exception e) {
+            log.warn("AniLiberty episode count failed for anime id={}: {}", anime.getId(), e.getMessage());
+            return OptionalInt.empty();
+        }
+    }
+
     private PlayerSourceResponse anilibertySource(Anime anime, int episodeNumber) {
         try {
-            AniRelease release = findRelease(anime.getTitle());
-            if (release == null) {
+            AniRelease detail = fetchRelease(anime.getTitle());
+            if (detail == null) {
                 return fallback(anime, episodeNumber, "AniLiberty release not found");
             }
-            String idOrAlias = text(release.alias());
-            if (idOrAlias == null) {
-                idOrAlias = release.id() == null ? null : release.id().toString();
-            }
-            if (idOrAlias == null) {
-                return fallback(anime, episodeNumber, "AniLiberty release has no id");
-            }
-
-            AniRelease detail = restClient.get()
-                    .uri(URI.create(ANILIBERTY_BASE + "/anime/releases/" + url(idOrAlias)))
-                    .header("Accept", "application/json")
-                    .header("User-Agent", USER_AGENT)
-                    .retrieve()
-                    .body(AniRelease.class);
-            List<AniEpisode> episodes = detail == null ? null : detail.episodes();
+            List<AniEpisode> episodes = detail.episodes();
             if (episodes == null || episodes.isEmpty()) {
                 return fallback(anime, episodeNumber, "AniLiberty release has no episodes");
             }
@@ -98,6 +101,21 @@ public class VideoSourceService {
                     anime.getId(), anime.getTitle(), e.getMessage());
             return fallback(anime, episodeNumber, "AniLiberty unavailable: " + e.getClass().getSimpleName());
         }
+    }
+
+    /** Search by title, then load the full release (with its episode list). */
+    private AniRelease fetchRelease(String title) {
+        AniRelease release = findRelease(title);
+        if (release == null) return null;
+        String idOrAlias = text(release.alias());
+        if (idOrAlias == null && release.id() != null) idOrAlias = release.id().toString();
+        if (idOrAlias == null) return null;
+        return restClient.get()
+                .uri(URI.create(ANILIBERTY_BASE + "/anime/releases/" + url(idOrAlias)))
+                .header("Accept", "application/json")
+                .header("User-Agent", USER_AGENT)
+                .retrieve()
+                .body(AniRelease.class);
     }
 
     private AniRelease findRelease(String title) {

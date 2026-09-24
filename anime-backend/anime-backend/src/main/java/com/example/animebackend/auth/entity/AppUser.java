@@ -45,6 +45,11 @@ public class AppUser {
     @Builder.Default
     private boolean isDeleted = false;
 
+    /** Email digest of new episodes for bookmarked titles (the in-app inbox is always on). */
+    @Column(nullable = false)
+    @Builder.Default
+    private boolean episodeEmails = true;
+
     /** Consecutive failed logins; reset on success. */
     @Builder.Default
     private int failedAttempts = 0;

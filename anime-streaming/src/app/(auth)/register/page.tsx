@@ -172,7 +172,7 @@ export default function RegisterPage() {
         <div data-rise>
           <Field
             id="email"
-            label="Email"
+            label="Почта"
             type="email"
             icon={<Mail size={17} />}
             autoComplete="email"
