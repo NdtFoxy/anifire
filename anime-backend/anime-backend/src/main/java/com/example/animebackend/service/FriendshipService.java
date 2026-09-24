@@ -4,17 +4,23 @@ import com.example.animebackend.auth.entity.AppUser;
 import com.example.animebackend.auth.repository.AppUserRepository;
 import com.example.animebackend.auth.security.RateLimiterService;
 import com.example.animebackend.auth.web.ApiException;
+import com.example.animebackend.dto.FriendActivityDto;
 import com.example.animebackend.dto.FriendDto;
 import com.example.animebackend.entity.Friendship;
 import com.example.animebackend.entity.Friendship.Status;
+import com.example.animebackend.entity.WatchEvent;
 import com.example.animebackend.repository.FriendshipRepository;
+import com.example.animebackend.repository.WatchEventRepository;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -44,14 +50,17 @@ public class FriendshipService {
     private final FriendshipRepository friendships;
     private final AppUserRepository users;
     private final RateLimiterService rateLimiter;
+    private final WatchEventRepository watchEvents;
 
     public FriendshipService(
             FriendshipRepository friendships,
             AppUserRepository users,
-            RateLimiterService rateLimiter) {
+            RateLimiterService rateLimiter,
+            WatchEventRepository watchEvents) {
         this.friendships = friendships;
         this.users = users;
         this.rateLimiter = rateLimiter;
+        this.watchEvents = watchEvents;
     }
 
     @Transactional
@@ -177,6 +186,43 @@ public class FriendshipService {
         return hydrate(
                 friendships.findByRequesterIdAndStatusOrderByCreatedAtDesc(userId, Status.PENDING),
                 userId);
+    }
+
+    /** How far back, and how many titles, the friends feed shows. */
+    static final Duration FEED_WINDOW = Duration.ofDays(30);
+    static final int FEED_SIZE = 30;
+
+    /**
+     * What accepted friends watched recently: one entry per (friend, title), the
+     * latest episode, newest first. Only friends — a pending or blocked edge
+     * reveals nothing, which is the whole point of asking first.
+     */
+    @Transactional(readOnly = true)
+    public List<FriendActivityDto> feed(Long userId) {
+        List<Friendship> edges = friendships.findAllForUser(userId, Status.ACCEPTED);
+        if (edges.isEmpty()) return List.of();
+        List<Long> friendIds = edges.stream()
+                .map(e -> e.getRequesterId().equals(userId) ? e.getAddresseeId() : e.getRequesterId())
+                .distinct()
+                .toList();
+        Map<Long, AppUser> byId = users.findAllById(friendIds).stream()
+                .filter(u -> !u.isDeleted())
+                .collect(Collectors.toMap(AppUser::getId, Function.identity()));
+        if (byId.isEmpty()) return List.of();
+        List<WatchEvent> events = watchEvents.findByUserIdInAndWatchedAtAfterOrderByWatchedAtDesc(
+                byId.keySet(), Instant.now().minus(FEED_WINDOW),
+                PageRequest.of(0, FEED_SIZE * 5));
+        Set<String> seen = new HashSet<>();
+        List<FriendActivityDto> out = new ArrayList<>();
+        for (WatchEvent e : events) {
+            if (out.size() == FEED_SIZE) break;
+            if (e.getAnimeKey() == null || !seen.add(e.getUserId() + "|" + e.getAnimeKey())) continue;
+            AppUser friend = byId.get(e.getUserId());
+            out.add(new FriendActivityDto(
+                    friend.getId(), friend.getDisplayName(), friend.getAvatarUrl(),
+                    e.getAnimeKey(), e.getAnimeTitle(), e.getEpisode(), e.getWatchedAt()));
+        }
+        return out;
     }
 
     private List<FriendDto> hydrate(List<Friendship> edges, Long userId) {

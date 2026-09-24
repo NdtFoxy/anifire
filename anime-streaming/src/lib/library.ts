@@ -218,6 +218,23 @@ export async function fetchFriends(): Promise<FriendOverview> {
   }
 }
 
+export interface FriendActivity {
+  userId: number;
+  displayName: string | null;
+  avatarUrl: string | null;
+  animeKey: string;
+  animeTitle: string | null;
+  episode: number;
+  watchedAt: string;
+}
+
+/** What friends watched lately; an error is surfaced, not hidden as "nothing". */
+export async function fetchFriendFeed(): Promise<FriendActivity[]> {
+  const res = await authFetch(`${ME}/friends/feed`);
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  return (await res.json()) as FriendActivity[];
+}
+
 export async function requestFriend(email: string): Promise<Friend> {
   const res = await authFetch(`${ME}/friends/requests`, {
     method: "POST",

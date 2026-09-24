@@ -9,8 +9,11 @@ import com.example.animebackend.auth.repository.AppUserRepository;
 import com.example.animebackend.auth.web.ApiException;
 import com.example.animebackend.dto.WatchProgressDto;
 import com.example.animebackend.dto.WatchProgressRequest;
+import com.example.animebackend.entity.WatchEvent;
+import com.example.animebackend.repository.WatchEventRepository;
 import com.example.animebackend.service.FriendshipService;
 import com.example.animebackend.service.WatchProgressService;
+import java.time.Instant;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,6 +36,9 @@ class LibraryContractTest {
 
     @Autowired
     private AppUserRepository users;
+
+    @Autowired
+    private WatchEventRepository watchEvents;
 
     private Long ann;
     private Long bob;
@@ -141,6 +147,34 @@ class LibraryContractTest {
         friends.request(bob, users.findById(ann).orElseThrow().getEmail());
         assertThat(friends.friends(ann)).hasSize(1);
         assertThat(friends.outgoing(bob)).isEmpty();
+    }
+
+    @Test
+    void feedShowsOnlyAcceptedFriendsLatestEpisodePerTitle() {
+        watch(bob, "frieren", 3, 300);
+        watch(bob, "frieren", 4, 200);
+        watch(bob, "bebop", 1, 100);
+
+        // A pending request reveals nothing.
+        friends.request(ann, bobEmail);
+        assertThat(friends.feed(ann)).isEmpty();
+
+        friends.respond(bob, friends.incoming(bob).getFirst().friendshipId(), true);
+        assertThat(friends.feed(ann))
+                .extracting(a -> a.animeKey() + "#" + a.episode())
+                .containsExactly("bebop#1", "frieren#4");
+        // Your own viewing is not in your friends feed.
+        assertThat(friends.feed(bob)).isEmpty();
+    }
+
+    private void watch(Long userId, String animeKey, int episode, long secondsAgo) {
+        watchEvents.save(WatchEvent.builder()
+                .userId(userId)
+                .animeKey(animeKey)
+                .animeTitle(animeKey)
+                .episode(episode)
+                .watchedAt(Instant.now().minusSeconds(secondsAgo))
+                .build());
     }
 
     @Test

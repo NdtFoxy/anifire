@@ -60,6 +60,9 @@ public interface WatchEventRepository extends JpaRepository<WatchEvent, Long> {
 
     long countByUserId(Long userId);
 
+    List<WatchEvent> findByUserIdInAndWatchedAtAfterOrderByWatchedAtDesc(
+            java.util.Collection<Long> userIds, Instant since, Pageable pageable);
+
     @Query("select count(distinct w.animeKey) from WatchEvent w where w.userId = :userId")
     long countDistinctTitlesForUser(@Param("userId") Long userId);
 

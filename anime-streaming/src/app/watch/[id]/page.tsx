@@ -22,6 +22,7 @@ import {
 } from "@/data/playerData";
 import { usePlayer } from "@/components/player/PlayerProvider";
 import RequireAuth from "@/components/auth/RequireAuth";
+import { setActiveParty } from "@/lib/party";
 import styles from "./watch.module.css";
 
 type Status = "loading" | "player" | "trailer" | "unavailable";
@@ -44,6 +45,12 @@ function Watch() {
     const raw = Number(search.get("t"));
     return Number.isFinite(raw) && raw > 0 ? Math.min(raw, 86_400) : undefined;
   })();
+
+  // "?party=" invite link: join that room; the player syncs to it from here on.
+  const partyCode = search.get("party");
+  useEffect(() => {
+    if (partyCode) setActiveParty(partyCode);
+  }, [partyCode]);
 
   // Track the latest mode so the unmount cleanup can read it without re-subscribing.
   const modeRef = useRef(mode);

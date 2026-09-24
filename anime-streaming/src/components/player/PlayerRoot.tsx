@@ -61,6 +61,8 @@ import { useTouchGestures } from "./useTouchGestures";
 import WordCard from "./WordCard";
 import IconBtn from "./IconBtn";
 import ProgressBar from "./ProgressBar";
+import PartyControl from "./PartyControl";
+import { useWatchParty } from "./useWatchParty";
 import { useAuth } from "@/components/auth/AuthProvider";
 import styles from "./player.module.css";
 
@@ -211,6 +213,25 @@ export default function PlayerRoot() {
     if (!adRunning) return;
     videoRef.current?.pause();
   }, [adRunning]);
+
+  /* ─────────── watch party ───────────
+   * The room is keyed by the watch page's own route id (the path segment of
+   * selfHref), which is what a friend's link must open — catalogue id or
+   * AniLiberty alias alike. Paused during an ad: rejoining afterwards re-applies
+   * the room's current position. */
+  const partySlot = useMemo(() => {
+    if (!source?.selfHref) return null;
+    const path = source.selfHref.split("?")[0];
+    const animeKey = decodeURIComponent(path.slice(path.lastIndexOf("/") + 1));
+    return animeKey ? { animeKey, episode: source.episode ?? 1 } : null;
+  }, [source]);
+  const party = useWatchParty({
+    videoRef,
+    slot: partySlot,
+    selfHref: source?.selfHref ?? null,
+    userId: user?.id ?? null,
+    enabled: !!user && mode !== "closed" && !adRunning,
+  });
 
   const { hud, flashHud } = useHud();
   const { volume, muted, changeVolume, bumpVolume, toggleMute } = useVolume({
@@ -691,6 +712,20 @@ export default function PlayerRoot() {
                 <IconBtn label="Мини-плеер" onClick={goMini}>
                   <PictureInPicture2 size={20} />
                 </IconBtn>
+
+                {user ? (
+                  <PartyControl
+                    code={party.code}
+                    link={party.link}
+                    members={party.members}
+                    error={party.error}
+                    onStart={party.start}
+                    onLeave={party.leave}
+                    onOpenChange={(open) => {
+                      if (open) setControls(true);
+                    }}
+                  />
+                ) : null}
 
                 <div className={styles.settingsWrap}>
                   <IconBtn

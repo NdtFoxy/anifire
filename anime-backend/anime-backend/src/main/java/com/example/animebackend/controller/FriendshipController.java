@@ -1,5 +1,6 @@
 package com.example.animebackend.controller;
 
+import com.example.animebackend.dto.FriendActivityDto;
 import com.example.animebackend.dto.FriendDto;
 import com.example.animebackend.service.FriendshipService;
 import jakarta.validation.Valid;
@@ -37,6 +38,12 @@ public class FriendshipController {
                 "friends", friends.friends(userId),
                 "incoming", friends.incoming(userId),
                 "outgoing", friends.outgoing(userId));
+    }
+
+    /** What friends watched lately (friends only, newest first). */
+    @GetMapping("/feed")
+    public List<FriendActivityDto> feed(@AuthenticationPrincipal Jwt jwt) {
+        return friends.feed(userId(jwt));
     }
 
     @PostMapping("/requests")

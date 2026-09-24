@@ -14,6 +14,7 @@ import {
 import { mediaUrl } from "@/lib/auth-client";
 import RemoteImage from "@/components/system/RemoteImage";
 import { EmptyState, ErrorState, Skeleton } from "./states";
+import FriendsFeed from "./FriendsFeed";
 import styles from "@/app/profile/profile.module.css";
 
 /**
@@ -114,6 +115,8 @@ export default function FriendsTab() {
         </button>
       </form>
       {notice ? <p className={styles.friendNotice}>{notice}</p> : null}
+
+      {data.friends.length > 0 ? <FriendsFeed /> : null}
 
       {data.incoming.length > 0 ? (
         <section className={styles.friendSection}>
